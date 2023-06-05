@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include "webserv.hpp"
 
 #define BACKLOG 128
 #define MAX_CLIENTS 1024
@@ -112,3 +113,23 @@ int main(int argc, char* argv[]) {
 	std::cout << "Listening on port " << argv[1] << ". 👂\n";
 	loop();
 }
+
+// main for testing parsing of config file
+// int main(int argc, char *argv[])
+// {
+// 	if (argc != 2) {
+// 		std::cerr << "Usage: ./webserv config_file" << std::endl;
+// 		return EXIT_FAILURE;
+// 	}
+// 	std::vector<VirtualServer> servers;
+// 	std::string file(argv[1]);
+// 	if (!parseConfig(file, servers))
+// 		return EXIT_FAILURE;
+// 	int i = 1;
+// 	for (std::vector<VirtualServer>::iterator it = servers.begin(); it != servers.end(); ++it) {
+// 		std::cout << "Server block number:" << i << std::endl;
+// 		(*it).printServerInformation();
+// 		++i;
+// 	}
+// 	return EXIT_SUCCESS;
+// }

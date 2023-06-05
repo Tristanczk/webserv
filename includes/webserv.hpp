@@ -11,6 +11,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include "VirtualServer.hpp"
 
 #define BACKLOG 128
 #define MAX_CLIENTS 1024
@@ -28,3 +29,6 @@ public:
 	virtual ~SystemError() throw() {}
 	const char* funcName;
 };
+
+bool parseConfig(std::string& file, std::vector<VirtualServer>& servers);
+bool getIPvalue(std::string &IP, uint32_t &res);
