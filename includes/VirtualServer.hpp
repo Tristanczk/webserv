@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Location.hpp"
-#include "webserv.hpp"
 #include <arpa/inet.h>
 #include <climits>
 #include <csignal>
@@ -48,16 +47,20 @@ public:
 	}
 
 	~VirtualServer(){};
-	void initKeywordMap(void) {
-		_keywordHandlers["listen"] = &VirtualServer::parseListen;
-		_keywordHandlers["server_name"] = &VirtualServer::parseServerNames;
-		_keywordHandlers["root"] = &VirtualServer::parseRoot;
-		_keywordHandlers["autoindex"] = &VirtualServer::parseAutoIndex;
-		_keywordHandlers["client_body_buffer_size"] = &VirtualServer::parseClientBodyBufferSize;
-		_keywordHandlers["client_max_body_size"] = &VirtualServer::parseClientMaxBodySize;
-		_keywordHandlers["error_page"] = &VirtualServer::parseErrorPages;
-		_keywordHandlers["index"] = &VirtualServer::parseIndex;
-		// _keywordHandlers["location"] = &VirtualServer::parseLocation;
+
+	VirtualServer& operator=(const VirtualServer& other) {
+		if (this != &other) {
+			_address = other._address;
+			_serverNames = other._serverNames;
+			_rootDir = other._rootDir;
+			_autoIndex = other._autoIndex;
+			_bufferSize = other._bufferSize;
+			_bodySize = other._bodySize;
+			_errorPages = other._errorPages;
+			_indexPages = other._indexPages;
+			_locations = other._locations;
+		}
+		return *this;
 	}
 
 	bool initServer(std::istream& config) {
@@ -70,6 +73,15 @@ public:
 				return true;
 			else if (keyword[0] == '#')
 				continue;
+			else if (keyword == "location")
+			{
+				Location location(*this);
+				if (!location.initUri(iss))
+					return false;
+				if (!location.parseLocationContent(config))
+					return false;
+				_locations.push_back(location);
+			}
 			else {
 				try {
 					KeywordHandler handler = _keywordHandlers.at(keyword);
@@ -81,8 +93,9 @@ public:
 				}
 			}
 		}
-		return true;
-	};
+		std::cerr << CONFIG_FILE_ERROR << "Missing closing bracket for server" << std::endl;
+		return false;
+	}
 
 	// TODO : delete this function as it uses inet_ntoa which is not allowed for the project
 	void	printServerInformation(void) {
@@ -109,6 +122,30 @@ public:
 		// 	it->printLocationInformation();
 	}
 
+	std::string getRootDir(void) const {
+		return _rootDir;
+	}
+
+	bool getAutoIndex(void) const {
+		return _autoIndex;
+	}
+
+	std::size_t getBufferSize(void) const {
+		return _bufferSize;
+	}
+
+	std::size_t getBodySize(void) const {
+		return _bodySize;
+	}
+
+	std::map<int, std::string> getErrorPages(void) const {
+		return _errorPages;
+	}
+
+	std::vector<std::string> getIndexPages(void) const {
+		return _indexPages;
+	}
+
 	
 
 private:
@@ -116,7 +153,7 @@ private:
 	struct sockaddr_in _address;
 	std::vector<std::string> _serverNames;
 	std::string _rootDir;
-	bool _autoIndex; // set to false by default
+	bool _autoIndex;
 	std::size_t _bufferSize;
 	std::size_t _bodySize;
 	std::map<int, std::string> _errorPages;
@@ -124,6 +161,17 @@ private:
 	std::vector<Location> _locations;
 	std::map< std::string, KeywordHandler> _keywordHandlers;
 
+	void initKeywordMap(void) {
+		_keywordHandlers["listen"] = &VirtualServer::parseListen;
+		_keywordHandlers["server_name"] = &VirtualServer::parseServerNames;
+		_keywordHandlers["root"] = &VirtualServer::parseRoot;
+		_keywordHandlers["autoindex"] = &VirtualServer::parseAutoIndex;
+		_keywordHandlers["client_body_buffer_size"] = &VirtualServer::parseClientBodyBufferSize;
+		_keywordHandlers["client_max_body_size"] = &VirtualServer::parseClientMaxBodySize;
+		_keywordHandlers["error_page"] = &VirtualServer::parseErrorPages;
+		_keywordHandlers["index"] = &VirtualServer::parseIndex;
+	}
+	
 	bool parseListen(std::istringstream& iss) {
 		std::string value, host;
 		size_t port;
@@ -403,3 +451,4 @@ private:
 		return true;
 	}
 };
+
