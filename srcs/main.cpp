@@ -1,3 +1,4 @@
+#include "webserv.hpp"
 #include <arpa/inet.h>
 #include <csignal>
 #include <cstdio>
@@ -6,7 +7,6 @@
 #include <iostream>
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include "webserv.hpp"
 
 #define BACKLOG 128
 #define MAX_CLIENTS 1024
@@ -115,8 +115,7 @@
 // }
 
 // main for testing parsing of config file
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		std::cerr << "Usage: ./webserv config_file" << std::endl;
 		return EXIT_FAILURE;
