@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Location.hpp"
+#include "webserv.hpp"
 #include <arpa/inet.h>
 #include <climits>
 #include <csignal>
@@ -26,6 +27,9 @@
 #define BODY_SIZE 1048576
 #define BODY_SIZE_LIMIT 1073741824 // 1GB
 #define DEFAULT_ERROR 0
+#define CONFIG_FILE_ERROR "Error in configuration file: "
+
+bool getIPvalue(std::string &IP, uint32_t &res); // TODO : understand why I need this prototype here while it already exists in weverserv.hpp
 
 class VirtualServer {
 
@@ -72,7 +76,7 @@ public:
 					if (!(this->*handler)(iss))
 						return false;
 				} catch (const std::exception& e) {
-					std::cerr << "Invalid keyword in configuration file: " << keyword << std::endl;
+					std::cerr << CONFIG_FILE_ERROR << "Invalid keyword in configuration file: " << keyword << std::endl;
 					return false;
 				}
 			}
@@ -80,6 +84,7 @@ public:
 		return true;
 	};
 
+	// TODO : delete this function as it uses inet_ntoa which is not allowed for the project
 	void	printServerInformation(void) {
 		std::cout << "Server information:" << std::endl;
 		std::cout << "Address: " << inet_ntoa(_address.sin_addr) << std::endl;
@@ -120,22 +125,63 @@ private:
 	std::map< std::string, KeywordHandler> _keywordHandlers;
 
 	bool parseListen(std::istringstream& iss) {
-		(void)iss;
-		// std::string value, host;
-		// int port;
-		// if (!(iss >> value)) {
-		// 	std::cerr << "Missing information after listen keyword" << std::endl;
-		// 	return false;
-		// }
-		// std::istringstream elements(value);
-		// voir comment on gere les valeurs
+		std::string value, host;
+		size_t port;
+		if (!(iss >> value)) {
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after listen keyword" << std::endl;
+			return false;
+		}
+		size_t idx = value.find(':');
+		if (idx == std::string::npos) {
+			if (value.find_first_not_of("0123456789") != std::string::npos) {
+				if (!getIPvalue(value, _address.sin_addr.s_addr))
+				{
+					std::cerr << CONFIG_FILE_ERROR << "Invalid IPv4 address format in listen instruction" << std::endl;
+					return false;
+				}
+			}
+			else {
+				port = std::strtol(value.c_str(), NULL, 10);
+				if (port > 65535) {
+					std::cerr << CONFIG_FILE_ERROR << "Invalid port number in listen instruction" << std::endl;
+					return false;
+				}
+				_address.sin_port = htons(port);
+			}
+		}
+		else {
+			value[idx] = ' ';
+			std::istringstream hostPort(value);
+			if (!(hostPort >> host >> port)) {
+				std::cerr << CONFIG_FILE_ERROR << "Invalid format for host:port in listen instruction" << std::endl;
+				return false;
+			}
+			if (!getIPvalue(host, _address.sin_addr.s_addr))
+			{
+				std::cerr << CONFIG_FILE_ERROR << "Invalid IPv4 address format in listen instruction" << std::endl;
+				return false;
+			}
+			if (port > 65535) {
+				std::cerr << CONFIG_FILE_ERROR << "Invalid port number in listen instruction" << std::endl;
+				return false;
+			}
+			_address.sin_port = htons(port);
+			if (hostPort >> value) {
+				std::cerr << CONFIG_FILE_ERROR << "Invalid format for host:port in listen instruction" << std::endl;
+				return false;
+			}
+		}
+		if (iss >> value) {
+			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after listen keyword" << std::endl;
+			return false;
+		}
 		return true;
 	}
 
 	bool parseServerNames(std::istringstream& iss) {
 		std::string value;
 		if (!(iss >> value)) {
-			std::cerr << "Missing information after server_name keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after server_name keyword" << std::endl;
 			return false;
 		}
 		_serverNames.push_back(value);
@@ -147,12 +193,12 @@ private:
 	bool parseRoot(std::istringstream& iss) {
 		std::string value;
 		if (!(iss >> value)) {
-			std::cerr << "Missing information after root keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after root keyword" << std::endl;
 			return false;
 		}
 		_rootDir = value;
 		if (iss >> value) {
-			std::cerr << "Too many arguments after root keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after root keyword" << std::endl;
 			return false;
 		}
 		return true;
@@ -161,7 +207,7 @@ private:
 	bool parseAutoIndex(std::istringstream& iss) {
 		std::string value;
 		if (!(iss >> value)) {
-			std::cerr << "Missing information after autoindex keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after autoindex keyword" << std::endl;
 			return false;
 		}
 		if (value == "on")
@@ -169,11 +215,11 @@ private:
 		else if (value == "off")
 			_autoIndex = false;
 		else {
-			std::cerr << "Invalid value for autoindex keyword: " << value << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Invalid value for autoindex keyword: " << value << std::endl;
 			return false;
 		}
 		if (iss >> value) {
-			std::cerr << "Too many arguments after autoindex keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after autoindex keyword" << std::endl;
 			return false;
 		}
 		return true;
@@ -182,17 +228,17 @@ private:
 	bool parseClientBodyBufferSize(std::istringstream& iss) {
 		std::string value;
 		if (!(iss >> value)) {
-			std::cerr << "Missing information after client_body_buffer_size keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after client_body_buffer_size keyword" << std::endl;
 			return false;
 		}
 		size_t idx = value.find_first_not_of("0123456789");
 		if (idx == 0) {
-			std::cerr << "Invalid character for client_body_buffer_size" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_body_buffer_size" << std::endl;
 			return false;
 		}
 		_bufferSize = std::strtol(value.c_str(), NULL, 10);
 		if (_bufferSize == LONG_MAX) {
-			std::cerr << "Invalid value for client_body_buffer_size" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size" << std::endl;
 			return false;
 		}
 		if (value[idx] != '\0') {
@@ -209,20 +255,20 @@ private:
 			// 	break;
 			// we do not accept gigabytes as the size would be too large
 			default:
-				std::cerr << "Invalid suffix for bytes value, valid suffix are: k, K, m, M" << std::endl;
+				std::cerr << CONFIG_FILE_ERROR << "Invalid suffix for bytes value, valid suffix are: k, K, m, M" << std::endl;
 				return false;
 			}
 			if (value[idx + 1] != '\0') {
-				std::cerr << "Invalid character after suffix for bytes value" << std::endl;
+				std::cerr << CONFIG_FILE_ERROR << "Invalid character after suffix for bytes value" << std::endl;
 				return false;
 			}
 		}
 		if (_bufferSize > BUFFER_SIZE_SERVER_LIMIT) {
-			std::cerr << "Buffer size too big, maximum is: " << BUFFER_SIZE_SERVER_LIMIT << " bytes" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Buffer size too big, maximum is: " << BUFFER_SIZE_SERVER_LIMIT << " bytes" << std::endl;
 			return false;
 		}
 		if (iss >> value) {
-			std::cerr << "Too many arguments after client_body_buffer_size keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after client_body_buffer_size keyword" << std::endl;
 			return false;
 		}
 		return true;
@@ -231,17 +277,17 @@ private:
 	bool parseClientMaxBodySize(std::istringstream& iss) {
 		std::string value;
 		if (!(iss >> value)) {
-			std::cerr << "Missing information after client_body_buffer_size keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after client_body_buffer_size keyword" << std::endl;
 			return false;
 		}
 		size_t idx = value.find_first_not_of("0123456789");
 		if (idx == 0) {
-			std::cerr << "Invalid character for client_body_buffer_size" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_body_buffer_size" << std::endl;
 			return false;
 		}
 		_bodySize = std::strtol(value.c_str(), NULL, 10);
 		if (_bodySize == LONG_MAX) {
-			std::cerr << "Invalid value for client_body_buffer_size" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size" << std::endl;
 			return false;
 		}
 		if (value[idx] != '\0') {
@@ -257,20 +303,20 @@ private:
 				_bodySize *= 1073741824;
 				break;
 			default:
-				std::cerr << "Invalid suffix for bytes value, valid suffix are: k, K, m, M, g, G" << std::endl;
+				std::cerr << CONFIG_FILE_ERROR << "Invalid suffix for bytes value, valid suffix are: k, K, m, M, g, G" << std::endl;
 				return false;
 			}
 			if (value[idx + 1] != '\0') {
-				std::cerr << "Invalid character after suffix for bytes value" << std::endl;
+				std::cerr << CONFIG_FILE_ERROR << "Invalid character after suffix for bytes value" << std::endl;
 				return false;
 			}
 		}
 		if (_bodySize > BODY_SIZE_LIMIT) {
-			std::cerr << "Body size too big, maximum is: " << BODY_SIZE_LIMIT << " bytes" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Body size too big, maximum is: " << BODY_SIZE_LIMIT << " bytes" << std::endl;
 			return false;
 		}
 		if (iss >> value) {
-			std::cerr << "Too many arguments after client_max_body_size keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after client_max_body_size keyword" << std::endl;
 			return false;
 		}
 		return true;
@@ -282,13 +328,13 @@ private:
 		std::vector<int> codeList;
 		int codeValue;
 		if (!(iss >> code)) {
-			std::cerr << "Missing information after error_page keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after error_page keyword" << std::endl;
 			return false;
 		}
 		if (!parseErrorCode(code, codeList))
 			return false;
 		if (!(iss >> tmpStr)) {
-			std::cerr << "Missing path after error_page code" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing path after error_page code" << std::endl;
 			return false;
 		}
 		code = tmpStr;
@@ -316,15 +362,15 @@ private:
 				int start, end;
 				std::string check;
 				if (!(range >> start >> end)) {
-					std::cerr << "Invalid format for code range in error_page" << std::endl;
+					std::cerr << CONFIG_FILE_ERROR << "Invalid format for code range in error_page" << std::endl;
 					return false;
 				}
 				if (range >> check) {
-					std::cerr << "Too many arguments for code range in error_page" << std::endl;
+					std::cerr << CONFIG_FILE_ERROR << "Too many arguments for code range in error_page" << std::endl;
 					return false;
 				}
 				if (start < 100 || start > 599 || end < 100 || end > 599) {
-					std::cerr << "Invalid error code in range: " << start << "-" << end << std::endl;
+					std::cerr << CONFIG_FILE_ERROR << "Invalid error code in range: " << start << "-" << end << std::endl;
 					return false;
 				}
 				for (int i = start; i <= end; i++)
@@ -332,13 +378,13 @@ private:
 				return true;
 			}
 			else {
-				std::cerr << "Invalid character in error code: " << code << std::endl;
+				std::cerr << CONFIG_FILE_ERROR << "Invalid character in error code: " << code << std::endl;
 				return false;
 			}
 		}
 		codeValue = std::strtol(code.c_str(), NULL, 10);
 		if (codeValue < 100 || codeValue > 599) {
-			std::cerr << "Invalid error code: " << codeValue << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Invalid error code: " << codeValue << std::endl;
 			return false;
 		}
 		codeList.push_back(codeValue);
@@ -348,7 +394,7 @@ private:
 	bool parseIndex(std::istringstream& iss) {
 		std::string value;
 		if (!(iss >> value)) {
-			std::cerr << "Missing information after index keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after index keyword" << std::endl;
 			return false;
 		}
 		_indexPages.push_back(value);

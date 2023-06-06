@@ -3,33 +3,36 @@
 bool getIPvalue(std::string &IP, uint32_t &res){
 	int count = 0;
 	size_t idx;
+	if (IP == "localhost")
+	{
+		res = htonl(INADDR_LOOPBACK);
+		return true;
+	}
+	if (IP == "*")
+	{
+		res = htonl(INADDR_ANY);
+		return true;
+	}
 	while (idx = IP.find('.'), idx != std::string::npos)
 	{
 		IP.replace(idx, 1, 1, ' ');
-		std::cerr << "here" << std::endl;
 		count++;
 	}
 	if (count != 3)
-	{
-		std::cerr << "Invalid IPv4 address format" << std::endl;
 		return false;
-	}
 	std::istringstream iss(IP);
+	std::string check;
 	int val[4];
 	if (!(iss >> val[0] >> val[1] >> val[2] >> val[3]))
-	{
-		std::cerr << "Invalid IPv4 address format" << std::endl;
 		return false;
-	}
 	for (int i = 0; i < 4; i++)
 	{
 		if (val[i] < 0 || val[i] > 255)
-		{
-			std::cerr << "Invalid IPv4 address format" << std::endl;
 			return false;
-		}
 		res += val[i] << (8 * (3 - i));
 	}
+	if (iss >> check)
+		return false;
 	res = htonl(res);
 	return true;
 }
