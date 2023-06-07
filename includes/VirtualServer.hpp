@@ -236,13 +236,13 @@ private:
 		if (value[idx] != '\0') {
 			switch (std::tolower(value[idx])) {
 			case 'k':
-				_bufferSize *= 1024;
+				_bufferSize <<= 10;
 				break;
 			case 'm':
-				_bufferSize *= 1048576;
+				_bufferSize <<= 20;
 				break;
 			// case 'g':
-			// 	_bufferSize *= 1073741824;
+			// 	_bufferSize <<= 30;
 			// 	break;
 			// we do not accept gigabytes as the size would be too large
 			default:
