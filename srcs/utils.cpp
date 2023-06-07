@@ -1,6 +1,6 @@
 #include "../includes/webserv.hpp"
 
-bool getIPvalue(std::string& IP, uint32_t& res) {
+bool getIPvalue(std::string IP, uint32_t& res) {
 	int count = 0;
 	size_t idx;
 	if (IP == "localhost") {
