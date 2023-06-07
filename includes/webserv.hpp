@@ -44,9 +44,11 @@ public:
 	const char* funcName;
 };
 
+class Location;
+class VirtualServer;
+
 bool getIpValue(std::string, uint32_t&);
+bool parseConfig(const std::string&, std::vector<VirtualServer>&);
 
 #include "Location.hpp"
 #include "VirtualServer.hpp"
-
-bool parseConfig(const std::string&, std::vector<VirtualServer>&);
