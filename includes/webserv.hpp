@@ -46,8 +46,5 @@ public:
 
 bool getIPvalue(std::string& IP, uint32_t& res);
 
-class Location;
-class VirtualServer;
-
 #include "Location.hpp"
 #include "VirtualServer.hpp"
