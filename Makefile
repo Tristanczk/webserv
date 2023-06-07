@@ -44,13 +44,13 @@ ${OBJS}: $O%.o: %.cpp ${HEADERS}
 
 ${NAME} ${TEST}: ${OBJS}
 	@${CXX} ${CXXFLAGS} $^ -o $@ ${CXXLIBS}
-	@echo "${BLUE}${NAME} is compiled.${END}"
+	@echo "${BLUE}$@ is compiled.${END}"
 
 clean:
 	${RM} $O ${GARBAGE}
 
 fclean: clean
-	${RM} ${NAME}
+	${RM} ${NAME} ${TEST}
 
 re: fclean
 	@${MAKE} all
