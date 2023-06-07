@@ -76,9 +76,9 @@ public:
 			 it != _indexPages.end(); it++)
 			std::cout << *it << ", ";
 		std::cout << std::endl;
-		// std::cout << "Locations:" << std::endl;
-		// for (std::vector<Location>::iterator it = _locations.begin(); it != _locations.end();
-		// it++) 	it->printLocationInformation();
+		std::cout << "Locations:" << std::endl;
+		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end();
+		it++) 	it->printLocationInformation();
 	}
 
 private:
