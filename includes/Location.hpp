@@ -102,7 +102,7 @@ public:
 	}
 
 private:
-	typedef bool (Location::*KeywordHandler)(std::istringstream& iss);
+	typedef bool (Location::*KeywordHandler)(std::istringstream&);
 	typedef enum e_modifier { NONE, REGEX, EXACT } t_modifier;
 	t_modifier _modifier;
 	std::string _uri;

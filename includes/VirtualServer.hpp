@@ -21,7 +21,7 @@ public:
 
 	bool initServer(std::istream& config) {
 		std::string line, keyword, val;
-		for (; std::getline(config, line);) {
+		while (std::getline(config, line)) {
 			std::istringstream iss(line);
 			if (!(iss >> keyword))
 				continue;
@@ -82,7 +82,7 @@ public:
 	}
 
 private:
-	typedef bool (VirtualServer::*KeywordHandler)(std::istringstream& iss);
+	typedef bool (VirtualServer::*KeywordHandler)(std::istringstream&);
 	struct sockaddr_in _address;
 	std::vector<std::string> _serverNames;
 	std::string _rootDir;
