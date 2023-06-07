@@ -44,7 +44,7 @@ public:
 	const char* funcName;
 };
 
-bool getIPvalue(std::string IP, uint32_t& res);
+bool getIpValue(std::string ip, uint32_t& res);
 
 #include "Location.hpp"
 #include "VirtualServer.hpp"

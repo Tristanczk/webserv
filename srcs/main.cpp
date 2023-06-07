@@ -54,7 +54,7 @@
 
 // 	syscall(socketFd = socket(AF_INET, SOCK_STREAM, 0), "socket");
 // 	syscall(bind(socketFd, (struct sockaddr*)&serverSocket, sizeof(serverSocket)), "bind");
-// 	syscall(listen(socketFd, BACKLOG), "listen");
+// 	syscall(listen(socketFd, BACKLOG), "listen"); // TODO SOMAXCONN
 // 	syscall(epollFd = epoll_create1(0), "epoll_create1");
 // 	addEvent(epollFd, STDIN_FILENO, EPOLLIN);
 // 	addEvent(epollFd, socketFd, EPOLLIN);

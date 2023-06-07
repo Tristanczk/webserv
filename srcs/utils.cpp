@@ -1,23 +1,23 @@
 #include "../includes/webserv.hpp"
 
-bool getIPvalue(std::string IP, uint32_t& res) {
-	int count = 0;
+bool getIpValue(std::string ip, uint32_t& res) {
 	size_t idx;
-	if (IP == "localhost") {
+	if (ip == "localhost") {
 		res = htonl(INADDR_LOOPBACK);
 		return true;
 	}
-	if (IP == "*") {
+	if (ip == "*") {
 		res = htonl(INADDR_ANY);
 		return true;
 	}
-	while (idx = IP.find('.'), idx != std::string::npos) {
-		IP.replace(idx, 1, 1, ' ');
+	int count = 0;
+	while ((idx = ip.find('.')) != std::string::npos) {
+		ip.replace(idx, 1, 1, ' ');
 		count++;
 	}
 	if (count != 3)
 		return false;
-	std::istringstream iss(IP);
+	std::istringstream iss(ip);
 	std::string check;
 	int val[4];
 	if (!(iss >> val[0] >> val[1] >> val[2] >> val[3]))

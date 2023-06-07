@@ -116,7 +116,7 @@ private:
 		size_t idx = value.find(':');
 		if (idx == std::string::npos) {
 			if (value.find_first_not_of("0123456789") != std::string::npos) {
-				if (!getIPvalue(value, _address.sin_addr.s_addr)) {
+				if (!getIpValue(value, _address.sin_addr.s_addr)) {
 					std::cerr << CONFIG_FILE_ERROR
 							  << "Invalid IPv4 address format in listen instruction" << std::endl;
 					return false;
@@ -138,7 +138,7 @@ private:
 						  << "Invalid format for host:port in listen instruction" << std::endl;
 				return false;
 			}
-			if (!getIPvalue(host, _address.sin_addr.s_addr)) {
+			if (!getIpValue(host, _address.sin_addr.s_addr)) {
 				std::cerr << CONFIG_FILE_ERROR
 						  << "Invalid IPv4 address format in listen instruction" << std::endl;
 				return false;
