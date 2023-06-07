@@ -9,7 +9,7 @@ GARBAGE		:= .vscode
 CXX			:= c++
 CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -I$I
 
-SRCS		:= ${wildcard $S*.cpp} ${wildcard $S*/*.cpp}
+SRCS		:= ${wildcard $S*.cpp}
 HEADERS		:= ${wildcard $I*.hpp}
 FILENAMES	:= ${basename ${SRCS}}
 FOLDERS 	:= ${sort ${dir ${SRCS}}}
