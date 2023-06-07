@@ -47,7 +47,7 @@ void lookup_host(const std::string& host) {
 	freeaddrinfo(result);
 }
 
-int main(void) {
+int main() {
 	do {
 		std::cout << "Type domain name:" << std::endl;
 		std::string str;

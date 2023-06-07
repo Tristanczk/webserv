@@ -7,7 +7,7 @@
 
 #define MAX_HOST 1024
 
-int main(void) {
+int main() {
 	struct addrinfo* result;
 	int error = getaddrinfo("chess.com", NULL, NULL, &result);
 	if (error) {

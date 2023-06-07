@@ -26,6 +26,7 @@ bool getIPvalue(std::string& IP, uint32_t& res) {
 		if (val[i] < 0 || val[i] > 255)
 			return false;
 		res += val[i] << (8 * (3 - i));
+		// TODO res = res << 8 | val[i]
 	}
 	if (iss >> check)
 		return false;
