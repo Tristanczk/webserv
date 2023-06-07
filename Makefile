@@ -35,11 +35,6 @@ RED			:= \033[31m
 GREEN		:= \033[32m
 BLUE		:= \033[34m
 
-# lol testlol:
-# 	@echo ${SRCS}
-# 	@echo ${OBJS}
-# 	@echo ${HEADERS}
-
 all: ${NAME}
 
 ${OBJS}: $O%.o: %.cpp ${HEADERS}
