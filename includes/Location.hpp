@@ -19,7 +19,7 @@ public:
 		std::string modifier, uri, check;
 		if (!(iss >> modifier >> uri)) {
 			std::cerr << CONFIG_FILE_ERROR
-					  << "Wrong syntax for location, syntax must be 'location [modifier] uri {"
+					  << "Wrong syntax for location, syntax must be 'location [modifier] uri {'"
 					  << std::endl;
 			return false;
 		}
@@ -39,7 +39,7 @@ public:
 			}
 			if (!(iss >> check)) {
 				std::cerr << CONFIG_FILE_ERROR
-						  << "Wrong syntax for location, syntax must be 'location [modifier] uri {"
+						  << "Wrong syntax for location, syntax must be 'location [modifier] uri {'"
 						  << std::endl;
 				return false;
 			}
