@@ -27,10 +27,7 @@ endif
 SRCS		:= ${notdir ${SRCS}}
 OBJS		:= ${patsubst %.cpp, $O%.o, ${SRCS}}
 
-RM			:= rm -rf
-MKDIR		:= mkdir -p
-
-END			:= \033[0m
+RESET		:= \033[0m
 RED			:= \033[31m
 GREEN		:= \033[32m
 BLUE		:= \033[34m
@@ -38,19 +35,19 @@ BLUE		:= \033[34m
 all: ${NAME}
 
 ${OBJS}: $O%.o: %.cpp ${HEADERS}
-	@${MKDIR} $O
+	@mkdir -p $O
 	@${CXX} ${CXXFLAGS} -c $< -o $@
-	@echo "${GREEN}✓ $@${END}"
+	@echo "${GREEN}✓ $@${RESET}"
 
 ${NAME} ${TEST}: ${OBJS}
-	@${CXX} ${CXXFLAGS} $^ -o $@ ${CXXLIBS}
-	@echo "${BLUE}$@ is compiled.${END}"
+	@${CXX} ${CXXFLAGS} $^ -o $@
+	@echo "${BLUE}$@ is compiled.${RESET}"
 
 clean:
-	${RM} $O ${GARBAGE}
+	rm -rf $O ${GARBAGE}
 
 fclean: clean
-	${RM} ${NAME} ${TEST}
+	rm -f ${NAME} ${TEST}
 
 re: fclean
 	@${MAKE} all
@@ -58,6 +55,6 @@ re: fclean
 bonus: ${NAME}
 
 test: ${TEST}
-	@./${TEST} # TODO launch with Valgrind
+	@./${TEST} # TODO launch with valgrind
 
 .PHONY: all bonus clean fclean re test
