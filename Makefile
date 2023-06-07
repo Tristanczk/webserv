@@ -7,7 +7,7 @@ I			:= includes/
 GARBAGE		:= .vscode
 
 CXX			:= c++
-CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -I$I
+CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -g3 -I$I
 
 SRCS		:= ${wildcard $S*.cpp}
 HEADERS		:= ${wildcard $I*.hpp}
