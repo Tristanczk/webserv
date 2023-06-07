@@ -54,13 +54,13 @@ public:
 	}
 
 	// TODO : delete this function as it uses inet_ntoa which is not allowed for the project
-	void printServerInformation() {
+	void printServerInformation() const {
 		std::cout << "Server information:" << std::endl;
 		std::cout << "Address: " << inet_ntoa(_address.sin_addr) << std::endl;
 		std::cout << "Port: " << ntohs(_address.sin_port) << std::endl;
 		std::cout << "Server names: ";
-		for (std::vector<std::string>::iterator it = _serverNames.begin(); it != _serverNames.end();
-			 it++)
+		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
+			 it != _serverNames.end(); it++)
 			std::cout << *it << ", ";
 		std::cout << std::endl;
 		std::cout << "Root directory: " << _rootDir << std::endl;
@@ -68,12 +68,12 @@ public:
 		std::cout << "Client body buffer size: " << _bufferSize << std::endl;
 		std::cout << "Client max body size: " << _bodySize << std::endl;
 		std::cout << "Error pages:" << std::endl;
-		for (std::map<int, std::string>::iterator it = _errorPages.begin(); it != _errorPages.end();
-			 it++)
+		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
+			 it != _errorPages.end(); it++)
 			std::cout << "error " << it->first << ": " << it->second << std::endl;
 		std::cout << "Index pages: ";
-		for (std::vector<std::string>::iterator it = _indexPages.begin(); it != _indexPages.end();
-			 it++)
+		for (std::vector<std::string>::const_iterator it = _indexPages.begin();
+			 it != _indexPages.end(); it++)
 			std::cout << *it << ", ";
 		std::cout << std::endl;
 		// std::cout << "Locations:" << std::endl;

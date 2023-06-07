@@ -102,7 +102,7 @@
 // 	loop();
 // }
 
-static bool parseConfig(std::string& file, std::vector<VirtualServer>& servers) {
+static bool parseConfig(const std::string& file, std::vector<VirtualServer>& servers) {
 	std::ifstream config(file.c_str());
 	if (!config.good()) {
 		std::cerr << "Cannot open file" << std::endl;
@@ -127,7 +127,7 @@ static bool parseConfig(std::string& file, std::vector<VirtualServer>& servers) 
 // main for testing parsing of config file
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
-		std::cerr << "Usage: ./webserv config_file" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " config_file" << std::endl;
 		return EXIT_FAILURE;
 	}
 	std::vector<VirtualServer> servers;
@@ -135,7 +135,8 @@ int main(int argc, char* argv[]) {
 	if (!parseConfig(file, servers))
 		return EXIT_FAILURE;
 	int i = 1;
-	for (std::vector<VirtualServer>::iterator it = servers.begin(); it != servers.end(); ++it) {
+	for (std::vector<VirtualServer>::const_iterator it = servers.begin(); it != servers.end();
+		 ++it) {
 		std::cout << "Server block number:" << i << std::endl;
 		(*it).printServerInformation();
 		++i;
