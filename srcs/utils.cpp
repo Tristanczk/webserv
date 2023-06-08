@@ -33,3 +33,10 @@ bool getIpValue(std::string ip, uint32_t& res) {
 	res = htonl(res);
 	return true;
 }
+
+std::string getIpString(in_addr_t ip) {
+	ip = ntohl(ip);
+	std::ostringstream oss;
+	oss << (ip >> 24 & 0xFF) << '.' << (ip >> 16 & 0xFF) << '.' << (ip >> 8 & 0xFF) << '.' << (ip & 0xFF);
+	return oss.str();
+}

@@ -53,10 +53,13 @@ public:
 		return false;
 	}
 
-	// TODO : delete this function as it uses inet_ntoa which is not allowed for the project
+	in_port_t getPort() const { return _address.sin_port; }
+	in_addr_t getAddr() const { return _address.sin_addr.s_addr; }
+	std::vector<std::string> getServerNames() const { return _serverNames; }
+
 	void printServerInformation() const {
 		std::cout << "Server information:" << std::endl;
-		std::cout << "Address: " << inet_ntoa(_address.sin_addr) << std::endl;
+		std::cout << "Address: " << getIpString(_address.sin_addr.s_addr) << std::endl;
 		std::cout << "Port: " << ntohs(_address.sin_port) << std::endl;
 		std::cout << "Server names: ";
 		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
