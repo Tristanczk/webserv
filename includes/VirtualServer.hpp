@@ -59,7 +59,7 @@ public:
 	// 2 means server_name does not match but IP address match exactly
 	// 3 means server_name match but IP address of server is inadr_any
 	// 4 means that it is a perfect match for IP address and server_name and no need to continue looking for a better match
-	int isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
+	size_t isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
 		if (port != _address.sin_port)
 			return 0;
 		if (addr != htonl(INADDR_ANY) && addr != _address.sin_addr.s_addr)

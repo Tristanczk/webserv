@@ -33,13 +33,22 @@ public:
 		return valid;
 	}
 
-	// VirtualServer&	findMatchingVirtualServer(in_port_t port, in_addr_t addr, std::string serverName) const {
-	// 	for (size_t i = 0; i < _virtualServers.size(); ++i) {
-	// 		if (_virtualServers[i].getPort() == port && _virtualServers[i].getAddr() == host)
-	// 			return i;
-	// 	}
-	// 	return -1;
-	// }
+	// we return a pointer rather than a reference in order to be able to return NULL in the event of no matching server
+	VirtualServer*	findMatchingVirtualServer(in_port_t port, in_addr_t addr, std::string serverName) {
+		int curBestMatch = -1;
+		size_t curBestMatchLevel = 0;
+		size_t tmp; 
+		for (size_t i = 0; i < _virtualServers.size(); ++i) {
+			if ((tmp = _virtualServers[i].isMatching(port, addr, serverName)) > curBestMatchLevel) {
+					curBestMatch = i;
+					curBestMatchLevel = tmp;
+				}
+		}
+		if (curBestMatch == -1)
+			return NULL;
+		else
+			return &(_virtualServers[curBestMatch]);
+	}
 
 	void printVirtualServerList() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {

@@ -112,6 +112,11 @@ int main(int argc, char* argv[]) {
 	std::string file(argv[1]);
 	if (!server.parseConfig(file))
 		return EXIT_FAILURE;
-	server.printVirtualServerList();
+	// server.printVirtualServerList();
+	VirtualServer *vs = server.findMatchingVirtualServer(htons(8081), htonl(INADDR_ANY), "lol.com");
+	if (vs == NULL)
+		std::cout << "No matching server found" << std::endl;
+	else
+		vs->printServerInformation();
 	return EXIT_SUCCESS;
 }
