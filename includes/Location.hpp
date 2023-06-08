@@ -84,23 +84,19 @@ public:
 	// -1 = regex match
 	// 0 = no match
 	// any positive number is a prefix match, the int returned is the length of the matching prefix
-	int isMatching(std::string const & requestPath) const {
-		if (_modifier == EXACT)
-		{
+	int isMatching(std::string const& requestPath) const {
+		if (_modifier == EXACT) {
 			if (requestPath == _uri)
 				return -2;
 			else
 				return 0;
-		}
-		else if (_modifier == REGEX)
-		{
+		} else if (_modifier == REGEX) {
 			regex_t reg;
-			int		regint;
-			
+			int regint;
+
 			if (regcomp(&reg, _uri.c_str(), REG_EXTENDED) != 0)
 				throw(RegexError());
-			else
-			{
+			else {
 				regint = regexec(&reg, requestPath.c_str(), 0, NULL, 0);
 				regfree(&reg);
 				if (regint == 0)
@@ -110,8 +106,7 @@ public:
 				else
 					throw(RegexError());
 			}
-		}
-		else
+		} else
 			return comparePrefix(_uri, requestPath);
 		return 0;
 	}
@@ -222,13 +217,13 @@ private:
 		if (value[idx] != '\0') {
 			switch (std::tolower(value[idx])) {
 			case 'k':
-				_bufferSize *= 1024;
+				_bufferSize <<= 10;
 				break;
 			case 'm':
-				_bufferSize *= 1048576;
+				_bufferSize <<= 20;
 				break;
 			// case 'g':
-			// 	_bufferSize *= 1073741824;
+			// 	_bufferSize <<= 30;
 			// 	break;
 			// we do not accept gigabytes as the size would be too large
 			default:
@@ -279,13 +274,13 @@ private:
 		if (value[idx] != '\0') {
 			switch (std::tolower(value[idx])) {
 			case 'k':
-				_bodySize *= 1024;
+				_bodySize <<= 10;
 				break;
 			case 'm':
-				_bodySize *= 1048576;
+				_bodySize <<= 20;
 				break;
 			case 'g':
-				_bodySize *= 1073741824;
+				_bodySize <<= 30;
 				break;
 			default:
 				std::cerr << CONFIG_FILE_ERROR
