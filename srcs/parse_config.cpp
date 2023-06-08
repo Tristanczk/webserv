@@ -19,6 +19,8 @@ bool parseConfig(const std::string& file, std::vector<VirtualServer>& servers) {
 			return false;
 		}
 	}
+	if (!checkInvalidServers(servers))
+		return false;
 	return true;
 }
 
@@ -30,10 +32,17 @@ bool checkInvalidServers(const std::vector<VirtualServer>& servers) {
 			if (servers[i].getPort() == servers[j].getPort() && servers[i].getAddr() == servers[j].getAddr()) {
 				std::vector<std::string> serverNamesI = servers[i].getServerNames();
 				std::vector<std::string> serverNamesJ = servers[j].getServerNames();
+				if (serverNamesI.empty() && serverNamesJ.empty())
+				{
+					std::cerr << "Conflicting servers on host:port " << getIpString(servers[i].getAddr()) << ":" << ntohs(servers[i].getPort())
+					<< " for server name \"\"" << std::endl;
+					return false;
+				}	
 				for (size_t k = 0; k < serverNamesI.size(); ++k) {
 					for (size_t l = 0; l < serverNamesJ.size(); ++l) {
 						if (serverNamesI[k] == serverNamesJ[l]) {
-							std::cerr << "Error: server name " << serverNamesI[k] << " is not unique" << std::endl;
+							std::cerr << "Conflicting servers on host:port " << getIpString(servers[i].getAddr()) << ":" << ntohs(servers[i].getPort())
+							<< " for server name: " << serverNamesI[k] << std::endl;
 							return false;
 						}
 					}
