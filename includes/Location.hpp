@@ -79,7 +79,7 @@ public:
 		return false;
 	};
 
-	//the int returned depend on the matching
+	// the int returned depend on the matching
 	// -2 = exact match
 	// -1 = regex match
 	// 0 = no match
@@ -98,7 +98,18 @@ public:
 	// 		int		regint;
 			
 	// 		if (regcomp(&reg, _uri.c_str(), REG_EXTENDED) != 0)
-	// 			throw()
+	// 			throw(RegexError());
+	// 		else
+	// 		{
+	// 			regint = regexec(&reg, requestPath.c_str(), 0, NULL, 0);
+	// 			regfree(&reg);
+	// 			if (regint == 0)
+	// 				return -1;
+	// 			else if (regint == REG_NOMATCH)
+	// 				return 0;
+	// 			else
+	// 				throw(RegexError());
+	// 		}
 	// 	}
 	// 	else
 	// 	{
