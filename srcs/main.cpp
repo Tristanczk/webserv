@@ -108,16 +108,10 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Usage: " << argv[0] << " config_file" << std::endl;
 		return EXIT_FAILURE;
 	}
-	std::vector<VirtualServer> servers;
+	Server server;
 	std::string file(argv[1]);
-	if (!parseConfig(file, servers))
+	if (!server.parseConfig(file))
 		return EXIT_FAILURE;
-	int i = 1;
-	for (std::vector<VirtualServer>::const_iterator it = servers.begin(); it != servers.end();
-		 ++it) {
-		std::cout << "Server block number:" << i << std::endl;
-		(*it).printServerInformation();
-		++i;
-	}
+	server.printVirtualServerList();
 	return EXIT_SUCCESS;
 }

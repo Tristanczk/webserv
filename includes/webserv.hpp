@@ -46,11 +46,11 @@ public:
 
 class Location;
 class VirtualServer;
+class Server;
 
 bool getIpValue(std::string, uint32_t&);
 std::string getIpString(in_addr_t ip);
-bool parseConfig(const std::string&, std::vector<VirtualServer>&);
-bool checkInvalidServers(const std::vector<VirtualServer>& servers);
 
 #include "Location.hpp"
 #include "VirtualServer.hpp"
+#include "Server.hpp"
