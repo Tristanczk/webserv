@@ -41,7 +41,7 @@ std::string getIpString(in_addr_t ip) {
 	return oss.str();
 }
 
-int comparePrefix(std::string& const s1, std::string& const s2)
+int comparePrefix(std::string const & s1, std::string const & s2)
 {
 	int i = 0;
 	while (s1[i] && s2[i] && s1[i] == s2[i])

@@ -58,6 +58,7 @@ class Server;
 
 bool getIpValue(std::string, uint32_t&);
 std::string getIpString(in_addr_t ip);
+int comparePrefix(std::string const & s1, std::string const & s2);
 
 #include "Location.hpp"
 #include "VirtualServer.hpp"
