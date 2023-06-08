@@ -79,6 +79,41 @@ public:
 		return false;
 	};
 
+	//the int returned depend on the matching
+	// -2 = exact match
+	// -1 = regex match
+	// 0 = no match
+	// any positive number is a prefix match, the int returned is the length of the matching prefix
+	// int isMatching(const std::string& requestPath) const {
+	// 	if (_modifier == EXACT)
+	// 	{
+	// 		if (requestPath == _uri)
+	// 			return -2;
+	// 		else
+	// 			return 0;
+	// 	}
+	// 	else if (_modifier == REGEX)
+	// 	{
+	// 		regex_t reg;
+	// 		int		regint;
+			
+	// 		if (regcomp(&reg, _uri.c_str(), REG_EXTENDED) != 0)
+	// 			throw()
+	// 	}
+	// 	else
+	// 	{
+	// 		if (requestPath.find(_uri) == 0)
+	// 			return _uri.length();
+	// 		else
+	// 			return 0;
+	// 	}
+	// 	else if (_modifier == REGEX) {
+	// 		std::regex regex(_uri);
+	// 		return std::regex_match(uri, regex);
+	// 	} else
+	// 		return uri == _uri;
+	// }
+
 	// TODO : delete this function as it uses inet_ntoa which is not allowed for the project
 	void printLocationInformation() const {
 		std::cout << "Location information:" << std::endl;

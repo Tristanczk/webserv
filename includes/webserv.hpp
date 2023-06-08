@@ -13,6 +13,7 @@
 #include <istream>
 #include <map>
 #include <netinet/in.h>
+#include <regex.h>
 #include <sstream>
 #include <stdlib.h>
 #include <string>
@@ -42,6 +43,13 @@ public:
 	explicit SystemError(const char* funcName) : std::runtime_error(funcName), funcName(funcName) {}
 	virtual ~SystemError() throw() {}
 	const char* funcName;
+};
+
+class RegexError : public std::exception {
+public:
+	virtual const char* what() const throw() {
+		return "Error when using regex module";
+	}
 };
 
 class Location;
