@@ -47,7 +47,7 @@ public:
 		if (curBestMatch == -1)
 			return NULL;
 		else
-			return &(_virtualServers[curBestMatch]);
+			return &_virtualServers[curBestMatch];
 	}
 
 	void printVirtualServerList() const {

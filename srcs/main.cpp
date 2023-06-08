@@ -113,10 +113,22 @@ int main(int argc, char* argv[]) {
 	if (!server.parseConfig(file))
 		return EXIT_FAILURE;
 	// server.printVirtualServerList();
-	VirtualServer *vs = server.findMatchingVirtualServer(htons(8081), htonl(INADDR_ANY), "lol.com");
-	if (vs == NULL)
+	VirtualServer *vs = server.findMatchingVirtualServer(htons(8080), htonl(INADDR_ANY), "website.com");
+	if (vs == NULL){
 		std::cout << "No matching server found" << std::endl;
+		return EXIT_FAILURE;
+	}
 	else
 		vs->printServerInformation();
+	Location *loc = vs->findMatchingLocation("/test.php");
+	if (loc == NULL)
+	{
+		std::cout << "No matching location found" << std::endl;
+		return EXIT_FAILURE;
+	}
+	else
+	{
+		loc->printLocationInformation();
+	}
 	return EXIT_SUCCESS;
 }

@@ -84,6 +84,30 @@ public:
 		return 1;
 	}
 
+	Location*	findMatchingLocation(std::string const & requestPath) {
+		int curRegex = -1;
+		int curPrefix = -1;
+		int prefixLength = 0;
+		int	tmp;
+		for (size_t i = 0; i < _locations.size(); ++i) {
+			tmp = _locations[i].isMatching(requestPath);
+			if (tmp == -2)
+				return &_locations[i];
+			else if (tmp == -1 && curRegex == -1)
+				curRegex = i;
+			else if (tmp > prefixLength) {
+				curPrefix = i;
+				prefixLength = tmp;
+			}
+		}
+		if (curRegex != -1)
+			return &_locations[curRegex];
+		else if (curPrefix != -1)
+			return &_locations[curPrefix];
+		else
+			return NULL;
+	}
+
 	in_port_t getPort() const { return _address.sin_port; }
 	in_addr_t getAddr() const { return _address.sin_addr.s_addr; }
 	std::vector<std::string> getServerNames() const { return _serverNames; }
