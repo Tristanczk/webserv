@@ -47,9 +47,7 @@ public:
 
 class RegexError : public std::exception {
 public:
-	virtual const char* what() const throw() {
-		return "Error when using regex module";
-	}
+	virtual const char* what() const throw() { return "Error when using regex module"; }
 };
 
 class Location;
@@ -58,8 +56,10 @@ class Server;
 
 bool getIpValue(std::string, uint32_t&);
 std::string getIpString(in_addr_t ip);
-int comparePrefix(std::string const & s1, std::string const & s2);
+int comparePrefix(std::string const& s1, std::string const& s2);
 
 #include "Location.hpp"
+
 #include "VirtualServer.hpp"
+
 #include "Server.hpp"
