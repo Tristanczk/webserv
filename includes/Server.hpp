@@ -9,6 +9,7 @@ public:
 
 	bool parseConfig(const std::string& file) {
 		std::ifstream config(file.c_str());
+		bool valid = false;
 		if (!config.good()) {
 			std::cerr << "Cannot open file" << std::endl;
 			return false;
@@ -18,6 +19,7 @@ public:
 				continue;
 			if (line == "server {") {
 				VirtualServer server;
+				valid = true;
 				if (!server.initServer(config))
 					return false;
 				_virtualServers.push_back(server);
@@ -28,8 +30,16 @@ public:
 		}
 		if (!checkInvalidServers())
 			return false;
-		return true;
+		return valid;
 	}
+
+	// VirtualServer&	findMatchingVirtualServer(in_port_t port, in_addr_t addr, std::string serverName) const {
+	// 	for (size_t i = 0; i < _virtualServers.size(); ++i) {
+	// 		if (_virtualServers[i].getPort() == port && _virtualServers[i].getAddr() == host)
+	// 			return i;
+	// 	}
+	// 	return -1;
+	// }
 
 	void printVirtualServerList() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
