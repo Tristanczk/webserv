@@ -21,12 +21,12 @@ static void test(const std::string& title, const std::string& directory, bool ex
 		filenames.push_back(CONF_NOT_FOUND);
 	for (std::vector<std::string>::const_iterator it = filenames.begin(); it != filenames.end();
 		 it++) {
-		std::vector<VirtualServer> servers;
 		const std::string& filename = *it;
 		const bool isUnreadable = filename == CONF_UNREADABLE;
 		if (isUnreadable)
 			chmod(CONF_UNREADABLE, 0000);
-		bool result = parseConfig(filename, servers);
+		Server server;
+		bool result = server.parseConfig(filename);
 		if (isUnreadable)
 			chmod(CONF_UNREADABLE, 0644);
 		displayResult(filename, result == expected);
