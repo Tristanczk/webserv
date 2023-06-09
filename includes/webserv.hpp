@@ -25,19 +25,14 @@
 #define DEFAULT_PORT 8080
 #define BACKLOG 128 // TODO SOMAXCONN
 #define MAX_CLIENTS 1024
-#define BUFFER_SIZE_SERVER_LIMIT 1048576 // 1MB
-#define BODY_SIZE_LIMIT 1073741824		 // 1GB
+#define BUFFER_SIZE_SERVER_LIMIT 1048576
+#define BODY_SIZE_LIMIT 1073741824
 #define BUFFER_SIZE_SERVER 16384
 #define BODY_SIZE 1048576
 #define DEFAULT_ERROR 0
 
 #define CONFIG_FILE_ERROR "Error in configuration file: "
 #define DEFAULT_CONF "conf/valid/default.conf"
-
-#define RESET "\033[0m"
-#define RED "\033[31m"
-#define GREEN "\033[32m"
-#define BLUE "\033[34m"
 
 #define LOCATION_MATCH_EXACT -2
 #define LOCATION_MATCH_REGEX -1
@@ -63,15 +58,15 @@ public:
 	virtual const char* what() const throw() { return "Error when using regex module"; }
 };
 
-class Location;
-class Server;
-class VirtualServer;
-
 int comparePrefix(const std::string&, const std::string&);
 bool endswith(const std::string&, const std::string&);
 bool doesRegexMatch(const char* regexStr, const char* matchStr);
 std::string getIpString(in_addr_t ip);
 bool getIpValue(std::string, uint32_t&);
+
+class Location;
+class VirtualServer;
+class Server;
 
 #include "Location.hpp"
 
