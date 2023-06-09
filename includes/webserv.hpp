@@ -66,6 +66,12 @@ bool endswith(const std::string&, const std::string&);
 bool doesRegexMatch(const char* regexStr, const char* matchStr);
 std::string getIpString(in_addr_t ip);
 bool getIpValue(std::string, uint32_t&);
+bool parseRoot(std::istringstream& iss, std::string& rootDir);
+bool parseAutoIndex(std::istringstream& iss, bool& autoIndex);
+bool parseErrorCode(std::string& code, std::vector<int>& codeList);
+bool parseErrorPages(std::istringstream& iss, std::map<int, std::string>& errorPages);
+bool parseIndex(std::istringstream& iss, std::vector<std::string>& indexPages);
+bool parseReturn(std::istringstream& iss, std::pair<long, std::string>& redirection);
 
 class Location;
 class VirtualServer;

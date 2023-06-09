@@ -237,40 +237,14 @@ private:
 	}
 
 	bool parseRoot(std::istringstream& iss) {
-		std::string value;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after root keyword" << std::endl;
+		if (!::parseRoot(iss, _rootDir))
 			return false;
-		}
-		_rootDir = value;
-		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after root keyword" << std::endl;
-			return false;
-		}
 		return true;
 	}
 
 	bool parseAutoIndex(std::istringstream& iss) {
-		std::string value;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after autoindex keyword"
-					  << std::endl;
+		if (!::parseAutoIndex(iss, _autoIndex))
 			return false;
-		}
-		if (value == "on")
-			_autoIndex = true;
-		else if (value == "off")
-			_autoIndex = false;
-		else {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for autoindex keyword: " << value
-					  << std::endl;
-			return false;
-		}
-		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after autoindex keyword"
-					  << std::endl;
-			return false;
-		}
 		return true;
 	}
 
@@ -349,131 +323,20 @@ private:
 	}
 
 	bool parseErrorPages(std::istringstream& iss) {
-		std::string code;
-		std::string tmpStr;
-		std::vector<int> codeList;
-		int codeValue;
-		if (!(iss >> code)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after error_page keyword"
-					  << std::endl;
+		if (!::parseErrorPages(iss, _errorPages))
 			return false;
-		}
-		if (!parseErrorCode(code, codeList))
-			return false;
-		if (!(iss >> tmpStr)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing path after error_page code" << std::endl;
-			return false;
-		}
-		code = tmpStr;
-		while (iss >> tmpStr) {
-			if (!parseErrorCode(code, codeList))
-				return false;
-			code = tmpStr;
-		}
-		for (std::vector<int>::iterator it = codeList.begin(); it != codeList.end(); it++) {
-			codeValue = *it;
-			if (_errorPages.find(codeValue) == _errorPages.end()) {
-				_errorPages[codeValue] =
-					code; // we replace the value only if the key does not exist, else it is the
-						  // first defined error page that is taken into account
-			}
-		}
-		return true;
-	}
-
-	bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
-		int codeValue;
-		size_t idx = code.find_first_not_of("0123456789");
-		if (idx != std::string::npos) {
-			if (code[idx] == '-') {
-				code[idx] = ' ';
-				std::istringstream range(code);
-				int start, end;
-				std::string check;
-				if (!(range >> start >> end)) {
-					std::cerr << CONFIG_FILE_ERROR << "Invalid format for code range in error_page"
-							  << std::endl;
-					return false;
-				}
-				if (range >> check) {
-					std::cerr << CONFIG_FILE_ERROR
-							  << "Too many arguments for code range in error_page" << std::endl;
-					return false;
-				}
-				if (start < 100 || start > 599 || end < 100 || end > 599) {
-					std::cerr << CONFIG_FILE_ERROR << "Invalid error code in range: " << start
-							  << "-" << end << std::endl;
-					return false;
-				}
-				for (int i = start; i <= end; i++)
-					codeList.push_back(i);
-				return true;
-			} else {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid character in error code: " << code
-						  << std::endl;
-				return false;
-			}
-		}
-		codeValue = std::strtol(code.c_str(), NULL, 10);
-		if (codeValue < 100 || codeValue > 599) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid error code: " << codeValue << std::endl;
-			return false;
-		}
-		codeList.push_back(codeValue);
 		return true;
 	}
 
 	bool parseIndex(std::istringstream& iss) {
-		std::string value;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after index keyword"
-					  << std::endl;
+		if (!::parseIndex(iss, _indexPages))
 			return false;
-		}
-		_indexPages.push_back(value);
-		while (iss >> value)
-			_indexPages.push_back(value);
 		return true;
 	}
 
 	bool parseReturn(std::istringstream& iss) {
-		std::string value;
-		if (_return.first != -1) {
-			std::cerr << CONFIG_FILE_ERROR << "Multiple return instructions" << std::endl;
+		if (!::parseReturn(iss, _return))
 			return false;
-		}
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after return keyword"
-					  << std::endl;
-			return false;
-		}
-		size_t idx = value.find_first_not_of("0123456789");
-		if (idx != std::string::npos) {
-			_return.first = 302;
-			_return.second = value;
-		}
-		else {
-			_return.first = std::strtol(value.c_str(), NULL, 10);
-			if (_return.first == LONG_MAX) {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid value for return code" << std::endl;
-				return false;
-			}
-			if (!(_return.first >= 0 && _return.first <= 599)) {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid return code: " << _return.first
-						  << std::endl;
-				return false;
-			}
-			if (!(iss >> value)) {
-				std::cerr << CONFIG_FILE_ERROR << "Missing redirection url or text after return code" << std::endl;
-				return false;
-			}
-			_return.second = value;
-		}
-		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after return keyword"
-					  << std::endl;
-			return false;
-		}
 		return true;
 	}
 };
