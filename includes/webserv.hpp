@@ -32,6 +32,7 @@
 #define DEFAULT_ERROR 0
 
 #define CONFIG_FILE_ERROR "Error in configuration file: "
+#define DEFAULT_CONF "conf/valid/default.conf"
 
 #define RESET "\033[0m"
 #define RED "\033[31m"
@@ -56,7 +57,8 @@ class Server;
 
 bool getIpValue(std::string, uint32_t&);
 std::string getIpString(in_addr_t ip);
-int comparePrefix(std::string const& s1, std::string const& s2);
+int comparePrefix(const std::string&, const std::string&);
+bool endswith(const std::string&, const std::string&);
 
 #include "Location.hpp"
 

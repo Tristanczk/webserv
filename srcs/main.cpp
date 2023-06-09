@@ -104,13 +104,13 @@
 
 // main for testing parsing of config file
 int main(int argc, char* argv[]) {
-	if (argc != 2) {
-		std::cerr << "Usage: " << argv[0] << " config_file" << std::endl;
+	if (argc > 2 || (argc == 2 && !endswith(argv[1], ".conf"))) {
+		std::cerr << "Usage: " << argv[0] << " [filename.conf]" << std::endl;
 		return EXIT_FAILURE;
 	}
 	Server server;
-	std::string file(argv[1]);
-	if (!server.parseConfig(file))
+	const std::string filename(argc == 2 ? argv[1] : DEFAULT_CONF);
+	if (!server.parseConfig(filename))
 		return EXIT_FAILURE;
 	// server.printVirtualServerList();
 	VirtualServer* vs =
@@ -118,8 +118,9 @@ int main(int argc, char* argv[]) {
 	if (vs == NULL) {
 		std::cout << "No matching server found" << std::endl;
 		return EXIT_FAILURE;
-	} else
+	} else {
 		vs->printServerInformation();
+	}
 	Location* loc = vs->findMatchingLocation("/test.php");
 	if (loc == NULL) {
 		std::cout << "No matching location found" << std::endl;
