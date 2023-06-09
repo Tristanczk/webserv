@@ -31,8 +31,7 @@ public:
 			else if (keyword[0] == '#')
 				continue;
 			else if (keyword == "location") {
-				Location location(_rootDir, _autoIndex, _bufferSize, _bodySize, _errorPages,
-								  _indexPages, _return);
+				Location location(_rootDir, _autoIndex, _errorPages, _indexPages, _return);
 				if (!location.initUri(iss))
 					return false;
 				if (!location.parseLocationContent(config))
@@ -285,7 +284,7 @@ private:
 			return false;
 		}
 		_bufferSize = std::strtol(value.c_str(), NULL, 10);
-		if (_bufferSize == LONG_MAX || _bufferSize == 0) {
+		if (_bufferSize == LONG_MAX) {
 			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size"
 					  << std::endl;
 			return false;
@@ -314,10 +313,10 @@ private:
 				return false;
 			}
 		}
-		if (_bufferSize > BUFFER_SIZE_SERVER_LIMIT) {
+		if (_bufferSize > BUFFER_SIZE_SERVER_LIMIT || _bufferSize < MIN_BUFFER_SIZE) {
 			std::cerr << CONFIG_FILE_ERROR
-					  << "Buffer size too big, maximum is: " << BUFFER_SIZE_SERVER_LIMIT << " bytes"
-					  << std::endl;
+					  << "Buffer size must be between " << MIN_BUFFER_SIZE
+					  << " and " << BUFFER_SIZE_SERVER_LIMIT << std::endl;
 			return false;
 		}
 		if (iss >> value) {
@@ -342,7 +341,7 @@ private:
 			return false;
 		}
 		_bodySize = std::strtol(value.c_str(), NULL, 10);
-		if (_bodySize == LONG_MAX || _bodySize == 0) {
+		if (_bodySize == LONG_MAX) {
 			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size"
 					  << std::endl;
 			return false;

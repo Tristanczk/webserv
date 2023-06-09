@@ -4,13 +4,14 @@
 
 class Location {
 public:
-	Location(const std::string& rootDir, bool autoIndex, size_t bufferSize, size_t bodySize,
-			 const std::map<int, std::string>& serverErrorPages,
+	Location(const std::string& rootDir, bool autoIndex, const std::map<int, std::string>& serverErrorPages,
 			 const std::vector<std::string>& serverIndexPages, const std::pair<long, std::string>& serverReturn)
 		: _modifier(NONE), _uri(""), _rootDir(rootDir), _autoIndex(autoIndex),
-		  _bufferSize(bufferSize), _bodySize(bodySize), _return(-1, ""), _serverErrorPages(serverErrorPages),
+		 	_return(-1, ""), _serverErrorPages(serverErrorPages),
 		  _serverIndexPages(serverIndexPages), _serverReturn(serverReturn) {
 		initKeywordMap();
+		for (int i = 0; i < NO_METHOD; i++)
+			_allowedMethods[i] = true;
 	}
 
 	~Location(){};
@@ -101,9 +102,10 @@ public:
 		std::cout << "URI: " << _uri << std::endl;
 		std::cout << "Root directory: " << _rootDir << std::endl;
 		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
-		std::cout << "Client body buffer size: " << _bufferSize << std::endl;
-		std::cout << "Client max body size: " << _bodySize << std::endl;
 		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
+		std::cout << "Allowed methods: " << (_allowedMethods[GET] ? "GET " : "")
+				  << (_allowedMethods[POST] ? "POST " : "")
+				  << (_allowedMethods[DELETE] ? "DELETE " : "") << std::endl;
 		std::cout << "Error pages:" << std::endl;
 		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
 			 it != _errorPages.end(); it++)
@@ -122,10 +124,8 @@ private:
 	std::string _uri;
 	std::string _rootDir;
 	bool _autoIndex;
-	std::size_t _bufferSize;
-	std::size_t _bodySize;
 	std::pair<long, std::string> _return;
-	std::array<bool, NO_METHOD> _allowedMethods; //NO_METHOD is equivalent to the number of methods in the RequestMethod enum
+	bool _allowedMethods[NO_METHOD]; //NO_METHOD is equivalent to the number of methods in the RequestMethod enum
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
 	const std::map<int, std::string>& _serverErrorPages;
@@ -136,11 +136,10 @@ private:
 	void initKeywordMap() {
 		_keywordHandlers["root"] = &Location::parseRoot;
 		_keywordHandlers["autoindex"] = &Location::parseAutoIndex;
-		_keywordHandlers["client_body_buffer_size"] = &Location::parseClientBodyBufferSize;
-		_keywordHandlers["client_max_body_size"] = &Location::parseClientMaxBodySize;
 		_keywordHandlers["error_page"] = &Location::parseErrorPages;
 		_keywordHandlers["index"] = &Location::parseIndex;
 		_keywordHandlers["return"] = &Location::parseReturn;
+		_keywordHandlers["limit_except"] = &Location::parseMethods;
 	}
 
 	bool parseRoot(std::istringstream& iss) {
@@ -176,118 +175,6 @@ private:
 		if (iss >> value) {
 			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after autoindex keyword"
 					  << std::endl;
-			return false;
-		}
-		return true;
-	}
-
-	bool parseClientBodyBufferSize(std::istringstream& iss) {
-		std::string value;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Missing information after client_body_buffer_size keyword" << std::endl;
-			return false;
-		}
-		size_t idx = value.find_first_not_of("0123456789");
-		if (idx == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_body_buffer_size"
-					  << std::endl;
-			return false;
-		}
-		_bufferSize = std::strtol(value.c_str(), NULL, 10);
-		if (_bufferSize == LONG_MAX || _bufferSize == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size"
-					  << std::endl;
-			return false;
-		}
-		if (value[idx] != '\0') {
-			switch (std::tolower(value[idx])) {
-			case 'k':
-				_bufferSize <<= 10;
-				break;
-			case 'm':
-				_bufferSize <<= 20;
-				break;
-			// case 'g':
-			// 	_bufferSize <<= 30;
-			// 	break;
-			// we do not accept gigabytes as the size would be too large
-			default:
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid suffix for bytes value, valid suffix are: k, K, m, M"
-						  << std::endl;
-				return false;
-			}
-			if (value[idx + 1] != '\0') {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid character after suffix for bytes value"
-						  << std::endl;
-				return false;
-			}
-		}
-		if (_bufferSize > BUFFER_SIZE_SERVER_LIMIT) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Buffer size too big, maximum is: " << BUFFER_SIZE_SERVER_LIMIT << " bytes"
-					  << std::endl;
-			return false;
-		}
-		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Too many arguments after client_body_buffer_size keyword" << std::endl;
-			return false;
-		}
-		return true;
-	}
-
-	bool parseClientMaxBodySize(std::istringstream& iss) {
-		std::string value;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Missing information after client_body_buffer_size keyword" << std::endl;
-			return false;
-		}
-		size_t idx = value.find_first_not_of("0123456789");
-		if (idx == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_body_buffer_size"
-					  << std::endl;
-			return false;
-		}
-		_bodySize = std::strtol(value.c_str(), NULL, 10);
-		if (_bodySize == LONG_MAX || _bodySize == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size"
-					  << std::endl;
-			return false;
-		}
-		if (value[idx] != '\0') {
-			switch (std::tolower(value[idx])) {
-			case 'k':
-				_bodySize <<= 10;
-				break;
-			case 'm':
-				_bodySize <<= 20;
-				break;
-			case 'g':
-				_bodySize <<= 30;
-				break;
-			default:
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid suffix for bytes value, valid suffix are: k, K, m, M, g, G"
-						  << std::endl;
-				return false;
-			}
-			if (value[idx + 1] != '\0') {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid character after suffix for bytes value"
-						  << std::endl;
-				return false;
-			}
-		}
-		if (_bodySize > BODY_SIZE_LIMIT) {
-			std::cerr << CONFIG_FILE_ERROR << "Body size too big, maximum is: " << BODY_SIZE_LIMIT
-					  << " bytes" << std::endl;
-			return false;
-		}
-		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Too many arguments after client_max_body_size keyword" << std::endl;
 			return false;
 		}
 		return true;
@@ -381,7 +268,7 @@ private:
 		return true;
 	}
 
-		bool parseReturn(std::istringstream& iss) {
+	bool parseReturn(std::istringstream& iss) {
 		std::string value;
 		if (_return.first != -1) {
 			std::cerr << CONFIG_FILE_ERROR << "Multiple return instructions" << std::endl;
@@ -422,7 +309,58 @@ private:
 		return true;
 	}
 
+	bool parseMethods(std::istringstream& iss) {
+		std::string method;
+		if (!(iss >> method)) {
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after limit_except keyword"
+					  << std::endl;
+			return false;
+		}
+		for (int i = 0; i < NO_METHOD; i++)
+			_allowedMethods[i] = false;
+		if (!updateMethod(method))
+			return false;
+		while (iss >> method) {
+			if (!updateMethod(method))
+				return false;
+		}
+		return true;
+	}
 
+	bool updateMethod(std::string const & method) {
+		if (method == "GET")
+		{
+			if (_allowedMethods[GET])
+			{
+				std::cerr << CONFIG_FILE_ERROR << "Multiple GET instructions in limit_except directive" << std::endl;
+				return false;
+			}
+			_allowedMethods[GET] = true;
+		}
+		else if (method == "POST")
+		{
+			if (_allowedMethods[POST])
+			{
+				std::cerr << CONFIG_FILE_ERROR << "Multiple POST instructions in limit_except directive" << std::endl;
+				return false;
+			}
+			_allowedMethods[POST] = true;
+		}
+		else if (method == "DELETE")
+		{
+			if (_allowedMethods[DELETE])
+			{
+				std::cerr << CONFIG_FILE_ERROR << "Multiple DELETE instructions in limit_except directive" << std::endl;
+				return false;
+			}
+			_allowedMethods[DELETE] = true;
+		}
+		else {
+			std::cerr << CONFIG_FILE_ERROR << "Invalid method in limit_except directive: " << method << std::endl;
+			return false;
+		}
+		return true;
+	}
 
 	void checkIndexPages() {
 		if (_indexPages.empty()) {
@@ -433,7 +371,6 @@ private:
 	}
 
 	void checkErrorPages() {
-		// Shouldn't we also check _errorPages.empty() like in checkIndexPages?
 		for (std::map<int, std::string>::const_iterator it = _serverErrorPages.begin();
 			 it != _serverErrorPages.end(); it++) {
 			if (_errorPages.find(it->first) == _errorPages.end())
