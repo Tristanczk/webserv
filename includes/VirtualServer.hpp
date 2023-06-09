@@ -117,7 +117,7 @@ public:
 		std::cout << std::endl;
 		std::cout << "Root directory: " << _rootDir << std::endl;
 		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
-		std::cout << "Client body buffer size: " << _bufferSize << std::endl;
+		std::cout << "Client buffer size: " << _bufferSize << std::endl;
 		std::cout << "Client max body size: " << _bodySize << std::endl;
 		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
 		std::cout << "Error pages:" << std::endl;
@@ -154,7 +154,7 @@ private:
 		_keywordHandlers["server_name"] = &VirtualServer::parseServerNames;
 		_keywordHandlers["root"] = &VirtualServer::parseRoot;
 		_keywordHandlers["autoindex"] = &VirtualServer::parseAutoIndex;
-		_keywordHandlers["client_body_buffer_size"] = &VirtualServer::parseClientBodyBufferSize;
+		_keywordHandlers["client_buffer_size"] = &VirtualServer::parseClientBodyBufferSize;
 		_keywordHandlers["client_max_body_size"] = &VirtualServer::parseClientMaxBodySize;
 		_keywordHandlers["error_page"] = &VirtualServer::parseErrorPages;
 		_keywordHandlers["index"] = &VirtualServer::parseIndex;
@@ -274,18 +274,18 @@ private:
 		std::string value;
 		if (!(iss >> value)) {
 			std::cerr << CONFIG_FILE_ERROR
-					  << "Missing information after client_body_buffer_size keyword" << std::endl;
+					  << "Missing information after client_buffer_size keyword" << std::endl;
 			return false;
 		}
 		size_t idx = value.find_first_not_of("0123456789");
 		if (idx == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_body_buffer_size"
+			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_buffer_size"
 					  << std::endl;
 			return false;
 		}
 		_bufferSize = std::strtol(value.c_str(), NULL, 10);
 		if (_bufferSize == LONG_MAX) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size"
+			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_buffer_size"
 					  << std::endl;
 			return false;
 		}
@@ -321,7 +321,7 @@ private:
 		}
 		if (iss >> value) {
 			std::cerr << CONFIG_FILE_ERROR
-					  << "Too many arguments after client_body_buffer_size keyword" << std::endl;
+					  << "Too many arguments after client_buffer_size keyword" << std::endl;
 			return false;
 		}
 		return true;
@@ -331,18 +331,18 @@ private:
 		std::string value;
 		if (!(iss >> value)) {
 			std::cerr << CONFIG_FILE_ERROR
-					  << "Missing information after client_body_buffer_size keyword" << std::endl;
+					  << "Missing information after client_buffer_size keyword" << std::endl;
 			return false;
 		}
 		size_t idx = value.find_first_not_of("0123456789");
 		if (idx == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_body_buffer_size"
+			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_buffer_size"
 					  << std::endl;
 			return false;
 		}
 		_bodySize = std::strtol(value.c_str(), NULL, 10);
 		if (_bodySize == LONG_MAX) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size"
+			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_buffer_size"
 					  << std::endl;
 			return false;
 		}
