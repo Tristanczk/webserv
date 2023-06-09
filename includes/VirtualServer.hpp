@@ -12,7 +12,8 @@ public:
 		_rootDir = "./www/";
 		_autoIndex = false;
 		_bufferSize = BUFFER_SIZE_SERVER;
-		_bodySize = BODY_SIZE;
+		_bodySize = DEFAULT_SIZE;
+		_headerSize = DEFAULT_SIZE;
 		_errorPages[DEFAULT_ERROR] = "./www/default_error.html";
 		_return.first = -1;
 		initKeywordMap();
@@ -119,6 +120,7 @@ public:
 		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
 		std::cout << "Client buffer size: " << _bufferSize << std::endl;
 		std::cout << "Client max body size: " << _bodySize << std::endl;
+		std::cout << "Client max header size: " << _headerSize << std::endl;
 		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
 		std::cout << "Error pages:" << std::endl;
 		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
@@ -143,6 +145,7 @@ private:
 	bool _autoIndex;
 	std::size_t _bufferSize;
 	std::size_t _bodySize;
+	std::size_t _headerSize;
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
 	std::pair<long, std::string> _return;
@@ -154,8 +157,9 @@ private:
 		_keywordHandlers["server_name"] = &VirtualServer::parseServerNames;
 		_keywordHandlers["root"] = &VirtualServer::parseRoot;
 		_keywordHandlers["autoindex"] = &VirtualServer::parseAutoIndex;
-		_keywordHandlers["client_buffer_size"] = &VirtualServer::parseClientBodyBufferSize;
+		_keywordHandlers["client_buffer_size"] = &VirtualServer::parseClientBufferSize;
 		_keywordHandlers["client_max_body_size"] = &VirtualServer::parseClientMaxBodySize;
+		_keywordHandlers["client_max_header_size"] = &VirtualServer::parseClientMaxHeaderSize;
 		_keywordHandlers["error_page"] = &VirtualServer::parseErrorPages;
 		_keywordHandlers["index"] = &VirtualServer::parseIndex;
 		_keywordHandlers["return"] = &VirtualServer::parseReturn;
@@ -270,113 +274,75 @@ private:
 		return true;
 	}
 
-	bool parseClientBodyBufferSize(std::istringstream& iss) {
-		std::string value;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Missing information after client_buffer_size keyword" << std::endl;
+	bool parseClientBufferSize(std::istringstream& iss) {
+		std::string keyword = "client_buffer_size";
+		if (!parseSize(iss, _bufferSize, keyword, MIN_BUFFER_SIZE, BUFFER_SIZE_SERVER_LIMIT))
 			return false;
-		}
-		size_t idx = value.find_first_not_of("0123456789");
-		if (idx == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_buffer_size"
-					  << std::endl;
-			return false;
-		}
-		_bufferSize = std::strtol(value.c_str(), NULL, 10);
-		if (_bufferSize == LONG_MAX) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_buffer_size"
-					  << std::endl;
-			return false;
-		}
-		if (value[idx] != '\0') {
-			switch (std::tolower(value[idx])) {
-			case 'k':
-				_bufferSize <<= 10;
-				break;
-			case 'm':
-				_bufferSize <<= 20;
-				break;
-			// case 'g':
-			// 	_bufferSize <<= 30;
-			// 	break;
-			// we do not accept gigabytes as the size would be too large
-			default:
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid suffix for bytes value, valid suffix are: k, K, m, M"
-						  << std::endl;
-				return false;
-			}
-			if (value[idx + 1] != '\0') {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid character after suffix for bytes value"
-						  << std::endl;
-				return false;
-			}
-		}
-		if (_bufferSize > BUFFER_SIZE_SERVER_LIMIT || _bufferSize < MIN_BUFFER_SIZE) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Buffer size must be between " << MIN_BUFFER_SIZE
-					  << " and " << BUFFER_SIZE_SERVER_LIMIT << std::endl;
-			return false;
-		}
-		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Too many arguments after client_buffer_size keyword" << std::endl;
-			return false;
-		}
 		return true;
 	}
 
 	bool parseClientMaxBodySize(std::istringstream& iss) {
+		std::string keyword = "client_max_body_size";
+		if (!parseSize(iss, _bodySize, keyword, 0, SIZE_LIMIT))
+			return false;
+		return true;
+	}
+
+	bool parseClientMaxHeaderSize(std::istringstream& iss) {
+		std::string keyword = "client_max_header_size";
+		if (!parseSize(iss, _headerSize, keyword, 0, SIZE_LIMIT))
+			return false;
+		return true;
+	}
+
+	bool parseSize(std::istringstream& iss, std::size_t& size, std::string& keyword, std::size_t minLimit, std::size_t maxLimit) {
 		std::string value;
 		if (!(iss >> value)) {
 			std::cerr << CONFIG_FILE_ERROR
-					  << "Missing information after client_buffer_size keyword" << std::endl;
+					  << "Missing information after " << keyword << "keyword" << std::endl;
 			return false;
 		}
 		size_t idx = value.find_first_not_of("0123456789");
 		if (idx == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid character for client_buffer_size"
+			std::cerr << CONFIG_FILE_ERROR << "Invalid character for " << keyword
 					  << std::endl;
 			return false;
 		}
-		_bodySize = std::strtol(value.c_str(), NULL, 10);
-		if (_bodySize == LONG_MAX) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_buffer_size"
+		size = std::strtol(value.c_str(), NULL, 10);
+		if (size == LONG_MAX) {
+			std::cerr << CONFIG_FILE_ERROR << "Invalid value for " << keyword
 					  << std::endl;
 			return false;
 		}
 		if (value[idx] != '\0') {
 			switch (std::tolower(value[idx])) {
 			case 'k':
-				_bodySize <<= 10;
+				size <<= 10;
 				break;
 			case 'm':
-				_bodySize <<= 20;
-				break;
-			case 'g':
-				_bodySize <<= 30;
+				size <<= 20;
 				break;
 			default:
 				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid suffix for bytes value, valid suffix are: k, K, m, M, g, G"
+						  << "Invalid suffix for bytes value in " << keyword << " directive, valid suffix are: k, K, m, M"
 						  << std::endl;
 				return false;
 			}
 			if (value[idx + 1] != '\0') {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid character after suffix for bytes value"
+				std::cerr << CONFIG_FILE_ERROR << "Invalid character after suffix for bytes value in " << keyword << " directive"
 						  << std::endl;
 				return false;
 			}
 		}
-		if (_bodySize > BODY_SIZE_LIMIT) {
-			std::cerr << CONFIG_FILE_ERROR << "Body size too big, maximum is: " << BODY_SIZE_LIMIT
-					  << " bytes" << std::endl;
+		if (size < minLimit || size > maxLimit) {
+			std::cerr << CONFIG_FILE_ERROR
+					  << keyword << " must be between " << minLimit
+					  << " and " << maxLimit << std::endl;
 			return false;
 		}
 		if (iss >> value) {
 			std::cerr << CONFIG_FILE_ERROR
-					  << "Too many arguments after client_max_body_size keyword" << std::endl;
+					  << "Too many arguments after " << keyword << " keyword" << std::endl;
 			return false;
 		}
 		return true;
