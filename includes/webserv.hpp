@@ -46,6 +46,8 @@ typedef enum e_vsmatch {
 	VS_MATCH_BOTH,
 } t_vsmatch;
 
+typedef enum RequestMethod { GET = 0, POST, DELETE, NO_METHOD } RequestMethod;
+
 class SystemError : public std::runtime_error {
 public:
 	explicit SystemError(const char* funcName) : std::runtime_error(funcName), funcName(funcName) {}

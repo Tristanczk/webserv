@@ -285,7 +285,7 @@ private:
 			return false;
 		}
 		_bufferSize = std::strtol(value.c_str(), NULL, 10);
-		if (_bufferSize == LONG_MAX) {
+		if (_bufferSize == LONG_MAX || _bufferSize == 0) {
 			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size"
 					  << std::endl;
 			return false;
@@ -342,7 +342,7 @@ private:
 			return false;
 		}
 		_bodySize = std::strtol(value.c_str(), NULL, 10);
-		if (_bodySize == LONG_MAX) {
+		if (_bodySize == LONG_MAX || _bodySize == 0) {
 			std::cerr << CONFIG_FILE_ERROR << "Invalid value for client_body_buffer_size"
 					  << std::endl;
 			return false;
