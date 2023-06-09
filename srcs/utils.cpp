@@ -53,3 +53,12 @@ bool endswith(const std::string& str, const std::string& end) {
 	return str.length() >= end.length() &&
 		   !str.compare(str.length() - end.length(), end.length(), end);
 }
+
+bool doesRegexMatch(const char* regexStr, const char* matchStr) {
+	regex_t regex;
+	if (regcomp(&regex, regexStr, REG_EXTENDED) != 0)
+		throw RegexError();
+	int regint = regexec(&regex, matchStr, 0, NULL, 0);
+	regfree(&regex);
+	return regint == 0;
+}

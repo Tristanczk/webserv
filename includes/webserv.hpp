@@ -39,6 +39,18 @@
 #define GREEN "\033[32m"
 #define BLUE "\033[34m"
 
+#define LOCATION_MATCH_EXACT -2
+#define LOCATION_MATCH_REGEX -1
+#define LOCATION_MATCH_NONE 0
+
+typedef enum e_vsmatch {
+	VS_MATCH_NONE = 0,
+	VS_MATCH_INADDR_ANY,
+	VS_MATCH_IP,
+	VS_MATCH_SERVER,
+	VS_MATCH_BOTH,
+} t_vsmatch;
+
 class SystemError : public std::runtime_error {
 public:
 	explicit SystemError(const char* funcName) : std::runtime_error(funcName), funcName(funcName) {}
@@ -52,13 +64,14 @@ public:
 };
 
 class Location;
-class VirtualServer;
 class Server;
+class VirtualServer;
 
-bool getIpValue(std::string, uint32_t&);
-std::string getIpString(in_addr_t ip);
 int comparePrefix(const std::string&, const std::string&);
 bool endswith(const std::string&, const std::string&);
+bool doesRegexMatch(const char* regexStr, const char* matchStr);
+std::string getIpString(in_addr_t ip);
+bool getIpValue(std::string, uint32_t&);
 
 #include "Location.hpp"
 

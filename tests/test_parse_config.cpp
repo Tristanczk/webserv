@@ -26,7 +26,7 @@ static void test(const std::string& title, const std::string& directory, bool ex
 		if (isUnreadable)
 			chmod(CONF_UNREADABLE, 0000);
 		Server server;
-		bool result = server.parseConfig(filename);
+		bool result = server.parseConfig(filename.c_str());
 		if (isUnreadable)
 			chmod(CONF_UNREADABLE, 0644);
 		displayResult(filename, result == expected);

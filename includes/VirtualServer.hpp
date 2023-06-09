@@ -53,50 +53,42 @@ public:
 		return false;
 	}
 
-	// the higher the value returned is, the better the match is
-	// 0 means no match
-	// 1 means server_name does not match and IP address of server is inadr_any
-	// 2 means server_name does not match but IP address match exactly
-	// 3 means server_name match but IP address of server is inadr_any
-	// 4 means that it is a perfect match for IP address and server_name and no need to continue
-	// looking for a better match
-	size_t isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
+	t_vsmatch isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
 		if (port != _address.sin_port)
-			return 0;
+			return VS_MATCH_NONE;
 		if (addr != htonl(INADDR_ANY) && addr != _address.sin_addr.s_addr)
-			return 0;
+			return VS_MATCH_NONE;
 		if (serverName.empty()) {
 			if (addr == htonl(INADDR_ANY))
-				return 1;
+				return VS_MATCH_INADDR_ANY;
 			else
-				return 2;
+				return VS_MATCH_IP;
 		}
 		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
 			 it != _serverNames.end(); it++)
 			if (*it == serverName) {
 				if (addr == htonl(INADDR_ANY))
-					return 3;
+					return VS_MATCH_SERVER;
 				else
-					return 4;
+					return VS_MATCH_BOTH; // TODO check if addr == virtual server address?
 			}
-		return 2;
-		return 1;
+		return VS_MATCH_IP;			// TODO ???
+		return VS_MATCH_INADDR_ANY; // TODO ???
 	}
 
 	Location* findMatchingLocation(std::string const& requestPath) {
 		int curRegex = -1;
 		int curPrefix = -1;
 		int prefixLength = 0;
-		int tmp;
 		for (size_t i = 0; i < _locations.size(); ++i) {
-			tmp = _locations[i].isMatching(requestPath);
-			if (tmp == -2)
+			int matchLevel = _locations[i].isMatching(requestPath);
+			if (matchLevel == LOCATION_MATCH_EXACT)
 				return &_locations[i];
-			else if (tmp == -1 && curRegex == -1)
+			else if (matchLevel == LOCATION_MATCH_REGEX && curRegex == -1)
 				curRegex = i;
-			else if (tmp > prefixLength) {
+			else if (matchLevel > prefixLength) {
 				curPrefix = i;
-				prefixLength = tmp;
+				prefixLength = matchLevel;
 			}
 		}
 		if (curRegex != -1)

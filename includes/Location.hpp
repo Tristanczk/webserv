@@ -79,36 +79,16 @@ public:
 		return false;
 	};
 
-	// the int returned depend on the matching
-	// -2 = exact match
-	// -1 = regex match
-	// 0 = no match
-	// any positive number is a prefix match, the int returned is the length of the matching prefix
-	int isMatching(std::string const& requestPath) const {
-		if (_modifier == EXACT) {
-			if (requestPath == _uri)
-				return -2;
-			else
-				return 0;
-		} else if (_modifier == REGEX) {
-			regex_t reg;
-			int regint;
-
-			if (regcomp(&reg, _uri.c_str(), REG_EXTENDED) != 0)
-				throw(RegexError());
-			else {
-				regint = regexec(&reg, requestPath.c_str(), 0, NULL, 0);
-				regfree(&reg);
-				if (regint == 0)
-					return -1;
-				else if (regint == REG_NOMATCH)
-					return 0;
-				else
-					throw(RegexError());
-			}
-		} else
+	int isMatching(const std::string& requestPath) const {
+		switch (_modifier) {
+		case NONE:
 			return comparePrefix(_uri, requestPath);
-		return 0;
+		case REGEX:
+			return doesRegexMatch(_uri.c_str(), requestPath.c_str()) ? LOCATION_MATCH_REGEX
+																	 : LOCATION_MATCH_NONE;
+		case EXACT:
+			return requestPath == _uri ? LOCATION_MATCH_EXACT : LOCATION_MATCH_NONE;
+		}
 	}
 
 	// TODO : delete this function as it uses inet_ntoa which is not allowed for the project

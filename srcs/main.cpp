@@ -109,8 +109,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	Server server;
-	const std::string filename(argc == 2 ? argv[1] : DEFAULT_CONF);
-	if (!server.parseConfig(filename))
+	if (!server.parseConfig(argc == 2 ? argv[1] : DEFAULT_CONF))
 		return EXIT_FAILURE;
 	// server.printVirtualServerList();
 	VirtualServer* vs =

@@ -7,11 +7,10 @@ public:
 	Server(){};
 	~Server(){};
 
-	bool parseConfig(const std::string& file) {
-		std::ifstream config(file.c_str());
-		bool valid = false;
+	bool parseConfig(const char* filename) {
+		std::ifstream config(filename);
 		if (!config.good()) {
-			std::cerr << "Cannot open file" << std::endl;
+			std::cerr << "Cannot open file " << filename << std::endl;
 			return false;
 		}
 		for (std::string line; std::getline(config, line);) {
@@ -19,7 +18,6 @@ public:
 				continue;
 			if (line == "server {") {
 				VirtualServer server;
-				valid = true;
 				if (!server.initServer(config))
 					return false;
 				_virtualServers.push_back(server);
@@ -28,28 +26,21 @@ public:
 				return false;
 			}
 		}
-		if (!checkInvalidServers())
-			return false;
-		return valid;
+		return !_virtualServers.empty() && checkInvalidServers();
 	}
 
-	// we return a pointer rather than a reference in order to be able to return NULL in the event
-	// of no matching server
 	VirtualServer* findMatchingVirtualServer(in_port_t port, in_addr_t addr,
-											 std::string serverName) {
-		int curBestMatch = -1;
-		size_t curBestMatchLevel = 0;
-		size_t tmp;
+											 const std::string& serverName) {
+		int bestMatch = -1;
+		t_vsmatch bestMatchLevel = VS_MATCH_NONE;
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
-			if ((tmp = _virtualServers[i].isMatching(port, addr, serverName)) > curBestMatchLevel) {
-				curBestMatch = i;
-				curBestMatchLevel = tmp;
+			t_vsmatch matchLevel = _virtualServers[i].isMatching(port, addr, serverName);
+			if (matchLevel > bestMatchLevel) {
+				bestMatch = i;
+				bestMatchLevel = matchLevel;
 			}
 		}
-		if (curBestMatch == -1)
-			return NULL;
-		else
-			return &_virtualServers[curBestMatch];
+		return bestMatch == -1 ? NULL : &_virtualServers[bestMatch];
 	}
 
 	void printVirtualServerList() const {
@@ -64,9 +55,7 @@ private:
 
 	bool checkInvalidServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
-			for (size_t j = 0; j < _virtualServers.size(); ++j) {
-				if (i == j)
-					continue;
+			for (size_t j = i + 1; j < _virtualServers.size(); ++j) {
 				if (_virtualServers[i].getPort() == _virtualServers[j].getPort() &&
 					_virtualServers[i].getAddr() == _virtualServers[j].getAddr()) {
 					std::vector<std::string> serverNamesI = _virtualServers[i].getServerNames();
