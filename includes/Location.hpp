@@ -91,7 +91,6 @@ public:
 		}
 	}
 
-	// TODO : delete this function as it uses inet_ntoa which is not allowed for the project
 	void printLocationInformation() const {
 		std::cout << "Location information:" << std::endl;
 		std::cout << "Modifier: "

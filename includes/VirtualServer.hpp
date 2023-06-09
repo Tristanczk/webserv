@@ -64,16 +64,19 @@ public:
 			else
 				return VS_MATCH_IP;
 		}
-		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
-			 it != _serverNames.end(); it++)
+		for (std::vector<std::string>::const_iterator it = _serverNames.begin(); it != _serverNames.end(); it++) 
+		{
 			if (*it == serverName) {
 				if (addr == htonl(INADDR_ANY))
 					return VS_MATCH_SERVER;
 				else
-					return VS_MATCH_BOTH; // TODO check if addr == virtual server address?
+					return VS_MATCH_BOTH;
 			}
-		return VS_MATCH_IP;			// TODO ???
-		return VS_MATCH_INADDR_ANY; // TODO ???
+		}
+		if (addr != htonl(INADDR_ANY))
+			return VS_MATCH_IP;
+		else
+			return VS_MATCH_INADDR_ANY;
 	}
 
 	Location* findMatchingLocation(std::string const& requestPath) {
