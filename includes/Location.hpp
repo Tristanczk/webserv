@@ -6,10 +6,10 @@ class Location {
 public:
 	Location(const std::string& rootDir, bool autoIndex, size_t bufferSize, size_t bodySize,
 			 const std::map<int, std::string>& serverErrorPages,
-			 const std::vector<std::string>& serverIndexPages)
+			 const std::vector<std::string>& serverIndexPages, const std::pair<long, std::string>& serverReturn)
 		: _modifier(NONE), _uri(""), _rootDir(rootDir), _autoIndex(autoIndex),
-		  _bufferSize(bufferSize), _bodySize(bodySize), _serverErrorPages(serverErrorPages),
-		  _serverIndexPages(serverIndexPages) {
+		  _bufferSize(bufferSize), _bodySize(bodySize), _return(-1, ""), _serverErrorPages(serverErrorPages),
+		  _serverIndexPages(serverIndexPages), _serverReturn(serverReturn) {
 		initKeywordMap();
 	}
 
@@ -60,6 +60,7 @@ public:
 			if (keyword == "}") {
 				checkIndexPages();
 				checkErrorPages();
+				checkReturn();
 				return true;
 			} else if (keyword[0] == '#')
 				continue;
@@ -89,6 +90,7 @@ public:
 		case EXACT:
 			return requestPath == _uri ? LOCATION_MATCH_EXACT : LOCATION_MATCH_NONE;
 		}
+		return LOCATION_MATCH_NONE;
 	}
 
 	void printLocationInformation() const {
@@ -101,6 +103,7 @@ public:
 		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
 		std::cout << "Client body buffer size: " << _bufferSize << std::endl;
 		std::cout << "Client max body size: " << _bodySize << std::endl;
+		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
 		std::cout << "Error pages:" << std::endl;
 		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
 			 it != _errorPages.end(); it++)
@@ -123,8 +126,10 @@ private:
 	std::size_t _bodySize;
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
+	std::pair<long, std::string> _return;
 	const std::map<int, std::string>& _serverErrorPages;
 	const std::vector<std::string>& _serverIndexPages;
+	const std::pair<long, std::string>& _serverReturn;
 	std::map<std::string, KeywordHandler> _keywordHandlers;
 
 	void initKeywordMap() {
@@ -134,6 +139,7 @@ private:
 		_keywordHandlers["client_max_body_size"] = &Location::parseClientMaxBodySize;
 		_keywordHandlers["error_page"] = &Location::parseErrorPages;
 		_keywordHandlers["index"] = &Location::parseIndex;
+		_keywordHandlers["return"] = &Location::parseReturn;
 	}
 
 	bool parseRoot(std::istringstream& iss) {
@@ -374,6 +380,49 @@ private:
 		return true;
 	}
 
+		bool parseReturn(std::istringstream& iss) {
+		std::string value;
+		if (_return.first != -1) {
+			std::cerr << CONFIG_FILE_ERROR << "Multiple return instructions" << std::endl;
+			return false;
+		}
+		if (!(iss >> value)) {
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after return keyword"
+					  << std::endl;
+			return false;
+		}
+		size_t idx = value.find_first_not_of("0123456789");
+		if (idx != std::string::npos) {
+			_return.first = 302;
+			_return.second = value;
+		}
+		else {
+			_return.first = std::strtol(value.c_str(), NULL, 10);
+			if (_return.first == LONG_MAX) {
+				std::cerr << CONFIG_FILE_ERROR << "Invalid value for return code" << std::endl;
+				return false;
+			}
+			if (!(_return.first >= 0 && _return.first <= 599)) {
+				std::cerr << CONFIG_FILE_ERROR << "Invalid return code: " << _return.first
+						  << std::endl;
+				return false;
+			}
+			if (!(iss >> value)) {
+				std::cerr << CONFIG_FILE_ERROR << "Missing redirection url or text after return code" << std::endl;
+				return false;
+			}
+			_return.second = value;
+		}
+		if (iss >> value) {
+			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after return keyword"
+					  << std::endl;
+			return false;
+		}
+		return true;
+	}
+
+
+
 	void checkIndexPages() {
 		if (_indexPages.empty()) {
 			for (std::vector<std::string>::const_iterator it = _serverIndexPages.begin();
@@ -389,5 +438,10 @@ private:
 			if (_errorPages.find(it->first) == _errorPages.end())
 				_errorPages[it->first] = it->second;
 		}
+	}
+
+	void checkReturn() {
+		if (_return.first == -1 && _serverReturn.first != -1)
+			_return = _serverReturn;
 	}
 };

@@ -120,12 +120,12 @@ int main(int argc, char* argv[]) {
 	} else {
 		vs->printServerInformation();
 	}
-	Location* loc = vs->findMatchingLocation("/test.php");
-	if (loc == NULL) {
-		std::cout << "No matching location found" << std::endl;
-		return EXIT_FAILURE;
-	} else {
-		loc->printLocationInformation();
-	}
+	// Location* loc = vs->findMatchingLocation("/test.php");
+	// if (loc == NULL) {
+	// 	std::cout << "No matching location found" << std::endl;
+	// 	return EXIT_FAILURE;
+	// } else {
+	// 	loc->printLocationInformation();
+	// }
 	return EXIT_SUCCESS;
 }

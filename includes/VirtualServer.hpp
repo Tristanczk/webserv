@@ -14,6 +14,7 @@ public:
 		_bufferSize = BUFFER_SIZE_SERVER;
 		_bodySize = BODY_SIZE;
 		_errorPages[DEFAULT_ERROR] = "./www/default_error.html";
+		_return.first = -1;
 		initKeywordMap();
 	}
 
@@ -31,7 +32,7 @@ public:
 				continue;
 			else if (keyword == "location") {
 				Location location(_rootDir, _autoIndex, _bufferSize, _bodySize, _errorPages,
-								  _indexPages);
+								  _indexPages, _return);
 				if (!location.initUri(iss))
 					return false;
 				if (!location.parseLocationContent(config))
@@ -119,6 +120,7 @@ public:
 		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
 		std::cout << "Client body buffer size: " << _bufferSize << std::endl;
 		std::cout << "Client max body size: " << _bodySize << std::endl;
+		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
 		std::cout << "Error pages:" << std::endl;
 		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
 			 it != _errorPages.end(); it++)
@@ -144,6 +146,7 @@ private:
 	std::size_t _bodySize;
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
+	std::pair<long, std::string> _return;
 	std::vector<Location> _locations;
 	std::map<std::string, KeywordHandler> _keywordHandlers;
 
@@ -156,6 +159,7 @@ private:
 		_keywordHandlers["client_max_body_size"] = &VirtualServer::parseClientMaxBodySize;
 		_keywordHandlers["error_page"] = &VirtualServer::parseErrorPages;
 		_keywordHandlers["index"] = &VirtualServer::parseIndex;
+		_keywordHandlers["return"] = &VirtualServer::parseReturn;
 	}
 
 	bool parseListen(std::istringstream& iss) {
@@ -464,6 +468,47 @@ private:
 		_indexPages.push_back(value);
 		while (iss >> value)
 			_indexPages.push_back(value);
+		return true;
+	}
+
+	bool parseReturn(std::istringstream& iss) {
+		std::string value;
+		if (_return.first != -1) {
+			std::cerr << CONFIG_FILE_ERROR << "Multiple return instructions" << std::endl;
+			return false;
+		}
+		if (!(iss >> value)) {
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after return keyword"
+					  << std::endl;
+			return false;
+		}
+		size_t idx = value.find_first_not_of("0123456789");
+		if (idx != std::string::npos) {
+			_return.first = 302;
+			_return.second = value;
+		}
+		else {
+			_return.first = std::strtol(value.c_str(), NULL, 10);
+			if (_return.first == LONG_MAX) {
+				std::cerr << CONFIG_FILE_ERROR << "Invalid value for return code" << std::endl;
+				return false;
+			}
+			if (!(_return.first >= 0 && _return.first <= 599)) {
+				std::cerr << CONFIG_FILE_ERROR << "Invalid return code: " << _return.first
+						  << std::endl;
+				return false;
+			}
+			if (!(iss >> value)) {
+				std::cerr << CONFIG_FILE_ERROR << "Missing redirection url or text after return code" << std::endl;
+				return false;
+			}
+			_return.second = value;
+		}
+		if (iss >> value) {
+			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after return keyword"
+					  << std::endl;
+			return false;
+		}
 		return true;
 	}
 };
