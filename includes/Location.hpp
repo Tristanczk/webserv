@@ -4,11 +4,13 @@
 
 class Location {
 public:
-	Location(const std::string& rootDir, bool autoIndex, const std::map<int, std::string>& serverErrorPages,
-			 const std::vector<std::string>& serverIndexPages, const std::pair<long, std::string>& serverReturn)
-		: _modifier(NONE), _uri(""), _rootDir(rootDir), _autoIndex(autoIndex),
-		 	_return(-1, ""), _serverErrorPages(serverErrorPages),
-		  _serverIndexPages(serverIndexPages), _serverReturn(serverReturn) {
+	Location(const std::string& rootDir, bool autoIndex,
+			 const std::map<int, std::string>& serverErrorPages,
+			 const std::vector<std::string>& serverIndexPages,
+			 const std::pair<long, std::string>& serverReturn)
+		: _modifier(NONE), _uri(""), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
+		  _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
+		  _serverReturn(serverReturn) {
 		initKeywordMap();
 		for (int i = 0; i < NO_METHOD; i++)
 			_allowedMethods[i] = true;
@@ -125,7 +127,8 @@ private:
 	std::string _rootDir;
 	bool _autoIndex;
 	std::pair<long, std::string> _return;
-	bool _allowedMethods[NO_METHOD]; //NO_METHOD is equivalent to the number of methods in the RequestMethod enum
+	bool _allowedMethods[NO_METHOD]; // NO_METHOD is equivalent to the number of methods in the
+									 // RequestMethod enum
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
 	const std::map<int, std::string>& _serverErrorPages;
@@ -190,36 +193,31 @@ private:
 		return true;
 	}
 
-	bool updateMethod(std::string const & method) {
-		if (method == "GET")
-		{
-			if (_allowedMethods[GET])
-			{
-				std::cerr << CONFIG_FILE_ERROR << "Multiple GET instructions in limit_except directive" << std::endl;
+	bool updateMethod(std::string const& method) {
+		if (method == "GET") {
+			if (_allowedMethods[GET]) {
+				std::cerr << CONFIG_FILE_ERROR
+						  << "Multiple GET instructions in limit_except directive" << std::endl;
 				return false;
 			}
 			_allowedMethods[GET] = true;
-		}
-		else if (method == "POST")
-		{
-			if (_allowedMethods[POST])
-			{
-				std::cerr << CONFIG_FILE_ERROR << "Multiple POST instructions in limit_except directive" << std::endl;
+		} else if (method == "POST") {
+			if (_allowedMethods[POST]) {
+				std::cerr << CONFIG_FILE_ERROR
+						  << "Multiple POST instructions in limit_except directive" << std::endl;
 				return false;
 			}
 			_allowedMethods[POST] = true;
-		}
-		else if (method == "DELETE")
-		{
-			if (_allowedMethods[DELETE])
-			{
-				std::cerr << CONFIG_FILE_ERROR << "Multiple DELETE instructions in limit_except directive" << std::endl;
+		} else if (method == "DELETE") {
+			if (_allowedMethods[DELETE]) {
+				std::cerr << CONFIG_FILE_ERROR
+						  << "Multiple DELETE instructions in limit_except directive" << std::endl;
 				return false;
 			}
 			_allowedMethods[DELETE] = true;
-		}
-		else {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid method in limit_except directive: " << method << std::endl;
+		} else {
+			std::cerr << CONFIG_FILE_ERROR << "Invalid method in limit_except directive: " << method
+					  << std::endl;
 			return false;
 		}
 		return true;

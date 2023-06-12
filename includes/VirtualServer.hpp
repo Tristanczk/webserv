@@ -65,8 +65,8 @@ public:
 			else
 				return VS_MATCH_IP;
 		}
-		for (std::vector<std::string>::const_iterator it = _serverNames.begin(); it != _serverNames.end(); it++) 
-		{
+		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
+			 it != _serverNames.end(); it++) {
 			if (*it == serverName) {
 				if (addr == htonl(INADDR_ANY))
 					return VS_MATCH_SERVER;
@@ -85,7 +85,13 @@ public:
 		int curPrefix = -1;
 		int prefixLength = 0;
 		for (size_t i = 0; i < _locations.size(); ++i) {
-			int matchLevel = _locations[i].isMatching(requestPath);
+			int matchLevel;
+			try {
+				matchLevel = _locations[i].isMatching(requestPath);
+			} catch (const std::exception& e) {
+				std::cerr << e.what() << std::endl;
+				return NULL;
+			}
 			if (matchLevel == LOCATION_MATCH_EXACT)
 				return &_locations[i];
 			else if (matchLevel == LOCATION_MATCH_REGEX && curRegex == -1)
@@ -105,6 +111,7 @@ public:
 
 	in_port_t getPort() const { return _address.sin_port; }
 	in_addr_t getAddr() const { return _address.sin_addr.s_addr; }
+	struct sockaddr_in& getAddress() { return _address; }
 	std::vector<std::string> getServerNames() const { return _serverNames; }
 
 	void printServerInformation() const {
@@ -269,23 +276,22 @@ private:
 		return true;
 	}
 
-	bool parseSize(std::istringstream& iss, std::size_t& size, std::string& keyword, std::size_t minLimit, std::size_t maxLimit) {
+	bool parseSize(std::istringstream& iss, std::size_t& size, std::string& keyword,
+				   std::size_t minLimit, std::size_t maxLimit) {
 		std::string value;
 		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Missing information after " << keyword << "keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Missing information after " << keyword << "keyword"
+					  << std::endl;
 			return false;
 		}
 		size_t idx = value.find_first_not_of("0123456789");
 		if (idx == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid character for " << keyword
-					  << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Invalid character for " << keyword << std::endl;
 			return false;
 		}
 		size = std::strtol(value.c_str(), NULL, 10);
 		if (size == LONG_MAX) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for " << keyword
-					  << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Invalid value for " << keyword << std::endl;
 			return false;
 		}
 		if (value[idx] != '\0') {
@@ -297,26 +303,25 @@ private:
 				size <<= 20;
 				break;
 			default:
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid suffix for bytes value in " << keyword << " directive, valid suffix are: k, K, m, M"
-						  << std::endl;
+				std::cerr << CONFIG_FILE_ERROR << "Invalid suffix for bytes value in " << keyword
+						  << " directive, valid suffix are: k, K, m, M" << std::endl;
 				return false;
 			}
 			if (value[idx + 1] != '\0') {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid character after suffix for bytes value in " << keyword << " directive"
-						  << std::endl;
+				std::cerr << CONFIG_FILE_ERROR
+						  << "Invalid character after suffix for bytes value in " << keyword
+						  << " directive" << std::endl;
 				return false;
 			}
 		}
 		if (size < minLimit || size > maxLimit) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << keyword << " must be between " << minLimit
-					  << " and " << maxLimit << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << keyword << " must be between " << minLimit << " and "
+					  << maxLimit << std::endl;
 			return false;
 		}
 		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Too many arguments after " << keyword << " keyword" << std::endl;
+			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after " << keyword << " keyword"
+					  << std::endl;
 			return false;
 		}
 		return true;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <netinet/in.h>
 
 class Server {
 public:
@@ -52,6 +53,8 @@ public:
 
 private:
 	std::vector<VirtualServer> _virtualServers;
+	int _epollFd;
+	std::vector<int> _listenSockets;
 
 	bool checkInvalidServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
@@ -80,6 +83,52 @@ private:
 					}
 				}
 			}
+		}
+		return true;
+	}
+
+	bool initEpoll() {
+		_epollFd = epoll_create1(0);
+		if (_epollFd == -1) {
+			std::cerr << "Error when creating epoll" << std::endl;
+			return false;
+		}
+		if (!addEpollEvent(STDIN_FILENO, EPOLLIN))
+			return false;
+		return true;
+	}
+
+	bool addEpollEvent(int eventFd, int flags) {
+		struct epoll_event event;
+		event.data.fd = eventFd;
+		event.events = flags;
+		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, eventFd, &event) == -1) {
+			std::cerr << "Error when adding event to epoll" << std::endl;
+			return false;
+		}
+		return true;
+	}
+
+	bool connectVirtualServers() {
+		int socketFd;
+		for (size_t i = 0; i < _virtualServers.size(); ++i) {
+			socketFd = socket(AF_INET, SOCK_STREAM, 0);
+			if (socketFd == -1) {
+				std::cerr << "Error when creating socket" << std::endl;
+				return false;
+			}
+			if (!bind(socketFd, (struct sockaddr*)&_virtualServers[i].getAddress(),
+					  sizeof(_virtualServers[i].getAddress()))) {
+				std::cerr << "Error when binding socket" << std::endl;
+				return false;
+			}
+			if (!listen(socketFd, BACKLOG)) {
+				std::cerr << "Error when listening on socket" << std::endl;
+				return false;
+			}
+			if (!addEpollEvent(socketFd, EPOLLIN))
+				return false;
+			_listenSockets.push_back(socketFd);
 		}
 		return true;
 	}

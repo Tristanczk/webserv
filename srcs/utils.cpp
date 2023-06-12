@@ -1,4 +1,5 @@
 #include "../includes/webserv.hpp"
+#include <cstddef>
 
 bool getIpValue(std::string ip, uint32_t& res) {
 	if (ip == "localhost") {
@@ -62,3 +63,24 @@ bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 	regfree(&regex);
 	return regint == 0;
 }
+
+std::string fullRead(int fd, size_t bufferSize) {
+	std::string message;
+	char buf[bufferSize];
+	size_t buflen;
+
+	while (true) {
+		syscall(buflen = read(fd, buf, bufferSize - 1), "read");
+		buf[buflen] = '\0';
+		message += buf;
+		if (buflen < bufferSize - 1)
+			return message;
+	}
+}
+
+// void syscall(int returnValue, const char* funcName) {
+// 	if (returnValue == -1) {
+// 		std::perror(funcName);
+// 		std::exit(EXIT_FAILURE);
+// 	}
+// }
