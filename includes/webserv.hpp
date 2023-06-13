@@ -72,13 +72,17 @@ bool parseErrorCode(std::string& code, std::vector<int>& codeList);
 bool parseErrorPages(std::istringstream& iss, std::map<int, std::string>& errorPages);
 bool parseIndex(std::istringstream& iss, std::vector<std::string>& indexPages);
 bool parseReturn(std::istringstream& iss, std::pair<long, std::string>& redirection);
+std::string fullRead(int fd, size_t bufferSize);
 
 class Location;
 class VirtualServer;
+class Client;
 class Server;
 
 #include "Location.hpp"
 
 #include "VirtualServer.hpp"
+
+#include "Client.hpp"
 
 #include "Server.hpp"

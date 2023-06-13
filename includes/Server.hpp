@@ -1,7 +1,11 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <netinet/in.h>
+#include <cstddef>
+#include <cstdio>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 class Server {
 public:
@@ -30,6 +34,50 @@ public:
 		return !_virtualServers.empty() && checkInvalidServers();
 	}
 
+	bool initServer() {
+		if (!initEpoll())
+			return false;
+		if (!connectVirtualServers())
+			return false;
+		return true;
+	}
+
+	void loop() {
+		int numFds, clientFd;
+		while (true) {
+			syscall(numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1), "epoll_wait");
+			for (int i = 0; i < numFds; ++i) {
+				if (_eventList[i].data.fd == STDIN_FILENO) {
+					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE_SERVER);
+					if (message == "quit\n") {
+						std::cout << "Exiting program" << std::endl;
+						cleanServer();
+						std::exit(EXIT_SUCCESS);
+					}
+				} else {
+					bool check = false;
+					for (size_t j = 0; j < _listenSockets.size(); ++j) {
+						if (_eventList[i].data.fd == _listenSockets[j]) {
+							Client client(&_virtualServers[j]);
+							syscall(clientFd = accept(_listenSockets[j],
+													  (struct sockaddr*)&client.getAddress(), NULL),
+									"accept");
+							client.setFd(clientFd);
+							syscall(addEpollEvent(clientFd, EPOLLIN), "add epoll event");
+							_clients[clientFd] = client;
+							check = true;
+							break;
+						}
+					}
+					if (!check) {
+						clientFd = _eventList[i].data.fd;
+					}
+				}
+			}
+		}
+	}
+
+	// not sure this function will be useful
 	VirtualServer* findMatchingVirtualServer(in_port_t port, in_addr_t addr,
 											 const std::string& serverName) {
 		int bestMatch = -1;
@@ -55,6 +103,8 @@ private:
 	std::vector<VirtualServer> _virtualServers;
 	int _epollFd;
 	std::vector<int> _listenSockets;
+	struct epoll_event _eventList[MAX_CLIENTS];
+	std::map<int, Client> _clients;
 
 	bool checkInvalidServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
@@ -93,20 +143,20 @@ private:
 			std::cerr << "Error when creating epoll" << std::endl;
 			return false;
 		}
-		if (!addEpollEvent(STDIN_FILENO, EPOLLIN))
+		if (addEpollEvent(STDIN_FILENO, EPOLLIN) == -1)
 			return false;
 		return true;
 	}
 
-	bool addEpollEvent(int eventFd, int flags) {
+	int addEpollEvent(int eventFd, int flags) {
 		struct epoll_event event;
 		event.data.fd = eventFd;
 		event.events = flags;
 		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, eventFd, &event) == -1) {
 			std::cerr << "Error when adding event to epoll" << std::endl;
-			return false;
+			return -1;
 		}
-		return true;
+		return 1;
 	}
 
 	bool connectVirtualServers() {
@@ -131,5 +181,24 @@ private:
 			_listenSockets.push_back(socketFd);
 		}
 		return true;
+	}
+
+	void cleanServer() {
+		for (size_t i = 0; i < _listenSockets.size(); ++i) {
+			close(_listenSockets[i]);
+		}
+		for (size_t i = 0; i < MAX_CLIENTS; ++i) {
+			// should we check something on the fd?
+			close(_eventList[i].data.fd);
+		}
+		close(_epollFd);
+	}
+
+	void syscall(int returnValue, const char* funcName) {
+		if (returnValue == -1) {
+			std::perror(funcName);
+			cleanServer();
+			std::exit(EXIT_FAILURE);
+		}
 	}
 };
