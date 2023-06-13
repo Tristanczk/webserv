@@ -1,8 +1,10 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <asm-generic/socket.h>
 #include <cstddef>
 #include <cstdio>
+#include <netinet/in.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -60,7 +62,8 @@ public:
 						if (_eventList[i].data.fd == _listenSockets[j]) {
 							Client client(&_virtualServers[j]);
 							syscall(clientFd = accept(_listenSockets[j],
-													  (struct sockaddr*)&client.getAddress(), NULL),
+													  (struct sockaddr*)&client.getAddress(),
+													  &client.getAddressLen()),
 									"accept");
 							client.setFd(clientFd);
 							syscall(addEpollEvent(clientFd, EPOLLIN), "add epoll event");
@@ -71,6 +74,9 @@ public:
 					}
 					if (!check) {
 						clientFd = _eventList[i].data.fd;
+						Client& client = _clients[clientFd];
+						std::string request = client.readRequest();
+						std::cout << "Request: " << request << std::endl;
 					}
 				}
 			}
@@ -159,6 +165,8 @@ private:
 		return 1;
 	}
 
+	// TODO: need to fix when handling multiple virtual servers on the same host:port because it is
+	// not possible to do multiple bind
 	bool connectVirtualServers() {
 		int socketFd;
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
@@ -167,12 +175,18 @@ private:
 				std::cerr << "Error when creating socket" << std::endl;
 				return false;
 			}
-			if (!bind(socketFd, (struct sockaddr*)&_virtualServers[i].getAddress(),
-					  sizeof(_virtualServers[i].getAddress()))) {
-				std::cerr << "Error when binding socket" << std::endl;
+			int reuse = 1;
+			if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
+				std::cerr << "Error when setting socket options" << std::endl;
 				return false;
 			}
-			if (!listen(socketFd, BACKLOG)) {
+			struct sockaddr_in addr = _virtualServers[i].getAddress();
+			if (bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+				// std::cerr << "Error when binding socket" << std::endl;
+				std::perror("bind");
+				return false;
+			}
+			if (listen(socketFd, BACKLOG) == -1) {
 				std::cerr << "Error when listening on socket" << std::endl;
 				return false;
 			}

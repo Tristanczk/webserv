@@ -1,6 +1,7 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <cstddef>
 
 class VirtualServer {
 public:
@@ -111,8 +112,9 @@ public:
 
 	in_port_t getPort() const { return _address.sin_port; }
 	in_addr_t getAddr() const { return _address.sin_addr.s_addr; }
-	struct sockaddr_in& getAddress() { return _address; }
+	struct sockaddr_in getAddress() const { return _address; }
 	std::vector<std::string> getServerNames() const { return _serverNames; }
+	std::size_t getBufferSize() const { return _bufferSize; }
 
 	void printServerInformation() const {
 		std::cout << "Server information:" << std::endl;

@@ -13,6 +13,10 @@ public:
 	};
 	~Client(){};
 
+	std::string readRequest() {
+		std::size_t bufferSize = _associatedServer->getBufferSize();
+		return fullRead(_fd, bufferSize);
+	}
 	struct sockaddr_in& getAddress() { return _address; }
 	socklen_t& getAddressLen() { return _addressLen; }
 	VirtualServer* getAssociatedServer() { return _associatedServer; }

@@ -103,6 +103,33 @@
 // }
 
 // main for testing parsing of config file
+// int main(int argc, char* argv[]) {
+// 	if (argc > 2 || (argc == 2 && !endswith(argv[1], ".conf"))) {
+// 		std::cerr << "Usage: " << argv[0] << " [filename.conf]" << std::endl;
+// 		return EXIT_FAILURE;
+// 	}
+// 	Server server;
+// 	if (!server.parseConfig(argc == 2 ? argv[1] : DEFAULT_CONF))
+// 		return EXIT_FAILURE;
+// 	// server.printVirtualServerList();
+// 	VirtualServer* vs =
+// 		server.findMatchingVirtualServer(htons(8080), htonl(INADDR_ANY), "website.com");
+// 	if (vs == NULL) {
+// 		std::cout << "No matching server found" << std::endl;
+// 		return EXIT_FAILURE;
+// 	} else {
+// 		vs->printServerInformation();
+// 	}
+// 	// Location* loc = vs->findMatchingLocation("/test.php");
+// 	// if (loc == NULL) {
+// 	// 	std::cout << "No matching location found" << std::endl;
+// 	// 	return EXIT_FAILURE;
+// 	// } else {
+// 	// 	loc->printLocationInformation();
+// 	// }
+// 	return EXIT_SUCCESS;
+// }
+
 int main(int argc, char* argv[]) {
 	if (argc > 2 || (argc == 2 && !endswith(argv[1], ".conf"))) {
 		std::cerr << "Usage: " << argv[0] << " [filename.conf]" << std::endl;
@@ -111,21 +138,8 @@ int main(int argc, char* argv[]) {
 	Server server;
 	if (!server.parseConfig(argc == 2 ? argv[1] : DEFAULT_CONF))
 		return EXIT_FAILURE;
-	// server.printVirtualServerList();
-	VirtualServer* vs =
-		server.findMatchingVirtualServer(htons(8080), htonl(INADDR_ANY), "website.com");
-	if (vs == NULL) {
-		std::cout << "No matching server found" << std::endl;
+	if (!server.initServer())
 		return EXIT_FAILURE;
-	} else {
-		vs->printServerInformation();
-	}
-	// Location* loc = vs->findMatchingLocation("/test.php");
-	// if (loc == NULL) {
-	// 	std::cout << "No matching location found" << std::endl;
-	// 	return EXIT_FAILURE;
-	// } else {
-	// 	loc->printLocationInformation();
-	// }
+	server.loop();
 	return EXIT_SUCCESS;
 }
