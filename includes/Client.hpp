@@ -17,6 +17,12 @@ public:
 		std::size_t bufferSize = _associatedServer->getBufferSize();
 		return fullRead(_fd, bufferSize);
 	}
+
+	void printAddress() {
+		std::cout << "Client host:port: " << getIpString(_address.sin_addr.s_addr) << ":"
+				  << ntohs(_address.sin_port) << std::endl;
+	}
+
 	struct sockaddr_in& getAddress() { return _address; }
 	socklen_t& getAddressLen() { return _addressLen; }
 	VirtualServer* getAssociatedServer() { return _associatedServer; }

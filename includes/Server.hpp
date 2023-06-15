@@ -1,13 +1,7 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <asm-generic/socket.h>
 #include <cstddef>
-#include <cstdio>
-#include <netinet/in.h>
-#include <sys/epoll.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 class Server {
 public:
@@ -45,8 +39,11 @@ public:
 	}
 
 	void loop() {
+		int i = 0;
+		std::cout << "Server is running" << std::endl;
 		int numFds, clientFd;
 		while (true) {
+			std::cout << "Waiting for new events " << i << std::endl;
 			syscall(numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1), "epoll_wait");
 			for (int i = 0; i < numFds; ++i) {
 				if (_eventList[i].data.fd == STDIN_FILENO) {
@@ -57,29 +54,57 @@ public:
 						std::exit(EXIT_SUCCESS);
 					}
 				} else {
-					bool check = false;
-					for (size_t j = 0; j < _listenSockets.size(); ++j) {
-						if (_eventList[i].data.fd == _listenSockets[j]) {
-							Client client(&_virtualServers[j]);
-							syscall(clientFd = accept(_listenSockets[j],
-													  (struct sockaddr*)&client.getAddress(),
-													  &client.getAddressLen()),
-									"accept");
-							client.setFd(clientFd);
-							syscall(addEpollEvent(clientFd, EPOLLIN), "add epoll event");
-							_clients[clientFd] = client;
-							check = true;
-							break;
+					std::map<int, VirtualServer*>::iterator it =
+						_listenSockets.find(_eventList[i].data.fd);
+					if (it != _listenSockets.end()) {
+						Client client(it->second);
+						syscall(clientFd = accept(it->first, (struct sockaddr*)&client.getAddress(),
+												  &client.getAddressLen()),
+								"accept");
+						// syscall(fcntl(clientFd, F_SETFL, O_NONBLOCK), "fcntl");
+						client.setFd(clientFd);
+						std::cout << "New client connected" << std::endl;
+						syscall(addEpollEvent(clientFd, EPOLLIN | EPOLLET), "add epoll event");
+						_clients[clientFd] = client;
+					} else {
+						if (_eventList[i].events & EPOLLIN) {
+							clientFd = _eventList[i].data.fd;
+							std::cout << "Client sent a new request" << std::endl;
+							Client& client = _clients[clientFd];
+							std::string request = client.readRequest();
+							std::cout << "Request: " << request << std::endl;
+							if (request.empty()) {
+								std::cout << "Client disconnected" << std::endl;
+								syscall(removeEpollEvent(clientFd, &_eventList[i]),
+										"remove epoll event");
+								syscall(close(clientFd), "close");
+								_clients.erase(clientFd);
+							} else {
+								syscall(modifyEpollEvent(clientFd, EPOLLOUT | EPOLLET),
+										"modify epoll event");
+							}
+						} else if (_eventList[i].events & EPOLLOUT) {
+							clientFd = _eventList[i].data.fd;
+							const char* HTTP_RESPONSE = "HTTP/1.1 200 OK\n"
+														"Content-Type: text/plain\n"
+														"Connection: keep-alive\n"
+														"Content-Length: 13\n"
+														"\r\n"
+														"Hello, World!";
+							size_t n =
+								send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
+							std::cout << "Response sent of " << n << " bytes" << std::endl;
+
+							syscall(modifyEpollEvent(clientFd, EPOLLIN | EPOLLET),
+									"modify epoll event");
+							// close(clientFd);
+							// std::cout << "Client disconnected" << std::endl;
 						}
-					}
-					if (!check) {
-						clientFd = _eventList[i].data.fd;
-						Client& client = _clients[clientFd];
-						std::string request = client.readRequest();
-						std::cout << "Request: " << request << std::endl;
 					}
 				}
 			}
+			++i;
+			std::cout << "End of events" << std::endl;
 		}
 	}
 
@@ -108,7 +133,7 @@ public:
 private:
 	std::vector<VirtualServer> _virtualServers;
 	int _epollFd;
-	std::vector<int> _listenSockets;
+	std::map<int, VirtualServer*> _listenSockets;
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
 
@@ -149,7 +174,7 @@ private:
 			std::cerr << "Error when creating epoll" << std::endl;
 			return false;
 		}
-		if (addEpollEvent(STDIN_FILENO, EPOLLIN) == -1)
+		if (addEpollEvent(STDIN_FILENO, EPOLLIN | EPOLLET) == -1)
 			return false;
 		return true;
 	}
@@ -162,11 +187,30 @@ private:
 			std::cerr << "Error when adding event to epoll" << std::endl;
 			return -1;
 		}
-		return 1;
+		return 0;
 	}
 
-	// TODO: need to fix when handling multiple virtual servers on the same host:port because it is
-	// not possible to do multiple bind
+	int removeEpollEvent(int eventFd, struct epoll_event* event) {
+		if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, eventFd, event) == -1) {
+			std::cerr << "Error when removing event from epoll" << std::endl;
+			return -1;
+		}
+		return 0;
+	}
+
+	int modifyEpollEvent(int eventFd, int flags) {
+		struct epoll_event event;
+		event.data.fd = eventFd;
+		event.events = flags;
+		if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, eventFd, &event) == -1) {
+			std::cerr << "Error when modifying event in epoll" << std::endl;
+			return -1;
+		}
+		return 0;
+	}
+
+	// TODO: need to fix when handling multiple virtual servers on the same host:port because it
+	// is not possible to do multiple bind
 	bool connectVirtualServers() {
 		int socketFd;
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
@@ -180,6 +224,10 @@ private:
 				std::cerr << "Error when setting socket options" << std::endl;
 				return false;
 			}
+			// if (fcntl(socketFd, F_SETFL, O_NONBLOCK) == -1) {
+			// 	std::cerr << "Error when setting socket to non-blocking" << std::endl;
+			// 	return false;
+			// }
 			struct sockaddr_in addr = _virtualServers[i].getAddress();
 			if (bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
 				// std::cerr << "Error when binding socket" << std::endl;
@@ -190,19 +238,22 @@ private:
 				std::cerr << "Error when listening on socket" << std::endl;
 				return false;
 			}
-			if (!addEpollEvent(socketFd, EPOLLIN))
+			if (addEpollEvent(socketFd, EPOLLIN | EPOLLET) == -1)
 				return false;
-			_listenSockets.push_back(socketFd);
+			_listenSockets[socketFd] = &_virtualServers[i];
 		}
 		return true;
 	}
 
 	void cleanServer() {
-		for (size_t i = 0; i < _listenSockets.size(); ++i) {
-			close(_listenSockets[i]);
+		for (std::map<int, VirtualServer*>::iterator it = _listenSockets.begin();
+			 it != _listenSockets.end(); ++it) {
+			close(it->first);
 		}
 		for (size_t i = 0; i < MAX_CLIENTS; ++i) {
 			// should we check something on the fd?
+			// TODO : need to check in order to avoir valgrind warning on invalid file
+			// descriptor in close()
 			close(_eventList[i].data.fd);
 		}
 		close(_epollFd);

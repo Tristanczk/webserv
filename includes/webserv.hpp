@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <istream>
@@ -20,6 +21,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <vector>
 
 #define DEFAULT_PORT 8080
