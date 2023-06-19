@@ -2,9 +2,6 @@
 
 #include "webserv.hpp"
 #include <cstddef>
-#include <iostream>
-#include <netinet/in.h>
-#include <sys/socket.h>
 
 class Server {
 public:
@@ -53,23 +50,24 @@ public:
 					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE_SERVER);
 					if (message == "quit\n") {
 						std::cout << "Exiting program" << std::endl;
-						cleanServer();
+						cleanServer(numFds);
 						std::exit(EXIT_SUCCESS);
 					}
 				} else {
-					std::map<int, VirtualServer*>::iterator it =
-						_listenSockets.find(_eventList[i].data.fd);
+					std::set<int>::iterator it = _listenSockets.find(_eventList[i].data.fd);
 					if (it != _listenSockets.end()) {
-						Client client(it->second);
-						syscall(clientFd = accept(it->first, (struct sockaddr*)&client.getAddress(),
+						Client client;
+						syscall(clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
 												  &client.getAddressLen()),
-								"accept");
+								"accept", numFds);
 						if (!client.setInfo(clientFd)) {
 							close(clientFd);
 							continue;
 						}
+						client.findAssociatedServers(_virtualServers);
 						// client.printHostPort();
-						syscall(addEpollEvent(clientFd, EPOLLIN | EPOLLET), "add epoll event");
+						syscall(addEpollEvent(clientFd, EPOLLIN | EPOLLET), "add epoll event",
+								numFds);
 						_clients[clientFd] = client;
 						// std::cout << "New client connected" << std::endl;
 					} else {
@@ -78,15 +76,19 @@ public:
 							Client& client = _clients[clientFd];
 							std::string request = client.readRequest();
 							// TO DO : parsing of the request
-							// TO DO : building of the response
+							// TO DO : get the server name in order to find the best matching server
+							// for the request
+							// std::string serverName =
+							// client.findServerName(request); VirtualServer* server =
+							// client.findBestMatch(serverName); TO DO : building of the response
 							if (request.empty()) {
 								syscall(removeEpollEvent(clientFd, &_eventList[i]),
-										"remove epoll event");
-								syscall(close(clientFd), "close");
+										"remove epoll event", numFds);
+								syscall(close(clientFd), "close", numFds);
 								_clients.erase(clientFd);
 							} else {
 								syscall(modifyEpollEvent(clientFd, EPOLLOUT | EPOLLET),
-										"modify epoll event");
+										"modify epoll event", numFds);
 							}
 							// std::cout << "received new request from client" << std::endl;
 						} else if (_eventList[i].events & EPOLLOUT) {
@@ -103,27 +105,12 @@ public:
 							// }
 							// std::cout << "sent response to client" << std::endl;
 							syscall(modifyEpollEvent(clientFd, EPOLLIN | EPOLLET),
-									"modify epoll event");
+									"modify epoll event", numFds);
 						}
 					}
 				}
 			}
 		}
-	}
-
-	// not sure this function will be useful
-	VirtualServer* findMatchingVirtualServer(in_port_t port, in_addr_t addr,
-											 const std::string& serverName) {
-		int bestMatch = -1;
-		t_vsmatch bestMatchLevel = VS_MATCH_NONE;
-		for (size_t i = 0; i < _virtualServers.size(); ++i) {
-			t_vsmatch matchLevel = _virtualServers[i].isMatching(port, addr, serverName);
-			if (matchLevel > bestMatchLevel) {
-				bestMatch = i;
-				bestMatchLevel = matchLevel;
-			}
-		}
-		return bestMatch == -1 ? NULL : &_virtualServers[bestMatch];
 	}
 
 	void printVirtualServerList() const {
@@ -144,7 +131,7 @@ private:
 	std::vector<VirtualServer> _virtualServers;
 	std::vector<VirtualServer*> _virtualServersToBind;
 	int _epollFd;
-	std::map<int, VirtualServer*> _listenSockets;
+	std::set<int> _listenSockets;
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
 
@@ -220,15 +207,10 @@ private:
 		return 0;
 	}
 
-	// TODO: need to fix when handling multiple virtual servers on the same host:port because it
-	// is not possible to do multiple bind
 	void findVirtualServersToBind() {
 		in_port_t port;
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
 			if (_virtualServers[i].getAddr() == INADDR_ANY) {
-				// get vector to delete
-				// if inaddr_any we delete all that have same port and consider only inaddr_any
-				// if not inaddr_any, we push only if no inaddr any in the vector
 				std::vector<VirtualServer*>::iterator it = _virtualServersToBind.begin();
 				port = _virtualServers[i].getPort();
 				while (it != _virtualServersToBind.end()) {
@@ -275,7 +257,6 @@ private:
 			// }
 			struct sockaddr_in addr = _virtualServersToBind[i]->getAddress();
 			if (bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-				// std::cerr << "Error when binding socket" << std::endl;
 				std::perror("bind");
 				return false;
 			}
@@ -285,29 +266,28 @@ private:
 			}
 			if (addEpollEvent(socketFd, EPOLLIN | EPOLLET) == -1)
 				return false;
-			_listenSockets[socketFd] = _virtualServersToBind[i];
+			_listenSockets.insert(socketFd);
 		}
 		return true;
 	}
 
-	void cleanServer() {
-		for (std::map<int, VirtualServer*>::iterator it = _listenSockets.begin();
-			 it != _listenSockets.end(); ++it) {
-			close(it->first);
+	void cleanServer(size_t eventsNb = 0) {
+		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
+			 ++it) {
+			close(*it);
 		}
-		for (size_t i = 0; i < MAX_CLIENTS; ++i) {
-			// should we check something on the fd?
-			// TODO : need to check in order to avoir valgrind warning on invalid file
-			// descriptor in close()
-			close(_eventList[i].data.fd);
+		for (size_t i = 0; i < eventsNb; ++i) {
+			if (_eventList[i].data.fd != STDIN_FILENO) {
+				close(_eventList[i].data.fd);
+			}
 		}
 		close(_epollFd);
 	}
 
-	void syscall(int returnValue, const char* funcName) {
+	void syscall(int returnValue, const char* funcName, size_t eventsNb = 0) {
 		if (returnValue == -1) {
 			std::perror(funcName);
-			cleanServer();
+			cleanServer(eventsNb);
 			std::exit(EXIT_FAILURE);
 		}
 	}

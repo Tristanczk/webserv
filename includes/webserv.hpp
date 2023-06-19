@@ -15,6 +15,7 @@
 #include <map>
 #include <netinet/in.h>
 #include <regex.h>
+#include <set>
 #include <sstream>
 #include <stdlib.h>
 #include <string>
