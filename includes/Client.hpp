@@ -18,19 +18,34 @@ public:
 		return fullRead(_fd, bufferSize);
 	}
 
-	void printAddress() {
-		std::cout << "Client host:port: " << getIpString(_address.sin_addr.s_addr) << ":"
-				  << ntohs(_address.sin_port) << std::endl;
+	void printHostPort() {
+		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
+	}
+
+	bool setInfo(int fd) {
+		_fd = fd;
+		struct sockaddr_in localAddr;
+		socklen_t localAddrLen = sizeof(localAddr);
+		if (getsockname(fd, (struct sockaddr*)&localAddr, &localAddrLen) == -1) {
+			std::cerr << "Error while getting local address" << std::endl;
+			return false;
+		}
+		_ip = localAddr.sin_addr.s_addr;
+		_port = localAddr.sin_port;
+		return true;
 	}
 
 	struct sockaddr_in& getAddress() { return _address; }
 	socklen_t& getAddressLen() { return _addressLen; }
 	VirtualServer* getAssociatedServer() { return _associatedServer; }
-	void setFd(int fd) { _fd = fd; }
+	in_addr_t getIp() { return _ip; }
+	in_port_t getPort() { return _port; }
 
 private:
 	VirtualServer* _associatedServer;
 	struct sockaddr_in _address;
 	socklen_t _addressLen;
+	in_addr_t _ip;
+	in_port_t _port;
 	int _fd;
 };

@@ -140,6 +140,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	if (!server.initServer())
 		return EXIT_FAILURE;
+	// server.printVirtualServerListToBind();
 	server.loop();
 	return EXIT_SUCCESS;
 }
