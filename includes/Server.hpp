@@ -39,6 +39,8 @@ public:
 		return true;
 	}
 
+	// note: in epoll, EPOLLHUP and EPOLLERR are always monitored and do not need to be specified in
+	// events
 	void loop() {
 		int numFds, clientFd;
 		// std::cout << "Server is running" << std::endl;
@@ -71,7 +73,17 @@ public:
 						_clients[clientFd] = client;
 						// std::cout << "New client connected" << std::endl;
 					} else {
-						if (_eventList[i].events & EPOLLIN) {
+						// should we handle error or unexpected closure differently ?
+						// especially is there a need to handle EPOLLRDHUP in a specific way ?
+						// because it might indicate that the connection is only half closed and can
+						// still receive data information from the server
+						if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+							syscall(removeEpollEvent(clientFd, &_eventList[i]),
+									"remove epoll event", numFds);
+							syscall(close(clientFd), "close", numFds);
+							_clients.erase(clientFd);
+							continue;
+						} else if (_eventList[i].events & EPOLLIN) {
 							clientFd = _eventList[i].data.fd;
 							Client& client = _clients[clientFd];
 							std::string request = client.readRequest();
@@ -87,6 +99,8 @@ public:
 								syscall(close(clientFd), "close", numFds);
 								_clients.erase(clientFd);
 							} else {
+								// TO DO: check if the request is complete before swapping to
+								// EPOLLOUT
 								syscall(modifyEpollEvent(clientFd, EPOLLOUT | EPOLLET),
 										"modify epoll event", numFds);
 							}
