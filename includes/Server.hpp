@@ -34,15 +34,13 @@ public:
 		return initEpoll() && connectVirtualServers();
 	}
 
-	// note: in epoll, EPOLLHUP and EPOLLERR are always monitored and do not need to be specified in
-	// events
 	void loop() {
 		int numFds, clientFd;
 		// std::cout << "Server is running" << std::endl;
 		while (true) {
 			syscall(numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1), "epoll_wait");
 			for (int i = 0; i < numFds; ++i) {
-				// TO DO : do we keep in the end ?
+				// TODO : do we keep in the end ?
 				if (_eventList[i].data.fd == STDIN_FILENO) {
 					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE_SERVER);
 					if (message == "quit\n") {
@@ -82,19 +80,19 @@ public:
 							clientFd = _eventList[i].data.fd;
 							Client& client = _clients[clientFd];
 							std::string request = client.readRequest();
-							// TO DO : parsing of the request
-							// TO DO : get the server name in order to find the best matching server
+							// TODO : parsing of the request
+							// TODO : get the server name in order to find the best matching server
 							// for the request
 							// std::string serverName =
 							// client.findServerName(request); VirtualServer* server =
-							// client.findBestMatch(serverName); TO DO : building of the response
+							// client.findBestMatch(serverName); TODO : building of the response
 							if (request.empty()) {
 								syscall(removeEpollEvent(clientFd, &_eventList[i]),
 										"remove epoll event", numFds);
 								syscall(close(clientFd), "close", numFds);
 								_clients.erase(clientFd);
 							} else {
-								// TO DO: check if the request is complete before swapping to
+								// TODO: check if the request is complete before swapping to
 								// EPOLLOUT
 								syscall(modifyEpollEvent(clientFd, EPOLLOUT | EPOLLET | EPOLLRDHUP),
 										"modify epoll event", numFds);
@@ -102,7 +100,7 @@ public:
 							// std::cout << "received new request from client" << std::endl;
 						} else if (_eventList[i].events & EPOLLOUT) {
 							clientFd = _eventList[i].data.fd;
-							// TO DO, send response to client
+							// TODO, send response to client
 							// int n =
 							// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
 							// if (n == -1) {

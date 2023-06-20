@@ -26,6 +26,7 @@
 #include <vector>
 
 #define DEFAULT_PORT 8080
+#define MAX_PORT 65535
 #define MAX_CLIENTS 1024
 #define BUFFER_SIZE_SERVER_LIMIT 1048576
 #define SIZE_LIMIT 1073741824

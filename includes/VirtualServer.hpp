@@ -52,29 +52,19 @@ public:
 	}
 
 	t_vsmatch isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
+		const bool addrIsAny = addr == htonl(INADDR_ANY);
 		if (port != _address.sin_port)
 			return VS_MATCH_NONE;
-		if (addr != htonl(INADDR_ANY) && addr != _address.sin_addr.s_addr)
+		if (!addrIsAny && addr != _address.sin_addr.s_addr)
 			return VS_MATCH_NONE;
-		if (serverName.empty()) {
-			if (addr == htonl(INADDR_ANY))
-				return VS_MATCH_INADDR_ANY;
-			else
-				return VS_MATCH_IP;
-		}
+		if (serverName.empty())
+			return addrIsAny ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
 		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
 			 it != _serverNames.end(); it++) {
-			if (*it == serverName) {
-				if (addr == htonl(INADDR_ANY))
-					return VS_MATCH_SERVER;
-				else
-					return VS_MATCH_BOTH;
-			}
+			if (*it == serverName)
+				return addrIsAny ? VS_MATCH_SERVER : VS_MATCH_BOTH;
 		}
-		if (addr != htonl(INADDR_ANY))
-			return VS_MATCH_IP;
-		else
-			return VS_MATCH_INADDR_ANY;
+		return addrIsAny ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
 	}
 
 	Location* findMatchingLocation(std::string const& requestPath) {
@@ -85,7 +75,7 @@ public:
 			int matchLevel;
 			try {
 				matchLevel = _locations[i].isMatching(requestPath);
-			} catch (const std::exception& e) {
+			} catch (const std::exception& e) { // ???
 				std::cerr << e.what() << std::endl;
 				return NULL;
 			}
@@ -182,7 +172,7 @@ private:
 					return configFileError("Invalid IPv4 address format in listen instruction");
 			} else {
 				port = std::strtol(value.c_str(), NULL, 10);
-				if (port > 65535)
+				if (port > MAX_PORT)
 					return configFileError("Invalid port number in listen instruction");
 				_address.sin_port = htons(port);
 			}
@@ -193,7 +183,7 @@ private:
 				return configFileError("Invalid format for host:port in listen instruction");
 			if (!getIpValue(host, _address.sin_addr.s_addr))
 				return configFileError("Invalid IPv4 address format in listen instruction");
-			if (port > 65535)
+			if (port > MAX_PORT)
 				return configFileError("Invalid port number in listen instruction");
 			_address.sin_port = htons(port);
 			if (hostPort >> value)
