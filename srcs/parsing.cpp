@@ -38,7 +38,7 @@ bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
 				return configFileError("Invalid format for code range in error_page");
 			if (range >> check)
 				return configFileError("Too many arguments for code range in error_page");
-			if (start < 100 || start > 599 || end < 100 || end > 599)
+			if (!isValidErrorCode(start) || !isValidErrorCode(end))
 				return configFileError("Invalid error code in range: " + toString(start) + "-" +
 									   toString(end));
 			for (int i = start; i <= end; i++)
@@ -48,7 +48,7 @@ bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
 			return configFileError("Invalid character in error code: " + code);
 	}
 	codeValue = std::strtol(code.c_str(), NULL, 10);
-	if (codeValue < 100 || codeValue > 599)
+	if (!isValidErrorCode(codeValue))
 		return configFileError("Invalid error code: " + toString(codeValue));
 	codeList.push_back(codeValue);
 	return true;
@@ -106,7 +106,7 @@ bool parseReturn(std::istringstream& iss, std::pair<long, std::string>& redirect
 		redirection.first = std::strtol(value.c_str(), NULL, 10);
 		if (redirection.first == LONG_MAX)
 			return configFileError("Invalid value for return code");
-		if (!(redirection.first >= 0 && redirection.first <= 599))
+		if (!isValidErrorCode(redirection.first))
 			return configFileError("Invalid return code: " + toString(redirection.first));
 		if (!(iss >> value))
 			return configFileError("Missing redirection url or text after return code");

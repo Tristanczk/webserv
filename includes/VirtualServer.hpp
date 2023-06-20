@@ -173,7 +173,7 @@ private:
 					return configFileError("Invalid IPv4 address format in listen instruction");
 			} else {
 				port = std::strtol(value.c_str(), NULL, 10);
-				if (port > MAX_PORT)
+				if (port > MAX_PORT || port < 0)
 					return configFileError("Invalid port number in listen instruction");
 				_address.sin_port = htons(port);
 			}
@@ -233,7 +233,7 @@ private:
 		if (idx == 0)
 			return configFileError("Invalid character for " + keyword);
 		size = std::strtol(value.c_str(), NULL, 10);
-		if (size == LONG_MAX)
+		if (size == LONG_MAX || size < 0)
 			return configFileError("Invalid value for " + keyword);
 		if (value[idx] != '\0') {
 			if (value[idx + 1] != '\0')

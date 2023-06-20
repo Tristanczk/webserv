@@ -78,6 +78,7 @@ bool doesRegexMatch(const char*, const char*);
 std::string fullRead(int, size_t);
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
+bool isValidErrorCode(int);
 
 bool parseAutoIndex(std::istringstream&, bool&);
 bool parseErrorCode(std::string&, std::vector<int>&);
