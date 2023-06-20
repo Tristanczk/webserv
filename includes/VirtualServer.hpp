@@ -44,14 +44,11 @@ public:
 					if (!(this->*handler)(iss))
 						return false;
 				} catch (const std::exception& e) {
-					std::cerr << CONFIG_FILE_ERROR
-							  << "Invalid keyword in configuration file: " << keyword << std::endl;
-					return false;
+					return configFileError("Invalid keyword in configuration file: " + keyword);
 				}
 			}
 		}
-		std::cerr << CONFIG_FILE_ERROR << "Missing closing bracket for server" << std::endl;
-		return false;
+		return configFileError("Missing closing bracket for server");
 	}
 
 	t_vsmatch isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
@@ -176,126 +173,81 @@ private:
 	bool parseListen(std::istringstream& iss) {
 		std::string value, host;
 		size_t port;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after listen keyword"
-					  << std::endl;
-			return false;
-		}
+		if (!(iss >> value))
+			return configFileError("Missing information after listen keyword");
 		size_t idx = value.find(':');
 		if (idx == std::string::npos) {
 			if (value.find_first_not_of("0123456789") != std::string::npos) {
-				if (!getIpValue(value, _address.sin_addr.s_addr)) {
-					std::cerr << CONFIG_FILE_ERROR
-							  << "Invalid IPv4 address format in listen instruction" << std::endl;
-					return false;
-				}
+				if (!getIpValue(value, _address.sin_addr.s_addr))
+					return configFileError("Invalid IPv4 address format in listen instruction");
 			} else {
 				port = std::strtol(value.c_str(), NULL, 10);
-				if (port > 65535) {
-					std::cerr << CONFIG_FILE_ERROR << "Invalid port number in listen instruction"
-							  << std::endl;
-					return false;
-				}
+				if (port > 65535)
+					return configFileError("Invalid port number in listen instruction");
 				_address.sin_port = htons(port);
 			}
 		} else {
 			value[idx] = ' ';
 			std::istringstream hostPort(value);
-			if (!(hostPort >> host >> port)) {
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid format for host:port in listen instruction" << std::endl;
-				return false;
-			}
-			if (!getIpValue(host, _address.sin_addr.s_addr)) {
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid IPv4 address format in listen instruction" << std::endl;
-				return false;
-			}
-			if (port > 65535) {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid port number in listen instruction"
-						  << std::endl;
-				return false;
-			}
+			if (!(hostPort >> host >> port))
+				return configFileError("Invalid format for host:port in listen instruction");
+			if (!getIpValue(host, _address.sin_addr.s_addr))
+				return configFileError("Invalid IPv4 address format in listen instruction");
+			if (port > 65535)
+				return configFileError("Invalid port number in listen instruction");
 			_address.sin_port = htons(port);
-			if (hostPort >> value) {
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid format for host:port in listen instruction" << std::endl;
-				return false;
-			}
+			if (hostPort >> value)
+				return configFileError("Invalid format for host:port in listen instruction");
 		}
-		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after listen keyword"
-					  << std::endl;
-			return false;
-		}
+		if (iss >> value)
+			return configFileError("Too many arguments after listen keyword");
 		return true;
 	}
 
 	bool parseServerNames(std::istringstream& iss) {
 		std::string value;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after server_name keyword"
-					  << std::endl;
-			return false;
-		}
+		if (!(iss >> value))
+			return configFileError("Missing information after server_name keyword");
 		_serverNames.push_back(value);
 		while (iss >> value)
 			_serverNames.push_back(value);
 		return true;
 	}
 
-	bool parseRoot(std::istringstream& iss) {
-		if (!::parseRoot(iss, _rootDir))
-			return false;
-		return true;
-	}
-
-	bool parseAutoIndex(std::istringstream& iss) {
-		if (!::parseAutoIndex(iss, _autoIndex))
-			return false;
-		return true;
-	}
+	bool parseAutoIndex(std::istringstream& iss) { return ::parseAutoIndex(iss, _autoIndex); }
+	bool parseErrorPages(std::istringstream& iss) { return ::parseErrorPages(iss, _errorPages); }
+	bool parseIndex(std::istringstream& iss) { return ::parseIndex(iss, _indexPages); }
+	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
+	bool parseRoot(std::istringstream& iss) { return ::parseRoot(iss, _rootDir); }
 
 	bool parseClientBufferSize(std::istringstream& iss) {
-		std::string keyword = "client_buffer_size";
-		if (!parseSize(iss, _bufferSize, keyword, MIN_BUFFER_SIZE, BUFFER_SIZE_SERVER_LIMIT))
-			return false;
-		return true;
+		return parseSize(iss, _bufferSize, "client_buffer_size", MIN_BUFFER_SIZE,
+						 BUFFER_SIZE_SERVER_LIMIT);
 	}
 
 	bool parseClientMaxBodySize(std::istringstream& iss) {
-		std::string keyword = "client_max_body_size";
-		if (!parseSize(iss, _bodySize, keyword, 0, SIZE_LIMIT))
-			return false;
-		return true;
+		return parseSize(iss, _bodySize, "client_max_body_size", 0, SIZE_LIMIT);
 	}
 
 	bool parseClientMaxHeaderSize(std::istringstream& iss) {
-		std::string keyword = "client_max_header_size";
-		if (!parseSize(iss, _headerSize, keyword, 0, SIZE_LIMIT))
-			return false;
-		return true;
+		return parseSize(iss, _headerSize, "client_max_header_size", 0, SIZE_LIMIT);
 	}
 
-	bool parseSize(std::istringstream& iss, std::size_t& size, std::string& keyword,
+	bool parseSize(std::istringstream& iss, std::size_t& size, const std::string& keyword,
 				   std::size_t minLimit, std::size_t maxLimit) {
 		std::string value;
-		if (!(iss >> value)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after " << keyword << "keyword"
-					  << std::endl;
-			return false;
-		}
+		if (!(iss >> value))
+			return configFileError("Missing information after " + keyword);
 		size_t idx = value.find_first_not_of("0123456789");
-		if (idx == 0) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid character for " << keyword << std::endl;
-			return false;
-		}
+		if (idx == 0)
+			return configFileError("Invalid character for " + keyword);
 		size = std::strtol(value.c_str(), NULL, 10);
-		if (size == LONG_MAX) {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid value for " << keyword << std::endl;
-			return false;
-		}
+		if (size == LONG_MAX)
+			return configFileError("Invalid value for " + keyword);
 		if (value[idx] != '\0') {
+			if (value[idx + 1] != '\0')
+				return configFileError("Invalid character after suffix for bytes value in " +
+									   keyword + " directive");
 			switch (std::tolower(value[idx])) {
 			case 'k':
 				size <<= 10;
@@ -304,45 +256,15 @@ private:
 				size <<= 20;
 				break;
 			default:
-				std::cerr << CONFIG_FILE_ERROR << "Invalid suffix for bytes value in " << keyword
-						  << " directive, valid suffix are: k, K, m, M" << std::endl;
-				return false;
-			}
-			if (value[idx + 1] != '\0') {
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Invalid character after suffix for bytes value in " << keyword
-						  << " directive" << std::endl;
-				return false;
+				return configFileError("Invalid suffix for bytes value in " + keyword +
+									   " directive, valid suffix are: k, K, m, M");
 			}
 		}
-		if (size < minLimit || size > maxLimit) {
-			std::cerr << CONFIG_FILE_ERROR << keyword << " must be between " << minLimit << " and "
-					  << maxLimit << std::endl;
-			return false;
-		}
-		if (iss >> value) {
-			std::cerr << CONFIG_FILE_ERROR << "Too many arguments after " << keyword << " keyword"
-					  << std::endl;
-			return false;
-		}
-		return true;
-	}
-
-	bool parseErrorPages(std::istringstream& iss) {
-		if (!::parseErrorPages(iss, _errorPages))
-			return false;
-		return true;
-	}
-
-	bool parseIndex(std::istringstream& iss) {
-		if (!::parseIndex(iss, _indexPages))
-			return false;
-		return true;
-	}
-
-	bool parseReturn(std::istringstream& iss) {
-		if (!::parseReturn(iss, _return))
-			return false;
+		if (size < minLimit || size > maxLimit)
+			return configFileError(keyword + " must be between " + toString(minLimit) + " and " +
+								   toString(maxLimit));
+		if (iss >> value)
+			return configFileError("Too many arguments after " + keyword + " keyword");
 		return true;
 	}
 };

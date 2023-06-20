@@ -1,5 +1,9 @@
 #include "../includes/webserv.hpp"
-#include <cstddef>
+
+bool configFileError(std::string message) {
+	std::cerr << CONFIG_FILE_ERROR << message << std::endl;
+	return false;
+}
 
 bool getIpValue(std::string ip, uint32_t& res) {
 	if (ip == "localhost") {
@@ -77,10 +81,3 @@ std::string fullRead(int fd, size_t bufferSize) {
 			return message;
 	}
 }
-
-// void syscall(int returnValue, const char* funcName) {
-// 	if (returnValue == -1) {
-// 		std::perror(funcName);
-// 		std::exit(EXIT_FAILURE);
-// 	}
-// }
