@@ -258,10 +258,6 @@ private:
 				std::cerr << "Error when setting socket options" << std::endl;
 				return false;
 			}
-			// if (fcntl(socketFd, F_SETFL, O_NONBLOCK) == -1) {
-			// 	std::cerr << "Error when setting socket to non-blocking" << std::endl;
-			// 	return false;
-			// }
 			struct sockaddr_in addr = _virtualServersToBind[i]->getAddress();
 			if (bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
 				std::perror("bind");

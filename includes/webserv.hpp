@@ -8,7 +8,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
-#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <istream>
