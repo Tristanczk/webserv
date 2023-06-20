@@ -68,8 +68,8 @@ public:
 						}
 						client.findAssociatedServers(_virtualServers);
 						// client.printHostPort();
-						syscall(addEpollEvent(clientFd, EPOLLIN | EPOLLET), "add epoll event",
-								numFds);
+						syscall(addEpollEvent(clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
+								"add epoll event", numFds);
 						_clients[clientFd] = client;
 						// std::cout << "New client connected" << std::endl;
 					} else {
@@ -101,7 +101,7 @@ public:
 							} else {
 								// TO DO: check if the request is complete before swapping to
 								// EPOLLOUT
-								syscall(modifyEpollEvent(clientFd, EPOLLOUT | EPOLLET),
+								syscall(modifyEpollEvent(clientFd, EPOLLOUT | EPOLLET | EPOLLRDHUP),
 										"modify epoll event", numFds);
 							}
 							// std::cout << "received new request from client" << std::endl;
@@ -118,7 +118,7 @@ public:
 							// 	_clients.erase(clientFd);
 							// }
 							// std::cout << "sent response to client" << std::endl;
-							syscall(modifyEpollEvent(clientFd, EPOLLIN | EPOLLET),
+							syscall(modifyEpollEvent(clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
 									"modify epoll event", numFds);
 						}
 					}
