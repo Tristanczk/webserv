@@ -1,7 +1,6 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <cstddef>
 
 class Server {
 public:
@@ -18,10 +17,10 @@ public:
 			if (line[0] == '#' || line.empty())
 				continue;
 			if (line == "server {") {
-				VirtualServer server;
-				if (!server.initServer(config))
+				VirtualServer vs;
+				if (!vs.initServer(config))
 					return false;
-				_virtualServers.push_back(server);
+				_virtualServers.push_back(vs);
 			} else {
 				std::cerr << "Invalid line in config file: " << line << std::endl;
 				return false;
@@ -32,11 +31,7 @@ public:
 
 	bool initServer() {
 		findVirtualServersToBind();
-		if (!initEpoll())
-			return false;
-		if (!connectVirtualServers())
-			return false;
-		return true;
+		return initEpoll() && connectVirtualServers();
 	}
 
 	// note: in epoll, EPOLLHUP and EPOLLERR are always monitored and do not need to be specified in
@@ -274,7 +269,7 @@ private:
 				std::perror("bind");
 				return false;
 			}
-			if (listen(socketFd, BACKLOG) == -1) {
+			if (listen(socketFd, SOMAXCONN) == -1) {
 				std::cerr << "Error when listening on socket" << std::endl;
 				return false;
 			}
