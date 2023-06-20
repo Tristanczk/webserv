@@ -145,35 +145,11 @@ private:
 		_keywordHandlers["limit_except"] = &Location::parseMethods;
 	}
 
-	bool parseRoot(std::istringstream& iss) {
-		if (!::parseRoot(iss, _rootDir))
-			return false;
-		return true;
-	}
-
-	bool parseAutoIndex(std::istringstream& iss) {
-		if (!::parseAutoIndex(iss, _autoIndex))
-			return false;
-		return true;
-	}
-
-	bool parseErrorPages(std::istringstream& iss) {
-		if (!::parseErrorPages(iss, _errorPages))
-			return false;
-		return true;
-	}
-
-	bool parseIndex(std::istringstream& iss) {
-		if (!::parseIndex(iss, _indexPages))
-			return false;
-		return true;
-	}
-
-	bool parseReturn(std::istringstream& iss) {
-		if (!::parseReturn(iss, _return))
-			return false;
-		return true;
-	}
+	bool parseRoot(std::istringstream& iss) { return ::parseRoot(iss, _rootDir); }
+	bool parseAutoIndex(std::istringstream& iss) { return ::parseAutoIndex(iss, _autoIndex); }
+	bool parseErrorPages(std::istringstream& iss) { return ::parseErrorPages(iss, _errorPages); }
+	bool parseIndex(std::istringstream& iss) { return ::parseIndex(iss, _indexPages); }
+	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
 
 	bool parseMethods(std::istringstream& iss) {
 		std::string method;
