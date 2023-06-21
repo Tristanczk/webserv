@@ -51,6 +51,7 @@ public:
 					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE_SERVER);
 					if (message == "quit\n") {
 						std::cout << "Exiting program" << std::endl;
+						// TODO return and let the main call ~Server()
 						cleanServer(numFds);
 						std::exit(EXIT_SUCCESS);
 					}
@@ -67,7 +68,7 @@ public:
 						}
 						client.findAssociatedServers(_virtualServers);
 						// client.printHostPort();
-						syscall(addEpollEvent(clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
+						syscall(addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
 								"add epoll event", numFds);
 						_clients[clientFd] = client;
 						// std::cout << "New client connected" << std::endl;
@@ -77,7 +78,7 @@ public:
 						// because it might indicate that the connection is only half closed and can
 						// still receive data information from the server
 						if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
-							syscall(removeEpollEvent(clientFd, &_eventList[i]),
+							syscall(removeEpollEvent(_epollFd, clientFd, &_eventList[i]),
 									"remove epoll event", numFds);
 							syscall(close(clientFd), "close", numFds);
 							_clients.erase(clientFd);
@@ -93,14 +94,15 @@ public:
 							// client.findServerName(request); VirtualServer* server =
 							// client.findBestMatch(serverName); TODO : building of the response
 							if (request.empty()) {
-								syscall(removeEpollEvent(clientFd, &_eventList[i]),
+								syscall(removeEpollEvent(_epollFd, clientFd, &_eventList[i]),
 										"remove epoll event", numFds);
 								syscall(close(clientFd), "close", numFds);
 								_clients.erase(clientFd);
 							} else {
 								// TODO: check if the request is complete before swapping to
 								// EPOLLOUT
-								syscall(modifyEpollEvent(clientFd, EPOLLOUT | EPOLLET | EPOLLRDHUP),
+								syscall(modifyEpollEvent(_epollFd, clientFd,
+														 EPOLLOUT | EPOLLET | EPOLLRDHUP),
 										"modify epoll event", numFds);
 							}
 							// std::cout << "received new request from client" << std::endl;
@@ -117,7 +119,8 @@ public:
 							// 	_clients.erase(clientFd);
 							// }
 							// std::cout << "sent response to client" << std::endl;
-							syscall(modifyEpollEvent(clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
+							syscall(modifyEpollEvent(_epollFd, clientFd,
+													 EPOLLIN | EPOLLET | EPOLLRDHUP),
 									"modify epoll event", numFds);
 						}
 					}
@@ -183,39 +186,9 @@ private:
 			std::cerr << "Error when creating epoll" << std::endl;
 			return false;
 		}
-		if (addEpollEvent(STDIN_FILENO, EPOLLIN | EPOLLET) == -1)
+		if (addEpollEvent(_epollFd, STDIN_FILENO, EPOLLIN | EPOLLET) == -1)
 			return false;
 		return true;
-	}
-
-	int addEpollEvent(int eventFd, int flags) {
-		struct epoll_event event;
-		event.data.fd = eventFd;
-		event.events = flags;
-		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, eventFd, &event) == -1) {
-			std::cerr << "Error when adding event to epoll" << std::endl;
-			return -1;
-		}
-		return 0;
-	}
-
-	int removeEpollEvent(int eventFd, struct epoll_event* event) {
-		if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, eventFd, event) == -1) {
-			std::cerr << "Error when removing event from epoll" << std::endl;
-			return -1;
-		}
-		return 0;
-	}
-
-	int modifyEpollEvent(int eventFd, int flags) {
-		struct epoll_event event;
-		event.data.fd = eventFd;
-		event.events = flags;
-		if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, eventFd, &event) == -1) {
-			std::cerr << "Error when modifying event in epoll" << std::endl;
-			return -1;
-		}
-		return 0;
 	}
 
 	void findVirtualServersToBind() {
@@ -250,9 +223,8 @@ private:
 	}
 
 	bool connectVirtualServers() {
-		int socketFd;
 		for (size_t i = 0; i < _virtualServersToBind.size(); ++i) {
-			socketFd = socket(AF_INET, SOCK_STREAM, 0);
+			int socketFd = socket(AF_INET, SOCK_STREAM, 0);
 			if (socketFd == -1) {
 				std::cerr << "Error when creating socket" << std::endl;
 				return false;
@@ -271,7 +243,7 @@ private:
 				std::cerr << "Error when listening on socket" << std::endl;
 				return false;
 			}
-			if (addEpollEvent(socketFd, EPOLLIN | EPOLLET) == -1)
+			if (addEpollEvent(_epollFd, socketFd, EPOLLIN | EPOLLET) == -1)
 				return false;
 			_listenSockets.insert(socketFd);
 		}

@@ -87,6 +87,10 @@ bool getIpValue(std::string, uint32_t&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
 
+int addEpollEvent(int, int, int);
+int removeEpollEvent(int, int, struct epoll_event*);
+int modifyEpollEvent(int, int, int);
+
 bool parseAutoIndex(std::istringstream&, bool&);
 bool parseErrorCode(std::string&, std::vector<int>&);
 bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
