@@ -9,7 +9,7 @@ public:
 			 const std::vector<std::string>& serverIndexPages,
 			 const std::pair<long, std::string>& serverReturn)
 		: _modifier(NONE), _uri(""), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
-		  _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
+		  _cgiExec(""), _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
 		for (int i = 0; i < NO_METHOD; i++)
@@ -102,6 +102,8 @@ public:
 			std::cout << *it << ", ";
 		std::cout << std::endl;
 	}
+
+	std::string getCgiExec() const { return _cgiExec; }
 
 private:
 	typedef bool (Location::*KeywordHandler)(std::istringstream&);

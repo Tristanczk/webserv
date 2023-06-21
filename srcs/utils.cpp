@@ -1,4 +1,5 @@
 #include "../includes/webserv.hpp"
+#include <string>
 
 bool configFileError(const std::string& message) {
 	std::cerr << CONFIG_FILE_ERROR << message << std::endl;
@@ -97,3 +98,30 @@ bool isDirectory(const std::string& path) {
 }
 
 bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
+
+bool getValidPath(std::string path, char* const envp[], std::string& finalPath) {
+	if (path.find('/') != std::string::npos) {
+		finalPath = path;
+		return true;
+	}
+	int i = 0;
+	std::string cmp = "PATH=";
+	std::string pathEnv;
+	while (envp[i]) {
+		std::string env(envp[i]);
+		if (env.substr(0, cmp.length()) == cmp) {
+			pathEnv = env.substr(cmp.length());
+			break;
+		}
+	}
+	while (!pathEnv.empty()) {
+		std::string pathToCheck = pathEnv.substr(0, pathEnv.find(':'));
+		pathEnv = pathEnv.substr(pathToCheck.length() + 1);
+		std::string fullPath = pathToCheck + '/' + path;
+		if (access(fullPath.c_str(), X_OK) == 0) {
+			finalPath = fullPath;
+			return true;
+		}
+	}
+	return false;
+}

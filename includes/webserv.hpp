@@ -154,6 +154,7 @@ std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
+bool getValidPath(std::string path, char* const envp[], std::string& finalPath);
 
 int addEpollEvent(int, int, int);
 int modifyEpollEvent(int, int, int);
