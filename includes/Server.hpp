@@ -78,8 +78,6 @@ public:
 						// because it might indicate that the connection is only half closed and can
 						// still receive data information from the server
 						if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
-							syscall(removeEpollEvent(_epollFd, clientFd, &_eventList[i]),
-									"remove epoll event", numFds);
 							syscall(close(clientFd), "close", numFds);
 							_clients.erase(clientFd);
 							continue;
@@ -94,8 +92,6 @@ public:
 							// client.findServerName(request); VirtualServer* server =
 							// client.findBestMatch(serverName); TODO : building of the response
 							if (request.empty()) {
-								syscall(removeEpollEvent(_epollFd, clientFd, &_eventList[i]),
-										"remove epoll event", numFds);
 								syscall(close(clientFd), "close", numFds);
 								_clients.erase(clientFd);
 							} else {
@@ -113,8 +109,6 @@ public:
 							// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
 							// if (n == -1) {
 							// 	std::cerr << "Error while sending response" << std::endl;
-							// 	syscall(removeEpollEvent(clientFd, &_eventList[i]),
-							// 			"remove epoll event");
 							// 	syscall(close(clientFd), "close");
 							// 	_clients.erase(clientFd);
 							// }

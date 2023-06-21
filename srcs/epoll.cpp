@@ -21,11 +21,3 @@ int modifyEpollEvent(int epollFd, int eventFd, int flags) {
 	}
 	return 0;
 }
-
-int removeEpollEvent(int epollFd, int eventFd, struct epoll_event* event) {
-	if (epoll_ctl(epollFd, EPOLL_CTL_DEL, eventFd, event) == -1) {
-		std::perror("EPOLL_CTL_DEL");
-		return -1;
-	}
-	return 0;
-}
