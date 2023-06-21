@@ -32,16 +32,12 @@ public:
 				if (!vs.init(config))
 					return false;
 				_virtualServers.push_back(vs);
-			} else {
-				std::cerr << "Invalid line in config file: " << line << std::endl;
-				return false;
-			}
+			} else
+				return configFileError("Invalid line in config file: " + line);
 		}
-		if (_virtualServers.empty()) {
-			std::cerr << "No server found in " << filename << std::endl;
-			return false;
-		}
-		return checkInvalidServers();
+		if (_virtualServers.empty())
+			return configFileError("No server found in " + std::string(filename));
+		return checkDuplicateServers();
 	}
 
 	void loop() {
@@ -152,7 +148,7 @@ private:
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
 
-	bool checkInvalidServers() const {
+	bool checkDuplicateServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
 			for (size_t j = i + 1; j < _virtualServers.size(); ++j) {
 				if (_virtualServers[i].getPort() == _virtualServers[j].getPort() &&
