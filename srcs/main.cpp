@@ -8,6 +8,10 @@ int main(int argc, char* argv[]) {
 	Server server;
 	if (!server.init(argc == 2 ? argv[1] : DEFAULT_CONF))
 		return EXIT_FAILURE;
-	server.loop();
+	try {
+		server.loop();
+	} catch (std::exception& e) {
+		return EXIT_FAILURE;
+	}
 	return EXIT_SUCCESS;
 }

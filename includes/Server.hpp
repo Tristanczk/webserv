@@ -5,7 +5,7 @@
 class Server {
 public:
 	Server(){};
-	~Server(){};
+	~Server() { cleanServer(); };
 
 	bool init(const char* filename) {
 		if (!parseConfig(filename))
@@ -42,47 +42,47 @@ public:
 
 	// note: in epoll, EPOLLHUP and EPOLLERR are always monitored and do not need to be specified in
 	// events
-	// are we allowed to swap between EPOLLIN and EPOLLOUT ? as it is written : poll() (or
-	// equivalent) must check read and write at the same time. in the subject
 	void loop() {
-		int numFds, clientFd;
+		int clientFd;
 		// std::cout << "Server is running" << std::endl;
 		while (true) {
-			syscall(numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1), "epoll_wait");
-			for (int i = 0; i < numFds; ++i) {
+			syscall(_numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1), "epoll_wait");
+			for (int i = 0; i < _numFds; ++i) {
 				// TODO : do we keep in the end ?
 				if (_eventList[i].data.fd == STDIN_FILENO) {
 					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE_SERVER);
 					if (message == "quit\n") {
 						std::cout << "Exiting program" << std::endl;
-						// TODO return and let the main call ~Server()
-						cleanServer(numFds);
-						std::exit(EXIT_SUCCESS);
+						return;
 					}
 				} else {
 					std::set<int>::iterator it = _listenSockets.find(_eventList[i].data.fd);
 					if (it != _listenSockets.end()) {
 						Client client;
+						// TODO : should we exit the server in case of accept error ?
 						syscall(clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
 												  &client.getAddressLen()),
-								"accept", numFds);
+								"accept");
 						if (!client.setInfo(clientFd)) {
 							close(clientFd);
 							continue;
 						}
 						client.findAssociatedServers(_virtualServers);
 						// client.printHostPort();
-						syscall(addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
-								"add epoll event", numFds);
-						_clients[clientFd] = client;
-						// std::cout << "New client connected" << std::endl;
+						if (addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP) ==
+							-1) {
+							// TODO : handle error appropriately
+						} else {
+							_clients[clientFd] = client;
+							// std::cout << "New client connected" << std::endl;
+						}
 					} else {
 						// should we handle error or unexpected closure differently ?
 						// especially is there a need to handle EPOLLRDHUP in a specific way ?
 						// because it might indicate that the connection is only half closed and can
 						// still receive data information from the server
 						if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
-							syscall(close(clientFd), "close", numFds);
+							syscall(close(clientFd), "close");
 							_clients.erase(clientFd);
 							continue;
 						} else if (_eventList[i].events & EPOLLIN) {
@@ -96,14 +96,16 @@ public:
 							// client.findServerName(request); VirtualServer* server =
 							// client.findBestMatch(serverName); TODO : building of the response
 							if (request.empty()) {
-								syscall(close(clientFd), "close", numFds);
+								syscall(close(clientFd), "close");
 								_clients.erase(clientFd);
 							} else {
 								// TODO: check if the request is complete before swapping to
 								// EPOLLOUT
-								syscall(modifyEpollEvent(_epollFd, clientFd,
-														 EPOLLOUT | EPOLLET | EPOLLRDHUP),
-										"modify epoll event", numFds);
+								if (modifyEpollEvent(_epollFd, clientFd,
+													 EPOLLOUT | EPOLLET | EPOLLRDHUP) == -1) {
+									syscall(close(clientFd), "close");
+									_clients.erase(clientFd);
+								}
 							}
 							// std::cout << "received new request from client" << std::endl;
 						} else if (_eventList[i].events & EPOLLOUT) {
@@ -117,9 +119,11 @@ public:
 							// 	_clients.erase(clientFd);
 							// }
 							// std::cout << "sent response to client" << std::endl;
-							syscall(modifyEpollEvent(_epollFd, clientFd,
-													 EPOLLIN | EPOLLET | EPOLLRDHUP),
-									"modify epoll event", numFds);
+							if (modifyEpollEvent(_epollFd, clientFd,
+												 EPOLLIN | EPOLLET | EPOLLRDHUP) == -1) {
+								syscall(close(clientFd), "close");
+								_clients.erase(clientFd);
+							}
 						}
 					}
 				}
@@ -145,6 +149,7 @@ private:
 	std::vector<VirtualServer> _virtualServers;
 	std::vector<VirtualServer*> _virtualServersToBind;
 	int _epollFd;
+	int _numFds;
 	std::set<int> _listenSockets;
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
@@ -248,24 +253,24 @@ private:
 		return true;
 	}
 
-	void cleanServer(size_t eventsNb = 0) {
+	void cleanServer() {
 		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
 			 ++it) {
 			close(*it);
 		}
-		for (size_t i = 0; i < eventsNb; ++i) {
+		for (size_t i = 0; i < _numFds; ++i) {
 			if (_eventList[i].data.fd != STDIN_FILENO) {
 				close(_eventList[i].data.fd);
 			}
 		}
-		close(_epollFd);
+		if (_epollFd != -1)
+			close(_epollFd);
 	}
 
-	void syscall(int returnValue, const char* funcName, size_t eventsNb = 0) {
+	void syscall(int returnValue, const char* funcName) {
 		if (returnValue == -1) {
 			std::perror(funcName);
-			cleanServer(eventsNb);
-			std::exit(EXIT_FAILURE);
+			throw SystemError(funcName);
 		}
 	}
 };
