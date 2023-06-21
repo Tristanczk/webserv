@@ -20,6 +20,7 @@
 #include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
@@ -75,12 +76,15 @@ public:
 };
 
 int comparePrefix(const std::string&, const std::string&);
-bool configFileError(std::string);
-bool endswith(const std::string&, const std::string&);
+bool configFileError(const std::string&);
 bool doesRegexMatch(const char*, const char*);
+bool endswith(const std::string&, const std::string&);
+const std::string* findCommonString(const std::vector<std::string>&,
+									const std::vector<std::string>&);
 std::string fullRead(int, size_t);
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
+bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
 
 bool parseAutoIndex(std::istringstream&, bool&);

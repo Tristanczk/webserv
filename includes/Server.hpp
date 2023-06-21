@@ -14,6 +14,36 @@ public:
 		return initEpoll() && connectVirtualServers();
 	}
 
+	bool parseConfig(const char* filename) {
+		if (isDirectory(filename)) {
+			std::cerr << filename << " is a directory" << std::endl;
+			return false;
+		}
+		std::ifstream config(filename);
+		if (!config.good()) {
+			std::cerr << "Cannot open file " << filename << std::endl;
+			return false;
+		}
+		for (std::string line; std::getline(config, line);) {
+			if (line[0] == '#' || line.empty())
+				continue;
+			if (line == "server {") {
+				VirtualServer vs;
+				if (!vs.init(config))
+					return false;
+				_virtualServers.push_back(vs);
+			} else {
+				std::cerr << "Invalid line in config file: " << line << std::endl;
+				return false;
+			}
+		}
+		if (_virtualServers.empty()) {
+			std::cerr << "No server found in " << filename << std::endl;
+			return false;
+		}
+		return checkInvalidServers();
+	}
+
 	void loop() {
 		int numFds, clientFd;
 		// std::cout << "Server is running" << std::endl;
@@ -122,28 +152,6 @@ private:
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
 
-	bool parseConfig(const char* filename) {
-		std::ifstream config(filename);
-		if (!config.good()) {
-			std::cerr << "Cannot open file " << filename << std::endl;
-			return false;
-		}
-		for (std::string line; std::getline(config, line);) {
-			if (line[0] == '#' || line.empty())
-				continue;
-			if (line == "server {") {
-				VirtualServer vs;
-				if (!vs.init(config))
-					return false;
-				_virtualServers.push_back(vs);
-			} else {
-				std::cerr << "Invalid line in config file: " << line << std::endl;
-				return false;
-			}
-		}
-		return !_virtualServers.empty() && checkInvalidServers();
-	}
-
 	bool checkInvalidServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
 			for (size_t j = i + 1; j < _virtualServers.size(); ++j) {
@@ -151,24 +159,18 @@ private:
 					_virtualServers[i].getAddr() == _virtualServers[j].getAddr()) {
 					std::vector<std::string> serverNamesI = _virtualServers[i].getServerNames();
 					std::vector<std::string> serverNamesJ = _virtualServers[j].getServerNames();
-					if (serverNamesI.empty() && serverNamesJ.empty()) {
-						std::cerr << "Conflicting server on host:port "
-								  << getIpString(_virtualServers[i].getAddr()) << ":"
-								  << ntohs(_virtualServers[i].getPort()) << " for server name \"\""
-								  << std::endl;
-						return false;
-					}
-					for (size_t k = 0; k < serverNamesI.size(); ++k) {
-						for (size_t l = 0; l < serverNamesJ.size(); ++l) {
-							if (serverNamesI[k] == serverNamesJ[l]) {
-								std::cerr << "Conflicting server on host:port "
-										  << getIpString(_virtualServers[i].getAddr()) << ":"
-										  << ntohs(_virtualServers[i].getPort())
-										  << " for server name: " << serverNamesI[k] << std::endl;
-								return false;
-							}
-						}
-					}
+					if (serverNamesI.empty() && serverNamesJ.empty())
+						return configFileError("Conflicting server on host:port " +
+											   getIpString(_virtualServers[i].getAddr()) + ":" +
+											   toString(ntohs(_virtualServers[i].getPort())) +
+											   " for server name: \"\"");
+					const std::string* commonServerName =
+						findCommonString(serverNamesI, serverNamesJ);
+					if (commonServerName)
+						return configFileError("Conflicting server on host:port " +
+											   getIpString(_virtualServers[i].getAddr()) + ":" +
+											   toString(ntohs(_virtualServers[i].getPort())) +
+											   " for server name: " + *commonServerName);
 				}
 			}
 		}

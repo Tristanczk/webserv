@@ -1,6 +1,6 @@
 #include "../includes/webserv.hpp"
 
-bool configFileError(std::string message) {
+bool configFileError(const std::string& message) {
 	std::cerr << CONFIG_FILE_ERROR << message << std::endl;
 	return false;
 }
@@ -24,6 +24,15 @@ bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 bool endswith(const std::string& str, const std::string& end) {
 	return str.length() >= end.length() &&
 		   !str.compare(str.length() - end.length(), end.length(), end);
+}
+
+const std::string* findCommonString(const std::vector<std::string>& vec1,
+									const std::vector<std::string>& vec2) {
+	std::set<std::string> set1(vec1.begin(), vec1.end());
+	for (std::vector<std::string>::const_iterator it = vec2.begin(); it != vec2.end(); ++it)
+		if (set1.find(*it) != set1.end())
+			return &*it;
+	return NULL;
 }
 
 std::string fullRead(int fd, size_t bufferSize) {
@@ -80,6 +89,11 @@ bool getIpValue(std::string ip, uint32_t& res) {
 		return false;
 	res = htonl(res);
 	return true;
+}
+
+bool isDirectory(const std::string& path) {
+	struct stat buf;
+	return stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode);
 }
 
 bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
