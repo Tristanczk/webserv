@@ -20,12 +20,8 @@ public:
 
 	bool initUri(std::istringstream& iss) {
 		std::string modifier, uri, check;
-		if (!(iss >> modifier >> uri)) {
-			std::cerr << CONFIG_FILE_ERROR
-					  << "Wrong syntax for location, syntax must be 'location [modifier] uri {'"
-					  << std::endl;
-			return false;
-		}
+		if (!(iss >> modifier >> uri))
+			return configFileError(ERROR_LOCATION);
 		if (uri == "{") {
 			_uri = modifier;
 			_modifier = NONE;
@@ -35,22 +31,13 @@ public:
 				_modifier = REGEX;
 			else if (modifier == "=")
 				_modifier = EXACT;
-			else {
-				std::cerr << CONFIG_FILE_ERROR << "Invalid modifier for location: " << modifier
-						  << std::endl;
-				return false;
-			}
-			if (!(iss >> check)) {
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Wrong syntax for location, syntax must be 'location [modifier] uri {'"
-						  << std::endl;
-				return false;
-			}
+			else
+				return configFileError("invalid modifier for location: " + modifier);
+			if (!(iss >> check))
+				return configFileError(ERROR_LOCATION);
 		}
-		if (iss >> check) {
-			std::cerr << CONFIG_FILE_ERROR << "Too many arguments for location" << std::endl;
-			return false;
-		}
+		if (iss >> check)
+			return configFileError("too many arguments for location");
 		return true;
 	}
 
@@ -73,14 +60,11 @@ public:
 					if (!(this->*handler)(iss))
 						return false;
 				} catch (const std::exception& e) {
-					std::cerr << CONFIG_FILE_ERROR
-							  << "Invalid keyword in location block: " << keyword << std::endl;
-					return false;
+					return configFileError("invalid keyword in location block: " + keyword);
 				}
 			}
 		}
-		std::cerr << CONFIG_FILE_ERROR << "Missing closing bracket for location block" << std::endl;
-		return false;
+		return configFileError("missing closing bracket for location block");
 	};
 
 	int isMatching(const std::string& requestPath) const {
@@ -145,43 +129,16 @@ private:
 		_keywordHandlers["limit_except"] = &Location::parseMethods;
 	}
 
-	bool parseRoot(std::istringstream& iss) {
-		if (!::parseRoot(iss, _rootDir))
-			return false;
-		return true;
-	}
-
-	bool parseAutoIndex(std::istringstream& iss) {
-		if (!::parseAutoIndex(iss, _autoIndex))
-			return false;
-		return true;
-	}
-
-	bool parseErrorPages(std::istringstream& iss) {
-		if (!::parseErrorPages(iss, _errorPages))
-			return false;
-		return true;
-	}
-
-	bool parseIndex(std::istringstream& iss) {
-		if (!::parseIndex(iss, _indexPages))
-			return false;
-		return true;
-	}
-
-	bool parseReturn(std::istringstream& iss) {
-		if (!::parseReturn(iss, _return))
-			return false;
-		return true;
-	}
+	bool parseRoot(std::istringstream& iss) { return ::parseRoot(iss, _rootDir); }
+	bool parseAutoIndex(std::istringstream& iss) { return ::parseAutoIndex(iss, _autoIndex); }
+	bool parseErrorPages(std::istringstream& iss) { return ::parseErrorPages(iss, _errorPages); }
+	bool parseIndex(std::istringstream& iss) { return ::parseIndex(iss, _indexPages); }
+	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
 
 	bool parseMethods(std::istringstream& iss) {
 		std::string method;
-		if (!(iss >> method)) {
-			std::cerr << CONFIG_FILE_ERROR << "Missing information after limit_except keyword"
-					  << std::endl;
-			return false;
-		}
+		if (!(iss >> method))
+			return configFileError("missing information after limit_except keyword");
 		for (int i = 0; i < NO_METHOD; i++)
 			_allowedMethods[i] = false;
 		if (!updateMethod(method))
@@ -195,31 +152,19 @@ private:
 
 	bool updateMethod(std::string const& method) {
 		if (method == "GET") {
-			if (_allowedMethods[GET]) {
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Multiple GET instructions in limit_except directive" << std::endl;
-				return false;
-			}
+			if (_allowedMethods[GET])
+				return configFileError("multiple GET instructions in limit_except directive");
 			_allowedMethods[GET] = true;
 		} else if (method == "POST") {
-			if (_allowedMethods[POST]) {
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Multiple POST instructions in limit_except directive" << std::endl;
-				return false;
-			}
+			if (_allowedMethods[POST])
+				return configFileError("multiple POST instructions in limit_except directive");
 			_allowedMethods[POST] = true;
 		} else if (method == "DELETE") {
-			if (_allowedMethods[DELETE]) {
-				std::cerr << CONFIG_FILE_ERROR
-						  << "Multiple DELETE instructions in limit_except directive" << std::endl;
-				return false;
-			}
+			if (_allowedMethods[DELETE])
+				return configFileError("multiple DELETE instructions in limit_except directive");
 			_allowedMethods[DELETE] = true;
-		} else {
-			std::cerr << CONFIG_FILE_ERROR << "Invalid method in limit_except directive: " << method
-					  << std::endl;
-			return false;
-		}
+		} else
+			return configFileError("invalid method in limit_except directive: " + method);
 		return true;
 	}
 

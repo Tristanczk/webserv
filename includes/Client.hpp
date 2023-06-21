@@ -1,8 +1,6 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <cstddef>
-#include <vector>
 
 class Client {
 public:

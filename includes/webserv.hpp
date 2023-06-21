@@ -8,7 +8,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
-#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <istream>
@@ -21,12 +20,13 @@
 #include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
 
 #define DEFAULT_PORT 8080
-#define BACKLOG 128 // TODO SOMAXCONN
+#define MAX_PORT 65535
 #define MAX_CLIENTS 1024
 #define BUFFER_SIZE_SERVER_LIMIT 1048576
 #define SIZE_LIMIT 1073741824
@@ -35,12 +35,23 @@
 #define DEFAULT_SIZE 1048576
 #define DEFAULT_ERROR 0
 
-#define CONFIG_FILE_ERROR "Error in configuration file: "
+#define CONFIG_FILE_ERROR "Configuration error: "
+#define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
+#define ERROR_LISTEN_FORMAT "invalid format for host:port in listen instruction"
+#define ERROR_LOCATION "wrong syntax for location, syntax must be 'location [modifier] uri {'"
+#define ERROR_PORT "invalid port number in listen instruction"
 #define DEFAULT_CONF "conf/valid/default.conf"
 
 #define LOCATION_MATCH_EXACT -2
 #define LOCATION_MATCH_REGEX -1
 #define LOCATION_MATCH_NONE 0
+
+template <typename T>
+std::string toString(T x) {
+	std::stringstream ss;
+	ss << x;
+	return ss.str();
+}
 
 typedef enum e_vsmatch {
 	VS_MATCH_NONE = 0,
@@ -65,17 +76,26 @@ public:
 };
 
 int comparePrefix(const std::string&, const std::string&);
+bool configFileError(const std::string&);
+bool doesRegexMatch(const char*, const char*);
 bool endswith(const std::string&, const std::string&);
-bool doesRegexMatch(const char* regexStr, const char* matchStr);
-std::string getIpString(in_addr_t ip);
+const std::string* findCommonString(const std::vector<std::string>&,
+									const std::vector<std::string>&);
+std::string fullRead(int, size_t);
+std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
-bool parseRoot(std::istringstream& iss, std::string& rootDir);
-bool parseAutoIndex(std::istringstream& iss, bool& autoIndex);
-bool parseErrorCode(std::string& code, std::vector<int>& codeList);
-bool parseErrorPages(std::istringstream& iss, std::map<int, std::string>& errorPages);
-bool parseIndex(std::istringstream& iss, std::vector<std::string>& indexPages);
-bool parseReturn(std::istringstream& iss, std::pair<long, std::string>& redirection);
-std::string fullRead(int fd, size_t bufferSize);
+bool isDirectory(const std::string&);
+bool isValidErrorCode(int);
+
+int addEpollEvent(int, int, int);
+int modifyEpollEvent(int, int, int);
+
+bool parseAutoIndex(std::istringstream&, bool&);
+bool parseErrorCode(std::string&, std::vector<int>&);
+bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
+bool parseIndex(std::istringstream&, std::vector<std::string>&);
+bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
+bool parseRoot(std::istringstream&, std::string&);
 
 class Location;
 class VirtualServer;

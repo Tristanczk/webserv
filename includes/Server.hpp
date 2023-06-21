@@ -1,14 +1,24 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <cstddef>
 
 class Server {
 public:
 	Server(){};
 	~Server(){};
 
+	bool init(const char* filename) {
+		if (!parseConfig(filename))
+			return false;
+		findVirtualServersToBind();
+		return initEpoll() && connectVirtualServers();
+	}
+
 	bool parseConfig(const char* filename) {
+		if (isDirectory(filename)) {
+			std::cerr << filename << " is a directory" << std::endl;
+			return false;
+		}
 		std::ifstream config(filename);
 		if (!config.good()) {
 			std::cerr << "Cannot open file " << filename << std::endl;
@@ -18,25 +28,16 @@ public:
 			if (line[0] == '#' || line.empty())
 				continue;
 			if (line == "server {") {
-				VirtualServer server;
-				if (!server.initServer(config))
+				VirtualServer vs;
+				if (!vs.init(config))
 					return false;
-				_virtualServers.push_back(server);
-			} else {
-				std::cerr << "Invalid line in config file: " << line << std::endl;
-				return false;
-			}
+				_virtualServers.push_back(vs);
+			} else
+				return configFileError("invalid line in config file: " + line);
 		}
-		return !_virtualServers.empty() && checkInvalidServers();
-	}
-
-	bool initServer() {
-		findVirtualServersToBind();
-		if (!initEpoll())
-			return false;
-		if (!connectVirtualServers())
-			return false;
-		return true;
+		if (_virtualServers.empty())
+			return configFileError("no server found in " + std::string(filename));
+		return checkDuplicateServers();
 	}
 
 	// note: in epoll, EPOLLHUP and EPOLLERR are always monitored and do not need to be specified in
@@ -49,11 +50,12 @@ public:
 		while (true) {
 			syscall(numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1), "epoll_wait");
 			for (int i = 0; i < numFds; ++i) {
-				// TO DO : do we keep in the end ?
+				// TODO : do we keep in the end ?
 				if (_eventList[i].data.fd == STDIN_FILENO) {
 					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE_SERVER);
 					if (message == "quit\n") {
 						std::cout << "Exiting program" << std::endl;
+						// TODO return and let the main call ~Server()
 						cleanServer(numFds);
 						std::exit(EXIT_SUCCESS);
 					}
@@ -70,7 +72,7 @@ public:
 						}
 						client.findAssociatedServers(_virtualServers);
 						// client.printHostPort();
-						syscall(addEpollEvent(clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
+						syscall(addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
 								"add epoll event", numFds);
 						_clients[clientFd] = client;
 						// std::cout << "New client connected" << std::endl;
@@ -80,8 +82,6 @@ public:
 						// because it might indicate that the connection is only half closed and can
 						// still receive data information from the server
 						if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
-							syscall(removeEpollEvent(clientFd, &_eventList[i]),
-									"remove epoll event", numFds);
 							syscall(close(clientFd), "close", numFds);
 							_clients.erase(clientFd);
 							continue;
@@ -89,38 +89,36 @@ public:
 							clientFd = _eventList[i].data.fd;
 							Client& client = _clients[clientFd];
 							std::string request = client.readRequest();
-							// TO DO : parsing of the request
-							// TO DO : get the server name in order to find the best matching server
+							// TODO : parsing of the request
+							// TODO : get the server name in order to find the best matching server
 							// for the request
 							// std::string serverName =
 							// client.findServerName(request); VirtualServer* server =
-							// client.findBestMatch(serverName); TO DO : building of the response
+							// client.findBestMatch(serverName); TODO : building of the response
 							if (request.empty()) {
-								syscall(removeEpollEvent(clientFd, &_eventList[i]),
-										"remove epoll event", numFds);
 								syscall(close(clientFd), "close", numFds);
 								_clients.erase(clientFd);
 							} else {
-								// TO DO: check if the request is complete before swapping to
+								// TODO: check if the request is complete before swapping to
 								// EPOLLOUT
-								syscall(modifyEpollEvent(clientFd, EPOLLOUT | EPOLLET | EPOLLRDHUP),
+								syscall(modifyEpollEvent(_epollFd, clientFd,
+														 EPOLLOUT | EPOLLET | EPOLLRDHUP),
 										"modify epoll event", numFds);
 							}
 							// std::cout << "received new request from client" << std::endl;
 						} else if (_eventList[i].events & EPOLLOUT) {
 							clientFd = _eventList[i].data.fd;
-							// TO DO, send response to client
+							// TODO, send response to client
 							// int n =
 							// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
 							// if (n == -1) {
 							// 	std::cerr << "Error while sending response" << std::endl;
-							// 	syscall(removeEpollEvent(clientFd, &_eventList[i]),
-							// 			"remove epoll event");
 							// 	syscall(close(clientFd), "close");
 							// 	_clients.erase(clientFd);
 							// }
 							// std::cout << "sent response to client" << std::endl;
-							syscall(modifyEpollEvent(clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP),
+							syscall(modifyEpollEvent(_epollFd, clientFd,
+													 EPOLLIN | EPOLLET | EPOLLRDHUP),
 									"modify epoll event", numFds);
 						}
 					}
@@ -151,31 +149,29 @@ private:
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
 
-	bool checkInvalidServers() const {
+	bool checkDuplicateServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
 			for (size_t j = i + 1; j < _virtualServers.size(); ++j) {
 				if (_virtualServers[i].getPort() == _virtualServers[j].getPort() &&
 					_virtualServers[i].getAddr() == _virtualServers[j].getAddr()) {
-					std::vector<std::string> serverNamesI = _virtualServers[i].getServerNames();
-					std::vector<std::string> serverNamesJ = _virtualServers[j].getServerNames();
-					if (serverNamesI.empty() && serverNamesJ.empty()) {
-						std::cerr << "Conflicting server on host:port "
-								  << getIpString(_virtualServers[i].getAddr()) << ":"
-								  << ntohs(_virtualServers[i].getPort()) << " for server name \"\""
-								  << std::endl;
-						return false;
+					const std::vector<std::string>& serverNamesI =
+						_virtualServers[i].getServerNames();
+					const std::vector<std::string>& serverNamesJ =
+						_virtualServers[j].getServerNames();
+					std::string conflict;
+					if (serverNamesI.empty() && serverNamesJ.empty())
+						conflict = "\"\"";
+					else {
+						const std::string* commonServerName =
+							findCommonString(serverNamesI, serverNamesJ);
+						if (!commonServerName)
+							continue;
+						conflict = *commonServerName;
 					}
-					for (size_t k = 0; k < serverNamesI.size(); ++k) {
-						for (size_t l = 0; l < serverNamesJ.size(); ++l) {
-							if (serverNamesI[k] == serverNamesJ[l]) {
-								std::cerr << "Conflicting server on host:port "
-										  << getIpString(_virtualServers[i].getAddr()) << ":"
-										  << ntohs(_virtualServers[i].getPort())
-										  << " for server name: " << serverNamesI[k] << std::endl;
-								return false;
-							}
-						}
-					}
+					return configFileError("conflicting server on " +
+										   getIpString(_virtualServers[i].getAddr()) + ":" +
+										   toString(ntohs(_virtualServers[i].getPort())) +
+										   " for server name: " + conflict);
 				}
 			}
 		}
@@ -188,39 +184,9 @@ private:
 			std::cerr << "Error when creating epoll" << std::endl;
 			return false;
 		}
-		if (addEpollEvent(STDIN_FILENO, EPOLLIN | EPOLLET) == -1)
+		if (addEpollEvent(_epollFd, STDIN_FILENO, EPOLLIN | EPOLLET) == -1)
 			return false;
 		return true;
-	}
-
-	int addEpollEvent(int eventFd, int flags) {
-		struct epoll_event event;
-		event.data.fd = eventFd;
-		event.events = flags;
-		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, eventFd, &event) == -1) {
-			std::cerr << "Error when adding event to epoll" << std::endl;
-			return -1;
-		}
-		return 0;
-	}
-
-	int removeEpollEvent(int eventFd, struct epoll_event* event) {
-		if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, eventFd, event) == -1) {
-			std::cerr << "Error when removing event from epoll" << std::endl;
-			return -1;
-		}
-		return 0;
-	}
-
-	int modifyEpollEvent(int eventFd, int flags) {
-		struct epoll_event event;
-		event.data.fd = eventFd;
-		event.events = flags;
-		if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, eventFd, &event) == -1) {
-			std::cerr << "Error when modifying event in epoll" << std::endl;
-			return -1;
-		}
-		return 0;
 	}
 
 	void findVirtualServersToBind() {
@@ -255,9 +221,8 @@ private:
 	}
 
 	bool connectVirtualServers() {
-		int socketFd;
 		for (size_t i = 0; i < _virtualServersToBind.size(); ++i) {
-			socketFd = socket(AF_INET, SOCK_STREAM, 0);
+			int socketFd = socket(AF_INET, SOCK_STREAM, 0);
 			if (socketFd == -1) {
 				std::cerr << "Error when creating socket" << std::endl;
 				return false;
@@ -267,20 +232,16 @@ private:
 				std::cerr << "Error when setting socket options" << std::endl;
 				return false;
 			}
-			// if (fcntl(socketFd, F_SETFL, O_NONBLOCK) == -1) {
-			// 	std::cerr << "Error when setting socket to non-blocking" << std::endl;
-			// 	return false;
-			// }
 			struct sockaddr_in addr = _virtualServersToBind[i]->getAddress();
 			if (bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
 				std::perror("bind");
 				return false;
 			}
-			if (listen(socketFd, BACKLOG) == -1) {
+			if (listen(socketFd, SOMAXCONN) == -1) {
 				std::cerr << "Error when listening on socket" << std::endl;
 				return false;
 			}
-			if (addEpollEvent(socketFd, EPOLLIN | EPOLLET) == -1)
+			if (addEpollEvent(_epollFd, socketFd, EPOLLIN | EPOLLET) == -1)
 				return false;
 			_listenSockets.insert(socketFd);
 		}

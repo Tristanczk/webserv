@@ -1,5 +1,61 @@
 #include "../includes/webserv.hpp"
-#include <cstddef>
+
+bool configFileError(const std::string& message) {
+	std::cerr << CONFIG_FILE_ERROR << message << std::endl;
+	return false;
+}
+
+int comparePrefix(const std::string& s1, const std::string& s2) {
+	int i = 0;
+	while (s1[i] && s2[i] && s1[i] == s2[i])
+		++i;
+	return i;
+}
+
+bool doesRegexMatch(const char* regexStr, const char* matchStr) {
+	regex_t regex;
+	if (regcomp(&regex, regexStr, REG_EXTENDED) != 0)
+		throw RegexError();
+	int regint = regexec(&regex, matchStr, 0, NULL, 0);
+	regfree(&regex);
+	return regint == 0;
+}
+
+bool endswith(const std::string& str, const std::string& end) {
+	return str.length() >= end.length() &&
+		   !str.compare(str.length() - end.length(), end.length(), end);
+}
+
+const std::string* findCommonString(const std::vector<std::string>& vec1,
+									const std::vector<std::string>& vec2) {
+	std::set<std::string> set1(vec1.begin(), vec1.end());
+	for (std::vector<std::string>::const_iterator it = vec2.begin(); it != vec2.end(); ++it)
+		if (set1.find(*it) != set1.end())
+			return &*it;
+	return NULL;
+}
+
+std::string fullRead(int fd, size_t bufferSize) {
+	std::string message;
+	char buf[bufferSize];
+	size_t buflen;
+
+	while (true) {
+		syscall(buflen = read(fd, buf, bufferSize - 1), "read");
+		buf[buflen] = '\0';
+		message += buf;
+		if (buflen < bufferSize - 1)
+			return message;
+	}
+}
+
+std::string getIpString(in_addr_t ip) {
+	ip = ntohl(ip);
+	std::ostringstream oss;
+	oss << (ip >> 24 & 0xFF) << '.' << (ip >> 16 & 0xFF) << '.' << (ip >> 8 & 0xFF) << '.'
+		<< (ip & 0xFF);
+	return oss.str();
+}
 
 bool getIpValue(std::string ip, uint32_t& res) {
 	if (ip == "localhost") {
@@ -35,52 +91,9 @@ bool getIpValue(std::string ip, uint32_t& res) {
 	return true;
 }
 
-std::string getIpString(in_addr_t ip) {
-	ip = ntohl(ip);
-	std::ostringstream oss;
-	oss << (ip >> 24 & 0xFF) << '.' << (ip >> 16 & 0xFF) << '.' << (ip >> 8 & 0xFF) << '.'
-		<< (ip & 0xFF);
-	return oss.str();
+bool isDirectory(const std::string& path) {
+	struct stat buf;
+	return stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode);
 }
 
-int comparePrefix(const std::string& s1, const std::string& s2) {
-	int i = 0;
-	while (s1[i] && s2[i] && s1[i] == s2[i])
-		++i;
-	return i;
-}
-
-bool endswith(const std::string& str, const std::string& end) {
-	return str.length() >= end.length() &&
-		   !str.compare(str.length() - end.length(), end.length(), end);
-}
-
-bool doesRegexMatch(const char* regexStr, const char* matchStr) {
-	regex_t regex;
-	if (regcomp(&regex, regexStr, REG_EXTENDED) != 0)
-		throw RegexError();
-	int regint = regexec(&regex, matchStr, 0, NULL, 0);
-	regfree(&regex);
-	return regint == 0;
-}
-
-static void syscall(int returnValue, const char* funcName) {
-	if (returnValue == -1) {
-		std::perror(funcName);
-		std::exit(EXIT_FAILURE);
-	}
-}
-
-std::string fullRead(int fd, size_t bufferSize) {
-	std::string message;
-	char buf[bufferSize];
-	size_t buflen;
-
-	while (true) {
-		syscall(buflen = read(fd, buf, bufferSize - 1), "read");
-		buf[buflen] = '\0';
-		message += buf;
-		if (buflen < bufferSize - 1)
-			return message;
-	}
-}
+bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
