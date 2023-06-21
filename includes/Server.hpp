@@ -153,24 +153,28 @@ private:
 	std::map<int, Client> _clients;
 
 	bool checkInvalidServers() const {
+		std::string conflict;
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
 			for (size_t j = i + 1; j < _virtualServers.size(); ++j) {
 				if (_virtualServers[i].getPort() == _virtualServers[j].getPort() &&
 					_virtualServers[i].getAddr() == _virtualServers[j].getAddr()) {
-					std::vector<std::string> serverNamesI = _virtualServers[i].getServerNames();
-					std::vector<std::string> serverNamesJ = _virtualServers[j].getServerNames();
+					const std::vector<std::string>& serverNamesI =
+						_virtualServers[i].getServerNames();
+					const std::vector<std::string>& serverNamesJ =
+						_virtualServers[j].getServerNames();
 					if (serverNamesI.empty() && serverNamesJ.empty())
-						return configFileError("Conflicting server on host:port " +
-											   getIpString(_virtualServers[i].getAddr()) + ":" +
-											   toString(ntohs(_virtualServers[i].getPort())) +
-											   " for server name: \"\"");
-					const std::string* commonServerName =
-						findCommonString(serverNamesI, serverNamesJ);
-					if (commonServerName)
-						return configFileError("Conflicting server on host:port " +
-											   getIpString(_virtualServers[i].getAddr()) + ":" +
-											   toString(ntohs(_virtualServers[i].getPort())) +
-											   " for server name: " + *commonServerName);
+						conflict = "\"\"";
+					else {
+						const std::string* commonServerName =
+							findCommonString(serverNamesI, serverNamesJ);
+						if (!commonServerName)
+							continue;
+						conflict = *commonServerName;
+					}
+					return configFileError("Conflicting server on " +
+										   getIpString(_virtualServers[i].getAddr()) + ":" +
+										   toString(ntohs(_virtualServers[i].getPort())) +
+										   " for server name: " + conflict);
 				}
 			}
 		}
