@@ -4,7 +4,7 @@
 
 class Server {
 public:
-	Server(){};
+	Server() : _epollFd(-1){};
 	~Server() { cleanServer(); };
 
 	bool init(const char* filename) {
