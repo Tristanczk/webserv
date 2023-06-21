@@ -7,29 +7,9 @@ public:
 	Server(){};
 	~Server(){};
 
-	bool parseConfig(const char* filename) {
-		std::ifstream config(filename);
-		if (!config.good()) {
-			std::cerr << "Cannot open file " << filename << std::endl;
+	bool init(const char* filename) {
+		if (!parseConfig(filename))
 			return false;
-		}
-		for (std::string line; std::getline(config, line);) {
-			if (line[0] == '#' || line.empty())
-				continue;
-			if (line == "server {") {
-				VirtualServer vs;
-				if (!vs.initServer(config))
-					return false;
-				_virtualServers.push_back(vs);
-			} else {
-				std::cerr << "Invalid line in config file: " << line << std::endl;
-				return false;
-			}
-		}
-		return !_virtualServers.empty() && checkInvalidServers();
-	}
-
-	bool initServer() {
 		findVirtualServersToBind();
 		return initEpoll() && connectVirtualServers();
 	}
@@ -141,6 +121,28 @@ private:
 	std::set<int> _listenSockets;
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
+
+	bool parseConfig(const char* filename) {
+		std::ifstream config(filename);
+		if (!config.good()) {
+			std::cerr << "Cannot open file " << filename << std::endl;
+			return false;
+		}
+		for (std::string line; std::getline(config, line);) {
+			if (line[0] == '#' || line.empty())
+				continue;
+			if (line == "server {") {
+				VirtualServer vs;
+				if (!vs.init(config))
+					return false;
+				_virtualServers.push_back(vs);
+			} else {
+				std::cerr << "Invalid line in config file: " << line << std::endl;
+				return false;
+			}
+		}
+		return !_virtualServers.empty() && checkInvalidServers();
+	}
 
 	bool checkInvalidServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {

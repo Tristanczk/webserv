@@ -6,9 +6,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	Server server;
-	if (!server.parseConfig(argc == 2 ? argv[1] : DEFAULT_CONF))
-		return EXIT_FAILURE;
-	if (!server.initServer())
+	if (!server.init(argc == 2 ? argv[1] : DEFAULT_CONF))
 		return EXIT_FAILURE;
 	server.loop();
 	return EXIT_SUCCESS;

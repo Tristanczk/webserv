@@ -21,7 +21,7 @@ public:
 
 	~VirtualServer(){};
 
-	bool initServer(std::istream& config) {
+	bool init(std::istream& config) {
 		std::string line, keyword, val;
 		while (std::getline(config, line)) {
 			std::istringstream iss(line);
