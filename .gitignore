@@ -1,4 +1,3 @@
-irc_axel
 objs
 a.out
 .vscode
@@ -6,3 +5,4 @@ webserv
 webtest
 test-cgi.cpp
 *.php
+test.cpp

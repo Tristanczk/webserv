@@ -1,16 +1,13 @@
+#include <climits>
+#include <cstddef>
 #include <iostream>
 #include <map>
 
 int main(void) {
-	std::map<int, std::string> m;
-	m[1] = "one";
-	m[2] = "two";
-	m[3] = "three";
-
-	for (std::map<int, std::string>::iterator it = m.begin(); it != m.end(); ++it)
-		std::cout << it->first << " => " << it->second << '\n';
-
-	m[2] = "deux";
-	for (std::map<int, std::string>::iterator it = m.begin(); it != m.end(); ++it)
-		std::cout << it->first << " => " << it->second << '\n';
+	std::string n = "123458465456456456456456456465456456456";
+	std::size_t size = std::strtol(n.c_str(), NULL, 10);
+	if (size == LONG_MAX)
+		std::cout << "too big" << std::endl;
+	else
+		std::cout << size << std::endl;
 }
