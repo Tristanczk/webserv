@@ -170,25 +170,25 @@ private:
 		if (idx == std::string::npos) {
 			if (value.find_first_not_of("0123456789") != std::string::npos) {
 				if (!getIpValue(value, _address.sin_addr.s_addr))
-					return configFileError("Invalid IPv4 address format in listen instruction");
+					return configFileError(ERROR_ADDRESS);
 			} else {
 				port = std::strtol(value.c_str(), NULL, 10);
 				if (port > MAX_PORT || port < 0)
-					return configFileError("Invalid port number in listen instruction");
+					return configFileError(ERROR_PORT);
 				_address.sin_port = htons(port);
 			}
 		} else {
 			value[idx] = ' ';
 			std::istringstream hostPort(value);
 			if (!(hostPort >> host >> port))
-				return configFileError("Invalid format for host:port in listen instruction");
+				return configFileError(ERROR_LISTEN_FORMAT);
 			if (!getIpValue(host, _address.sin_addr.s_addr))
-				return configFileError("Invalid IPv4 address format in listen instruction");
+				return configFileError(ERROR_ADDRESS);
 			if (port > MAX_PORT)
-				return configFileError("Invalid port number in listen instruction");
+				return configFileError(ERROR_PORT);
 			_address.sin_port = htons(port);
 			if (hostPort >> value)
-				return configFileError("Invalid format for host:port in listen instruction");
+				return configFileError(ERROR_LISTEN_FORMAT);
 		}
 		if (iss >> value)
 			return configFileError("Too many arguments after listen keyword");

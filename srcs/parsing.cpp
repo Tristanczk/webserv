@@ -45,11 +45,11 @@ bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
 				codeList.push_back(i);
 			return true;
 		} else
-			return configFileError("Invalid character in error code: " + code);
+			return configFileError("Invalid error code: " + code);
 	}
 	codeValue = std::strtol(code.c_str(), NULL, 10);
 	if (!isValidErrorCode(codeValue))
-		return configFileError("Invalid error code: " + toString(codeValue));
+		return configFileError("Invalid error code: " + code);
 	codeList.push_back(codeValue);
 	return true;
 }
