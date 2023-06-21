@@ -153,7 +153,6 @@ private:
 	std::map<int, Client> _clients;
 
 	bool checkInvalidServers() const {
-		std::string conflict;
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
 			for (size_t j = i + 1; j < _virtualServers.size(); ++j) {
 				if (_virtualServers[i].getPort() == _virtualServers[j].getPort() &&
@@ -162,6 +161,7 @@ private:
 						_virtualServers[i].getServerNames();
 					const std::vector<std::string>& serverNamesJ =
 						_virtualServers[j].getServerNames();
+					std::string conflict;
 					if (serverNamesI.empty() && serverNamesJ.empty())
 						conflict = "\"\"";
 					else {
