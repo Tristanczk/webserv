@@ -33,10 +33,10 @@ public:
 					return false;
 				_virtualServers.push_back(vs);
 			} else
-				return configFileError("Invalid line in config file: " + line);
+				return configFileError("invalid line in config file: " + line);
 		}
 		if (_virtualServers.empty())
-			return configFileError("No server found in " + std::string(filename));
+			return configFileError("no server found in " + std::string(filename));
 		return checkDuplicateServers();
 	}
 
@@ -164,7 +164,7 @@ private:
 							continue;
 						conflict = *commonServerName;
 					}
-					return configFileError("Conflicting server on " +
+					return configFileError("conflicting server on " +
 										   getIpString(_virtualServers[i].getAddr()) + ":" +
 										   toString(ntohs(_virtualServers[i].getPort())) +
 										   " for server name: " + conflict);

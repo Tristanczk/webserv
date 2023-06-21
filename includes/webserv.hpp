@@ -35,7 +35,7 @@
 #define DEFAULT_SIZE 1048576
 #define DEFAULT_ERROR 0
 
-#define CONFIG_FILE_ERROR "Error in configuration file: "
+#define CONFIG_FILE_ERROR "Configuration error: "
 #define ERROR_ADDRESS "Invalid IPv4 address format in listen instruction"
 #define ERROR_LISTEN_FORMAT "Invalid format for host:port in listen instruction"
 #define ERROR_LOCATION "Wrong syntax for location, syntax must be 'location [modifier] uri {'"

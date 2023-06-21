@@ -44,11 +44,11 @@ public:
 					if (!(this->*handler)(iss))
 						return false;
 				} catch (const std::exception& e) {
-					return configFileError("Invalid keyword in configuration file: " + keyword);
+					return configFileError("invalid keyword in configuration file: " + keyword);
 				}
 			}
 		}
-		return configFileError("Missing closing bracket for server");
+		return configFileError("missing closing bracket for server");
 	}
 
 	t_vsmatch isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
@@ -165,7 +165,7 @@ private:
 		std::string value, host;
 		size_t port;
 		if (!(iss >> value))
-			return configFileError("Missing information after listen keyword");
+			return configFileError("missing information after listen keyword");
 		size_t idx = value.find(':');
 		if (idx == std::string::npos) {
 			if (value.find_first_not_of("0123456789") != std::string::npos) {
@@ -191,14 +191,14 @@ private:
 				return configFileError(ERROR_LISTEN_FORMAT);
 		}
 		if (iss >> value)
-			return configFileError("Too many arguments after listen keyword");
+			return configFileError("too many arguments after listen keyword");
 		return true;
 	}
 
 	bool parseServerNames(std::istringstream& iss) {
 		std::string value;
 		if (!(iss >> value))
-			return configFileError("Missing information after server_name keyword");
+			return configFileError("missing information after server_name keyword");
 		_serverNames.push_back(value);
 		while (iss >> value)
 			_serverNames.push_back(value);
@@ -228,16 +228,16 @@ private:
 				   std::size_t minLimit, std::size_t maxLimit) {
 		std::string value;
 		if (!(iss >> value))
-			return configFileError("Missing information after " + keyword);
+			return configFileError("missing information after " + keyword);
 		size_t idx = value.find_first_not_of("0123456789");
 		if (idx == 0)
-			return configFileError("Invalid character for " + keyword);
+			return configFileError("invalid character for " + keyword);
 		size = std::strtol(value.c_str(), NULL, 10);
 		if (size == LONG_MAX || size < 0)
-			return configFileError("Invalid value for " + keyword);
+			return configFileError("invalid value for " + keyword);
 		if (value[idx] != '\0') {
 			if (value[idx + 1] != '\0')
-				return configFileError("Invalid character after suffix for bytes value in " +
+				return configFileError("invalid character after suffix for bytes value in " +
 									   keyword + " directive");
 			switch (std::tolower(value[idx])) {
 			case 'k':
@@ -247,7 +247,7 @@ private:
 				size <<= 20;
 				break;
 			default:
-				return configFileError("Invalid suffix for bytes value in " + keyword +
+				return configFileError("invalid suffix for bytes value in " + keyword +
 									   " directive, valid suffix are: k, K, m, M");
 			}
 		}
@@ -255,7 +255,7 @@ private:
 			return configFileError(keyword + " must be between " + toString(minLimit) + " and " +
 								   toString(maxLimit));
 		if (iss >> value)
-			return configFileError("Too many arguments after " + keyword + " keyword");
+			return configFileError("too many arguments after " + keyword + " keyword");
 		return true;
 	}
 };

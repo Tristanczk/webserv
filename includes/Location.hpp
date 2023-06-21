@@ -32,12 +32,12 @@ public:
 			else if (modifier == "=")
 				_modifier = EXACT;
 			else
-				return configFileError("Invalid modifier for location: " + modifier);
+				return configFileError("invalid modifier for location: " + modifier);
 			if (!(iss >> check))
 				return configFileError(ERROR_LOCATION);
 		}
 		if (iss >> check)
-			return configFileError("Too many arguments for location");
+			return configFileError("too many arguments for location");
 		return true;
 	}
 
@@ -60,11 +60,11 @@ public:
 					if (!(this->*handler)(iss))
 						return false;
 				} catch (const std::exception& e) {
-					return configFileError("Invalid keyword in location block: " + keyword);
+					return configFileError("invalid keyword in location block: " + keyword);
 				}
 			}
 		}
-		return configFileError("Missing closing bracket for location block");
+		return configFileError("missing closing bracket for location block");
 	};
 
 	int isMatching(const std::string& requestPath) const {
@@ -138,7 +138,7 @@ private:
 	bool parseMethods(std::istringstream& iss) {
 		std::string method;
 		if (!(iss >> method))
-			return configFileError("Missing information after limit_except keyword");
+			return configFileError("missing information after limit_except keyword");
 		for (int i = 0; i < NO_METHOD; i++)
 			_allowedMethods[i] = false;
 		if (!updateMethod(method))
@@ -153,18 +153,18 @@ private:
 	bool updateMethod(std::string const& method) {
 		if (method == "GET") {
 			if (_allowedMethods[GET])
-				return configFileError("Multiple GET instructions in limit_except directive");
+				return configFileError("multiple GET instructions in limit_except directive");
 			_allowedMethods[GET] = true;
 		} else if (method == "POST") {
 			if (_allowedMethods[POST])
-				return configFileError("Multiple POST instructions in limit_except directive");
+				return configFileError("multiple POST instructions in limit_except directive");
 			_allowedMethods[POST] = true;
 		} else if (method == "DELETE") {
 			if (_allowedMethods[DELETE])
-				return configFileError("Multiple DELETE instructions in limit_except directive");
+				return configFileError("multiple DELETE instructions in limit_except directive");
 			_allowedMethods[DELETE] = true;
 		} else
-			return configFileError("Invalid method in limit_except directive: " + method);
+			return configFileError("invalid method in limit_except directive: " + method);
 		return true;
 	}
 
