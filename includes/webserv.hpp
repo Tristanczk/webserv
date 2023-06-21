@@ -35,6 +35,7 @@
 #define MIN_BUFFER_SIZE 1024
 #define DEFAULT_SIZE 1048576
 #define DEFAULT_ERROR 0
+#define BUFFER_SIZE_HEADER 16384
 
 #define CONFIG_FILE_ERROR "Configuration error: "
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"

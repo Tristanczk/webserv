@@ -9,8 +9,10 @@ public:
 	};
 	~Client(){};
 
+	// buffer size is defined after reading the header as the server name is required to identify
+	// the correct virtual server
 	std::string readRequest() {
-		std::size_t bufferSize = _currentMatchingServer->getBufferSize();
+		std::size_t bufferSize = BUFFER_SIZE_HEADER;
 		return fullRead(_fd, bufferSize);
 	}
 
@@ -52,6 +54,27 @@ public:
 		}
 		_currentMatchingServer = bestMatch == -1 ? NULL : _associatedServers[bestMatch];
 		return _currentMatchingServer;
+	}
+
+	std::string getCGIResponse(const char* path_to_exec, char* const argv[], char* const envp[]) {
+		int pipefd[2];
+		if (pipe(pipefd) == -1)
+			throw std::runtime_error("pipe() failed");
+		pid_t pid = fork();
+		if (pid == -1)
+			throw std::runtime_error("fork() failed");
+		if (pid == 0) {
+			close(pipefd[0]);
+			if (dup2(pipefd[1], STDOUT_FILENO) == -1)
+				throw std::runtime_error("dup2() failed");
+			close(pipefd[1]);
+			if (execve(path_to_exec, argv, envp) == -1)
+				throw std::runtime_error("execve() failed");
+		}
+		close(pipefd[1]);
+		std::string response = fullRead(pipefd[0], BUFFER_SIZE_SERVER);
+		close(pipefd[0]);
+		return response;
 	}
 
 	struct sockaddr_in& getAddress() { return _address; }
