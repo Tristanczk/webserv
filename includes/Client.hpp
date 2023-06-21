@@ -59,17 +59,17 @@ public:
 	std::string getCGIResponse(const char* path_to_exec, char* const argv[], char* const envp[]) {
 		int pipefd[2];
 		if (pipe(pipefd) == -1)
-			throw std::runtime_error("pipe() failed");
+			throw std::runtime_error("pipe");
 		pid_t pid = fork();
 		if (pid == -1)
-			throw std::runtime_error("fork() failed");
+			throw std::runtime_error("fork");
 		if (pid == 0) {
 			close(pipefd[0]);
 			if (dup2(pipefd[1], STDOUT_FILENO) == -1)
-				throw std::runtime_error("dup2() failed");
+				throw std::runtime_error("dup2");
 			close(pipefd[1]);
 			if (execve(path_to_exec, argv, envp) == -1)
-				throw std::runtime_error("execve() failed");
+				throw std::runtime_error("execv");
 		}
 		close(pipefd[1]);
 		std::string response = fullRead(pipefd[0], BUFFER_SIZE_SERVER);
