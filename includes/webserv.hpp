@@ -13,6 +13,7 @@
 #include <istream>
 #include <map>
 #include <netinet/in.h>
+#include <queue>
 #include <regex.h>
 #include <set>
 #include <sstream>
