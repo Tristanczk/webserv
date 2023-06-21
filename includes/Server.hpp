@@ -41,6 +41,8 @@ public:
 
 	// note: in epoll, EPOLLHUP and EPOLLERR are always monitored and do not need to be specified in
 	// events
+	// are we allowed to swap between EPOLLIN and EPOLLOUT ? as it is written : poll() (or
+	// equivalent) must check read and write at the same time. in the subject
 	void loop() {
 		int numFds, clientFd;
 		// std::cout << "Server is running" << std::endl;

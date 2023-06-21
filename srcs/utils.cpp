@@ -64,6 +64,13 @@ bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 	return regint == 0;
 }
 
+static void syscall(int returnValue, const char* funcName) {
+	if (returnValue == -1) {
+		std::perror(funcName);
+		std::exit(EXIT_FAILURE);
+	}
+}
+
 std::string fullRead(int fd, size_t bufferSize) {
 	std::string message;
 	char buf[bufferSize];
@@ -77,10 +84,3 @@ std::string fullRead(int fd, size_t bufferSize) {
 			return message;
 	}
 }
-
-// void syscall(int returnValue, const char* funcName) {
-// 	if (returnValue == -1) {
-// 		std::perror(funcName);
-// 		std::exit(EXIT_FAILURE);
-// 	}
-// }
