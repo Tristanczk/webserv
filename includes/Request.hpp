@@ -141,7 +141,8 @@ private:
 			}
 		}
 		// il n'y a pas des checks a faire sur la valeur de key ? est-ce qu'il ne faut pas qu'elle
-		// prenne un nombre limite de valeurs possibles ?
+		// prenne un nombre limite de valeurs possibles ? peut-etre pas effectivement, ca fait
+		// beaucoup de champs possibles et au pire s'il y en a un mauvais on ne l'utilise juste pas
 		// est-ce qu'il ne faut pas verifier que la valeur de key n'est pas deja dans _headers
 		// (quelle gestion pour les doublons) ?
 		if (key.empty() || value.empty())
@@ -154,6 +155,7 @@ private:
 		if (_isRequestLine)
 			return CLIENT_BAD_REQUEST;
 		// pourquoi on verifie qu'il n'y a pas de champ host ? Ca ne devrait pas etre l'inverse ?
+		// le nom du champ est Host et pas host non ?
 		if (_headers.find("host") != _headers.end())
 			return CLIENT_BAD_REQUEST;
 		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
