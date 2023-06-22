@@ -258,7 +258,7 @@ private:
 			 ++it) {
 			close(*it);
 		}
-		for (size_t i = 0; i < _numFds; ++i) {
+		for (int i = 0; i < _numFds; ++i) {
 			if (_eventList[i].data.fd != STDIN_FILENO) {
 				close(_eventList[i].data.fd);
 			}

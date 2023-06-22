@@ -30,6 +30,7 @@
 #define DEFAULT_PORT 8080
 #define MAX_PORT 65535
 #define MAX_CLIENTS 1024
+#define MAX_URI_SIZE 2048
 #define BUFFER_SIZE_SERVER_LIMIT 1048576
 #define SIZE_LIMIT 1073741824
 #define BUFFER_SIZE_SERVER 16384
@@ -155,7 +156,7 @@ std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
-bool getValidPath(std::string path, char* const envp[], std::string& finalPath);
+bool getValidPath(std::string, char* const[], std::string&);
 
 int addEpollEvent(int, int, int);
 int modifyEpollEvent(int, int, int);

@@ -96,7 +96,7 @@ public:
 				throw std::runtime_error("dup2");
 			close(pipefd[1]);
 			if (execve(finalPath.c_str(), argv, envp) == -1)
-				throw std::runtime_error("execv");
+				throw std::runtime_error("execve");
 		}
 		close(pipefd[1]);
 		std::string response = fullRead(pipefd[0], BUFFER_SIZE_SERVER);

@@ -8,8 +8,8 @@ public:
 			 const std::map<int, std::string>& serverErrorPages,
 			 const std::vector<std::string>& serverIndexPages,
 			 const std::pair<long, std::string>& serverReturn)
-		: _modifier(NONE), _uri(""), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
-		  _cgiExec(""), _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
+		: _modifier(NONE), _uri(""), _rootDir(rootDir), _cgiExec(""), _autoIndex(autoIndex),
+		  _return(-1, ""), _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
 		for (int i = 0; i < NO_METHOD; i++)
