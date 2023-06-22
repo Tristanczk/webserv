@@ -129,7 +129,7 @@ private:
 				if (c == ':')
 					headerState = HEADER_SKIP;
 				else
-					key += c;
+					key += tolower(c);
 				break;
 			case HEADER_SKIP:
 				if (c != ' ')
