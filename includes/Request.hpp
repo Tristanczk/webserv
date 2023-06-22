@@ -140,6 +140,10 @@ private:
 				break;
 			}
 		}
+		// il n'y a pas des checks a faire sur la valeur de key ? est-ce qu'il ne faut pas qu'elle
+		// prenne un nombre limite de valeurs possibles ?
+		// est-ce qu'il ne faut pas verifier que la valeur de key n'est pas deja dans _headers
+		// (quelle gestion pour les doublons) ?
 		if (key.empty() || value.empty())
 			return CLIENT_BAD_REQUEST;
 		_headers[key] = value;
@@ -149,12 +153,15 @@ private:
 	StatusCode checkHeaders() {
 		if (_isRequestLine)
 			return CLIENT_BAD_REQUEST;
+		// pourquoi on verifie qu'il n'y a pas de champ host ? Ca ne devrait pas etre l'inverse ?
 		if (_headers.find("host") != _headers.end())
 			return CLIENT_BAD_REQUEST;
 		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
 		if (_method == POST) {
 			if (it == _headers.end())
 				return CLIENT_LENGTH_REQUIRED;
+			/// pourquoi on ne check le content-length que pour POST ? il ne faudrait pas le faire
+			/// pour les autres methodes s'il y en a un ?
 			const std::string contentLengthString = it->second;
 			if (contentLengthString.find_first_not_of("0123456789") != std::string::npos)
 				return CLIENT_BAD_REQUEST;
