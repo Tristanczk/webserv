@@ -85,8 +85,8 @@ private:
 	std::vector<unsigned char> _body;
 
 	void clear() {
-		while (!_queue.empty())
-			_queue.pop();
+		std::queue<unsigned char> empty;
+		_queue.swap(empty);
 		_line.clear();
 		_headerSize = 0;
 		_contentLength = 0;
