@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <vector>
 
+#define LONGEST_HTTP_METHOD_NAME 7
 #define DEFAULT_PORT 8080
 #define MAX_PORT 65535
 #define MAX_CLIENTS 1024
@@ -164,10 +165,16 @@ bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
 bool parseRoot(std::istringstream&, std::string&);
 
+class Request;
+class Response;
 class Location;
 class VirtualServer;
 class Client;
 class Server;
+
+#include "Request.hpp"
+
+#include "Response.hpp"
 
 #include "Location.hpp"
 

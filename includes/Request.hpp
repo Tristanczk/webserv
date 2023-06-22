@@ -5,19 +5,17 @@
 // TODO return true once a request is finished even if more is in the stack
 // TODO one Request for each Client
 // TODO fail if no host header field
-// TODO illegal characters in request line, header and body
-// TODO states for \r\n
+// TODO illegal characters in request line or header
+// TODO don't accept both transfer encoding and content length
 
 // TODO version too long or method too long
 
 // TODO 411 Length Required
 // TODO 413 Payload Too Large
 // TODO 414 URI Too Long
+// TODO 426 Upgrade Required
 // TODO 431 Request Header Fields Too Large
 // TODO 505 HTTP Version Not Supported
-
-// TODO _statusCode for every return false
-// TODO _responseBody for every return false
 
 typedef enum RequestParsingEnum {
 	REQUEST_PARSING_CURRENT,
@@ -26,43 +24,43 @@ typedef enum RequestParsingEnum {
 } RequestParsingEnum;
 
 typedef struct RequestParsingSuccess {
-	RequestMethod _method;
-	std::string _uri;
-	std::map<std::string, std::string> _headers;
-	std::vector<unsigned char> _body;
+	RequestMethod method;
+	std::string uri;
+	std::map<std::string, std::string> headers;
+	std::vector<unsigned char> body;
 } RequestParsingSuccess;
-
-typedef struct RequestParsingFailure {
-	StatusCode _statusCode;
-	std::string info;
-} RequestParsingFailure;
 
 typedef struct RequestParsingResult {
 	RequestParsingEnum result;
 	RequestParsingSuccess success;
-	RequestParsingFailure failure;
+	StatusCode statusCode;
 } RequestParsingResult;
 
 class Request {
 public:
 	Request(size_t bufferSize, size_t maxHeaderSize, size_t maxBodySize)
 		: _bufferSize(bufferSize), _maxHeaderSize(maxHeaderSize), _maxBodySize(maxBodySize) {
-		clear(false);
+		clear();
+		(void)_maxHeaderSize;
+		(void)_maxBodySize;
+		(void)_bufferSize;
 	}
 
-	RequestParsingResult parse(const unsigned char* s, size_t size) {
+	RequestParsingResult parse(const unsigned char* s = NULL, size_t size = 0) {
 		for (size_t i = 0; i < size; ++i)
 			_queue.push(s[i]);
 		while (!_queue.empty()) {
 			unsigned char c = _queue.back();
 			_queue.pop();
+			(void)c;
 		}
-		return parsingFailure();
+		return parsingCurrent();
 	}
 
 private:
 	std::queue<unsigned char> _queue;
-	std::string line;
+	std::string _beforeEmptyLine;
+	bool _isInBody;
 
 	RequestMethod _method;
 	std::string _methodString;
@@ -81,9 +79,11 @@ private:
 	const size_t _maxHeaderSize;
 	const size_t _maxBodySize;
 
-	void clear(bool clearQueue) {
-		if (clearQueue)
-			std::queue<unsigned char>().swap(_queue);
+	void clear() {
+		while (!_queue.empty())
+			_queue.pop();
+		_beforeEmptyLine.clear();
+		_isInBody = false;
 		_method = NO_METHOD;
 		_methodString.clear();
 		_uri.clear();
@@ -99,7 +99,6 @@ private:
 	RequestParsingResult parsingCurrent() {
 		RequestParsingResult rpr;
 		rpr.result = REQUEST_PARSING_CURRENT;
-		// TODO
 		return rpr;
 	}
 
@@ -107,7 +106,7 @@ private:
 		RequestParsingResult rpr;
 		rpr.result = REQUEST_PARSING_FAILURE;
 		// TODO
-		clear(true);
+		clear();
 		return rpr;
 	}
 
@@ -115,7 +114,7 @@ private:
 		RequestParsingResult rpr;
 		rpr.result = REQUEST_PARSING_SUCCESS;
 		// TODO
-		clear(false);
+		clear();
 		return rpr;
 	}
 };
