@@ -86,7 +86,7 @@ private:
 
 	void clear() {
 		std::queue<unsigned char> empty;
-		_queue.swap(empty);
+		std::swap(_queue, empty);
 		_line.clear();
 		_headerSize = 0;
 		_contentLength = 0;
