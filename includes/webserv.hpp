@@ -26,7 +26,6 @@
 #include <unistd.h>
 #include <vector>
 
-#define LONGEST_HTTP_METHOD_NAME 7
 #define DEFAULT_PORT 8080
 #define MAX_PORT 65535
 #define MAX_CLIENTS 1024
