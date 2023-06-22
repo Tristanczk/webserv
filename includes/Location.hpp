@@ -9,7 +9,7 @@ public:
 			 const std::vector<std::string>& serverIndexPages,
 			 const std::pair<long, std::string>& serverReturn)
 		: _modifier(NONE), _uri(""), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
-		  _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
+		  _cgiExec(""), _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
 		for (int i = 0; i < NO_METHOD; i++)
@@ -103,12 +103,15 @@ public:
 		std::cout << std::endl;
 	}
 
+	std::string getCgiExec() const { return _cgiExec; }
+
 private:
 	typedef bool (Location::*KeywordHandler)(std::istringstream&);
 	typedef enum e_modifier { NONE, REGEX, EXACT } t_modifier;
 	t_modifier _modifier;
 	std::string _uri;
 	std::string _rootDir;
+	std::string _cgiExec;
 	bool _autoIndex;
 	std::pair<long, std::string> _return;
 	bool _allowedMethods[NO_METHOD]; // NO_METHOD is equivalent to the number of methods in the
@@ -127,13 +130,15 @@ private:
 		_keywordHandlers["index"] = &Location::parseIndex;
 		_keywordHandlers["return"] = &Location::parseReturn;
 		_keywordHandlers["limit_except"] = &Location::parseMethods;
+		_keywordHandlers["cgi"] = &Location::parseCgi;
 	}
 
-	bool parseRoot(std::istringstream& iss) { return ::parseRoot(iss, _rootDir); }
+	bool parseRoot(std::istringstream& iss) { return ::parseString(iss, _rootDir, "root"); }
 	bool parseAutoIndex(std::istringstream& iss) { return ::parseAutoIndex(iss, _autoIndex); }
 	bool parseErrorPages(std::istringstream& iss) { return ::parseErrorPages(iss, _errorPages); }
 	bool parseIndex(std::istringstream& iss) { return ::parseIndex(iss, _indexPages); }
 	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
+	bool parseCgi(std::istringstream& iss) { return ::parseString(iss, _cgiExec, "cgi"); }
 
 	bool parseMethods(std::istringstream& iss) {
 		std::string method;

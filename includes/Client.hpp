@@ -9,8 +9,10 @@ public:
 	};
 	~Client(){};
 
+	// buffer size is defined after reading the header as the server name is required to identify
+	// the correct virtual server
 	std::string readRequest() {
-		std::size_t bufferSize = _currentMatchingServer->getBufferSize();
+		std::size_t bufferSize = BUFFER_SIZE_HEADER;
 		return fullRead(_fd, bufferSize);
 	}
 
@@ -54,6 +56,54 @@ public:
 		return _currentMatchingServer;
 	}
 
+	Location* findMatchingLocation(const std::string& uri) {
+		if (_currentMatchingServer == NULL)
+			return NULL;
+		_currentMatchingLocation = _currentMatchingServer->findMatchingLocation(uri);
+		return _currentMatchingLocation;
+	}
+
+	std::string buildResponse(char* const envp[], std::string& filename) {
+		std::string cgiExec = _currentMatchingLocation->getCgiExec();
+		if (cgiExec.empty()) {
+			// TODO
+			//  return buildResponseHTML();
+			return "";
+		} else {
+			// build the header
+			std::string body = buildCgiBody(cgiExec, filename, envp);
+			// TODO
+			return "";
+		}
+	}
+
+	std::string buildCgiBody(std::string path_to_exec, std::string filename, char* const envp[]) {
+		int pipefd[2];
+		std::string finalPath;
+		if (!getValidPath(path_to_exec, envp, finalPath))
+			// do we throw an exception in this case or do we handle the error differently?
+			throw std::runtime_error("Invalid path for CGI");
+		if (pipe(pipefd) == -1)
+			throw std::runtime_error("pipe");
+		pid_t pid = fork();
+		if (pid == -1)
+			throw std::runtime_error("fork");
+		if (pid == 0) {
+			char* const argv[] = {const_cast<char*>(finalPath.c_str()),
+								  const_cast<char*>(filename.c_str()), NULL};
+			close(pipefd[0]);
+			if (dup2(pipefd[1], STDOUT_FILENO) == -1)
+				throw std::runtime_error("dup2");
+			close(pipefd[1]);
+			if (execve(finalPath.c_str(), argv, envp) == -1)
+				throw std::runtime_error("execv");
+		}
+		close(pipefd[1]);
+		std::string response = fullRead(pipefd[0], BUFFER_SIZE_SERVER);
+		close(pipefd[0]);
+		return response;
+	}
+
 	struct sockaddr_in& getAddress() { return _address; }
 	socklen_t& getAddressLen() { return _addressLen; }
 	in_addr_t getIp() { return _ip; }
@@ -62,6 +112,7 @@ public:
 private:
 	std::vector<VirtualServer*> _associatedServers;
 	VirtualServer* _currentMatchingServer;
+	Location* _currentMatchingLocation;
 	struct sockaddr_in _address;
 	socklen_t _addressLen;
 	in_addr_t _ip;

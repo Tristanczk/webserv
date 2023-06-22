@@ -209,7 +209,7 @@ private:
 	bool parseErrorPages(std::istringstream& iss) { return ::parseErrorPages(iss, _errorPages); }
 	bool parseIndex(std::istringstream& iss) { return ::parseIndex(iss, _indexPages); }
 	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
-	bool parseRoot(std::istringstream& iss) { return ::parseRoot(iss, _rootDir); }
+	bool parseRoot(std::istringstream& iss) { return ::parseString(iss, _rootDir, "root"); }
 
 	bool parseClientBufferSize(std::istringstream& iss) {
 		return parseSize(iss, _bufferSize, "client_buffer_size", MIN_BUFFER_SIZE,
