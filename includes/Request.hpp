@@ -154,9 +154,7 @@ private:
 	StatusCode checkHeaders() {
 		if (_isRequestLine)
 			return CLIENT_BAD_REQUEST;
-		// pourquoi on verifie qu'il n'y a pas de champ host ? Ca ne devrait pas etre l'inverse ?
-		// le nom du champ est Host et pas host non ?
-		if (_headers.find("host") != _headers.end())
+		if (_headers.find("host") == _headers.end())
 			return CLIENT_BAD_REQUEST;
 		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
 		if (_method == POST) {
