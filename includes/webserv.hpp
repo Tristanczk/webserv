@@ -30,13 +30,10 @@
 #define MAX_PORT 65535
 #define MAX_CLIENTS 1024
 #define MAX_URI_SIZE 2048
-#define BUFFER_SIZE_SERVER_LIMIT 1048576
 #define SIZE_LIMIT 1073741824
-#define BUFFER_SIZE_SERVER 16384
-#define MIN_BUFFER_SIZE 1024
+#define BUFFER_SIZE 16384
 #define DEFAULT_SIZE 1048576
 #define DEFAULT_ERROR 0
-#define BUFFER_SIZE_HEADER 16384
 
 #define CONFIG_FILE_ERROR "Configuration error: "
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"

@@ -50,7 +50,7 @@ public:
 			for (int i = 0; i < _numFds; ++i) {
 				// TODO : do we keep in the end ?
 				if (_eventList[i].data.fd == STDIN_FILENO) {
-					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE_SERVER);
+					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE);
 					if (message == "quit\n") {
 						std::cout << "Exiting program" << std::endl;
 						return;

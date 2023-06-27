@@ -101,7 +101,7 @@ public:
 				throw std::runtime_error("execve");
 		}
 		close(pipefd[1]);
-		std::string response = fullRead(pipefd[0], BUFFER_SIZE_SERVER);
+		std::string response = fullRead(pipefd[0], BUFFER_SIZE);
 		close(pipefd[0]);
 		return response;
 	}
@@ -123,7 +123,7 @@ private:
 	std::queue<Response> _responseQueue;
 
 	std::string readRequest() {
-		std::size_t bufferSize = BUFFER_SIZE_HEADER;
+		std::size_t bufferSize = BUFFER_SIZE;
 		return fullRead(_fd, bufferSize);
 	}
 };
