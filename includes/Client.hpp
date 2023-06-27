@@ -9,14 +9,19 @@ public:
 	};
 	~Client(){};
 
-	void handleRequests() {
-		std::string request = readRequest();
-		// TODO: parse header
-		// get the server name in the host part
-		// find the best matching server (using the findBestMatch method)
-		// get the value for the max body size
-		return true;
+	std::string readRequest() {
+		std::size_t bufferSize = BUFFER_SIZE;
+		return fullRead(_fd, bufferSize);
 	}
+
+	// void handleRequests() {
+	// 	std::string request = readRequest();
+	// 	// TODO: parse header
+	// 	// get the server name in the host part
+	// 	// find the best matching server (using the findBestMatch method)
+	// 	// get the value for the max body size
+	// 	return true;
+	// }
 
 	void printHostPort() {
 		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
@@ -121,9 +126,4 @@ private:
 	in_port_t _port;
 	int _fd;
 	std::queue<Response> _responseQueue;
-
-	std::string readRequest() {
-		std::size_t bufferSize = BUFFER_SIZE;
-		return fullRead(_fd, bufferSize);
-	}
 };
