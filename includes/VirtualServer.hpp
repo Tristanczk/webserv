@@ -11,9 +11,7 @@ public:
 		_address.sin_addr.s_addr = htonl(INADDR_ANY);
 		_rootDir = "./www/";
 		_autoIndex = false;
-		_bufferSize = BUFFER_SIZE_SERVER;
 		_bodySize = DEFAULT_SIZE;
-		_headerSize = DEFAULT_SIZE;
 		_errorPages[DEFAULT_ERROR] = "./www/default_error.html";
 		_return.first = -1;
 		initKeywordMap();
@@ -101,7 +99,6 @@ public:
 	in_addr_t getAddr() const { return _address.sin_addr.s_addr; }
 	struct sockaddr_in getAddress() const { return _address; }
 	const std::vector<std::string>& getServerNames() const { return _serverNames; }
-	std::size_t getBufferSize() const { return _bufferSize; }
 
 	void printServerInformation() const {
 		std::cout << "Server information:" << std::endl;
@@ -114,9 +111,7 @@ public:
 		std::cout << std::endl;
 		std::cout << "Root directory: " << _rootDir << std::endl;
 		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
-		std::cout << "Client buffer size: " << _bufferSize << std::endl;
 		std::cout << "Client max body size: " << _bodySize << std::endl;
-		std::cout << "Client max header size: " << _headerSize << std::endl;
 		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
 		std::cout << "Error pages:" << std::endl;
 		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
@@ -139,9 +134,7 @@ private:
 	std::vector<std::string> _serverNames;
 	std::string _rootDir;
 	bool _autoIndex;
-	std::size_t _bufferSize;
 	std::size_t _bodySize;
-	std::size_t _headerSize;
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
 	std::pair<long, std::string> _return;
@@ -153,9 +146,7 @@ private:
 		_keywordHandlers["server_name"] = &VirtualServer::parseServerNames;
 		_keywordHandlers["root"] = &VirtualServer::parseRoot;
 		_keywordHandlers["autoindex"] = &VirtualServer::parseAutoIndex;
-		_keywordHandlers["client_buffer_size"] = &VirtualServer::parseClientBufferSize;
 		_keywordHandlers["client_max_body_size"] = &VirtualServer::parseClientMaxBodySize;
-		_keywordHandlers["client_max_header_size"] = &VirtualServer::parseClientMaxHeaderSize;
 		_keywordHandlers["error_page"] = &VirtualServer::parseErrorPages;
 		_keywordHandlers["index"] = &VirtualServer::parseIndex;
 		_keywordHandlers["return"] = &VirtualServer::parseReturn;
@@ -211,17 +202,8 @@ private:
 	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
 	bool parseRoot(std::istringstream& iss) { return ::parseString(iss, _rootDir, "root"); }
 
-	bool parseClientBufferSize(std::istringstream& iss) {
-		return parseSize(iss, _bufferSize, "client_buffer_size", MIN_BUFFER_SIZE,
-						 BUFFER_SIZE_SERVER_LIMIT);
-	}
-
 	bool parseClientMaxBodySize(std::istringstream& iss) {
 		return parseSize(iss, _bodySize, "client_max_body_size", 0, SIZE_LIMIT);
-	}
-
-	bool parseClientMaxHeaderSize(std::istringstream& iss) {
-		return parseSize(iss, _headerSize, "client_max_header_size", 0, SIZE_LIMIT);
 	}
 
 	bool parseSize(std::istringstream& iss, std::size_t& size, const std::string& keyword,

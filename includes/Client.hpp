@@ -9,11 +9,13 @@ public:
 	};
 	~Client(){};
 
-	// buffer size is defined after reading the header as the server name is required to identify
-	// the correct virtual server
-	std::string readRequest() {
-		std::size_t bufferSize = BUFFER_SIZE_HEADER;
-		return fullRead(_fd, bufferSize);
+	void handleRequests() {
+		std::string request = readRequest();
+		// TODO: parse header
+		// get the server name in the host part
+		// find the best matching server (using the findBestMatch method)
+		// get the value for the max body size
+		return true;
 	}
 
 	void printHostPort() {
@@ -118,4 +120,10 @@ private:
 	in_addr_t _ip;
 	in_port_t _port;
 	int _fd;
+	std::queue<Response> _responseQueue;
+
+	std::string readRequest() {
+		std::size_t bufferSize = BUFFER_SIZE_HEADER;
+		return fullRead(_fd, bufferSize);
+	}
 };
