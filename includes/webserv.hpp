@@ -33,6 +33,7 @@
 #define SIZE_LIMIT 1073741824
 #define BUFFER_SIZE 16384
 #define DEFAULT_SIZE 1048576
+#define MAX_HEADER_SIZE 1048576
 #define DEFAULT_ERROR 0
 
 #define CONFIG_FILE_ERROR "Configuration error: "
