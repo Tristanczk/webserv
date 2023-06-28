@@ -19,6 +19,7 @@ int main(int argc, char* argv[]) {
 		std::cout << BLUE << "\rGood bye. 💞" << RESET << std::endl;
 		return EXIT_SUCCESS;
 	} catch (const SystemError& e) {
+		std::perror(e.funcName);
 		return EXIT_FAILURE;
 	}
 }

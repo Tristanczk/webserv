@@ -8,8 +8,6 @@ void signalHandler(int signum) {
 }
 
 void syscall(int returnValue, const char* funcName) {
-	if (returnValue == -1) {
-		std::perror(funcName);
+	if (returnValue == -1)
 		throw SystemError(funcName);
-	}
 }
