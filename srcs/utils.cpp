@@ -138,6 +138,10 @@ bool getValidPath(std::string path, char* const envp[], std::string& finalPath) 
 	return false;
 }
 
+std::string getBasename(const std::string& path) {
+	return path.substr(path.find_last_of("/\\") + 1);
+}
+
 std::string getDate() {
 	std::time_t t = std::time(0);
 	std::tm* now = std::localtime(&t);

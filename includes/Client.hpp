@@ -90,21 +90,20 @@ public:
 		if (!getValidPath(path_to_exec, envp, finalPath))
 			// do we throw an exception in this case or do we handle the error differently?
 			// TODO return internal server error probably
-			throw std::runtime_error("Invalid path for CGI");
-		if (pipe(pipefd) == -1)
-			throw std::runtime_error("pipe");
+			throw SystemError("Invalid path for CGI");
+		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
 		if (pid == -1)
-			throw std::runtime_error("fork");
+			throw SystemError("fork");
 		if (pid == 0) {
 			char* const argv[] = {const_cast<char*>(finalPath.c_str()),
 								  const_cast<char*>(filename.c_str()), NULL};
 			close(pipefd[0]);
 			if (dup2(pipefd[1], STDOUT_FILENO) == -1)
-				throw std::runtime_error("dup2");
+				throw SystemError("dup2");
 			close(pipefd[1]);
 			if (execve(finalPath.c_str(), argv, envp) == -1)
-				throw std::runtime_error("execve");
+				throw SystemError("execve");
 		}
 		close(pipefd[1]);
 		std::string response = fullRead(pipefd[0], BUFFER_SIZE);

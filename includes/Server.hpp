@@ -2,10 +2,24 @@
 
 #include "webserv.hpp"
 
+extern bool run;
+
 class Server {
 public:
 	Server() : _epollFd(-1){};
-	~Server() { cleanServer(); };
+	~Server() {
+		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
+			 ++it) {
+			close(*it);
+		}
+		for (int i = 0; i < _numFds; ++i) {
+			if (_eventList[i].data.fd != STDIN_FILENO) {
+				close(_eventList[i].data.fd);
+			}
+		}
+		if (_epollFd != -1)
+			close(_epollFd);
+	};
 
 	bool init(const char* filename) {
 		if (!parseConfig(filename))
@@ -45,85 +59,78 @@ public:
 	void loop() {
 		int clientFd;
 		// std::cout << "Server is running" << std::endl;
-		while (true) {
-			syscall(_numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1), "epoll_wait");
+		while (run) {
+			_numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1);
+			if (_numFds < 0) {
+				if (!run)
+					break;
+				throw SystemError("epoll_wait");
+			}
 			for (int i = 0; i < _numFds; ++i) {
-				// TODO : do we keep in the end ?
-				if (_eventList[i].data.fd == STDIN_FILENO) {
-					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE);
-					if (message == "quit\n") {
-						std::cout << "Exiting program" << std::endl;
-						return;
+				std::set<int>::iterator it = _listenSockets.find(_eventList[i].data.fd);
+				if (it != _listenSockets.end()) {
+					Client client;
+					// TODO : should we exit the server in case of accept error ?
+					syscall(clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
+											  &client.getAddressLen()),
+							"accept");
+					if (!client.setInfo(clientFd)) {
+						close(clientFd);
+						continue;
+					}
+					client.findAssociatedServers(_virtualServers);
+					// client.printHostPort();
+					if (addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP) == -1) {
+						// TODO : handle error appropriately
+					} else {
+						_clients[clientFd] = client;
+						// std::cout << "New client connected" << std::endl;
 					}
 				} else {
-					std::set<int>::iterator it = _listenSockets.find(_eventList[i].data.fd);
-					if (it != _listenSockets.end()) {
-						Client client;
-						// TODO : should we exit the server in case of accept error ?
-						syscall(clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
-												  &client.getAddressLen()),
-								"accept");
-						if (!client.setInfo(clientFd)) {
-							close(clientFd);
-							continue;
-						}
-						client.findAssociatedServers(_virtualServers);
-						// client.printHostPort();
-						if (addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP) ==
-							-1) {
-							// TODO : handle error appropriately
-						} else {
-							_clients[clientFd] = client;
-							// std::cout << "New client connected" << std::endl;
-						}
-					} else {
-						// should we handle error or unexpected closure differently ?
-						// especially is there a need to handle EPOLLRDHUP in a specific way ?
-						// because it might indicate that the connection is only half closed and can
-						// still receive data information from the server
-						if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+					// should we handle error or unexpected closure differently ?
+					// especially is there a need to handle EPOLLRDHUP in a specific way ?
+					// because it might indicate that the connection is only half closed and can
+					// still receive data information from the server
+					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+						syscall(close(clientFd), "close");
+						_clients.erase(clientFd);
+						continue;
+					} else if (_eventList[i].events & EPOLLIN) {
+						clientFd = _eventList[i].data.fd;
+						Client& client = _clients[clientFd];
+						std::string request = client.readRequest();
+						// TODO : parsing of the request
+						// TODO : get the server name in order to find the best matching server
+						// for the request
+						// std::string serverName =
+						// client.findServerName(request); VirtualServer* server =
+						// client.findBestMatch(serverName); TODO : building of the response
+						if (request.empty()) {
 							syscall(close(clientFd), "close");
 							_clients.erase(clientFd);
-							continue;
-						} else if (_eventList[i].events & EPOLLIN) {
-							clientFd = _eventList[i].data.fd;
-							Client& client = _clients[clientFd];
-							std::string request = client.readRequest();
-							// TODO : parsing of the request
-							// TODO : get the server name in order to find the best matching server
-							// for the request
-							// std::string serverName =
-							// client.findServerName(request); VirtualServer* server =
-							// client.findBestMatch(serverName); TODO : building of the response
-							if (request.empty()) {
-								syscall(close(clientFd), "close");
-								_clients.erase(clientFd);
-							} else {
-								// TODO: check if the request is complete before swapping to
-								// EPOLLOUT
-								if (modifyEpollEvent(_epollFd, clientFd,
-													 EPOLLOUT | EPOLLET | EPOLLRDHUP) == -1) {
-									syscall(close(clientFd), "close");
-									_clients.erase(clientFd);
-								}
-							}
-							// std::cout << "received new request from client" << std::endl;
-						} else if (_eventList[i].events & EPOLLOUT) {
-							clientFd = _eventList[i].data.fd;
-							// TODO, send response to client
-							// int n =
-							// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
-							// if (n == -1) {
-							// 	std::cerr << "Error while sending response" << std::endl;
-							// 	syscall(close(clientFd), "close");
-							// 	_clients.erase(clientFd);
-							// }
-							// std::cout << "sent response to client" << std::endl;
-							if (modifyEpollEvent(_epollFd, clientFd,
-												 EPOLLIN | EPOLLET | EPOLLRDHUP) == -1) {
+						} else {
+							// TODO: check if the request is complete before swapping to
+							// EPOLLOUT
+							if (modifyEpollEvent(_epollFd, clientFd, EPOLLOUT | EPOLLRDHUP) == -1) {
 								syscall(close(clientFd), "close");
 								_clients.erase(clientFd);
 							}
+						}
+						// std::cout << "received new request from client" << std::endl;
+					} else if (_eventList[i].events & EPOLLOUT) {
+						clientFd = _eventList[i].data.fd;
+						// TODO, send response to client
+						// int n =
+						// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
+						// if (n == -1) {
+						// 	std::cerr << "Error while sending response" << std::endl;
+						// 	syscall(close(clientFd), "close");
+						// 	_clients.erase(clientFd);
+						// }
+						// std::cout << "sent response to client" << std::endl;
+						if (modifyEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP) == -1) {
+							syscall(close(clientFd), "close");
+							_clients.erase(clientFd);
 						}
 					}
 				}
@@ -189,8 +196,6 @@ private:
 			std::cerr << "Error when creating epoll" << std::endl;
 			return false;
 		}
-		if (addEpollEvent(_epollFd, STDIN_FILENO, EPOLLIN | EPOLLET) == -1)
-			return false;
 		return true;
 	}
 
@@ -246,31 +251,10 @@ private:
 				std::cerr << "Error when listening on socket" << std::endl;
 				return false;
 			}
-			if (addEpollEvent(_epollFd, socketFd, EPOLLIN | EPOLLET) == -1)
+			if (addEpollEvent(_epollFd, socketFd, EPOLLIN) == -1)
 				return false;
 			_listenSockets.insert(socketFd);
 		}
 		return true;
-	}
-
-	void cleanServer() {
-		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
-			 ++it) {
-			close(*it);
-		}
-		for (int i = 0; i < _numFds; ++i) {
-			if (_eventList[i].data.fd != STDIN_FILENO) {
-				close(_eventList[i].data.fd);
-			}
-		}
-		if (_epollFd != -1)
-			close(_epollFd);
-	}
-
-	void syscall(int returnValue, const char* funcName) {
-		if (returnValue == -1) {
-			std::perror(funcName);
-			throw SystemError(funcName);
-		}
 	}
 };

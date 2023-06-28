@@ -1,17 +1,24 @@
 #include "../includes/webserv.hpp"
 
+bool run = true;
+
 int main(int argc, char* argv[]) {
-	if (argc > 2 || (argc == 2 && !endswith(argv[1], ".conf"))) {
+	signal(SIGINT, signalHandler);
+	const char* conf = argc == 2 ? argv[1] : DEFAULT_CONF;
+	if (argc > 2 || !endswith(conf, ".conf")) {
 		std::cerr << "Usage: " << argv[0] << " [filename.conf]" << std::endl;
 		return EXIT_FAILURE;
 	}
 	Server server;
-	if (!server.init(argc == 2 ? argv[1] : DEFAULT_CONF))
+	if (!server.init(conf))
 		return EXIT_FAILURE;
 	try {
+		std::cout << BLUE << getBasename(argv[0]) << " is running." << RESET << std::endl;
+		std::cout << BLUE << "Press Ctrl+C to exit." << RESET << std::endl;
 		server.loop();
-	} catch (std::exception& e) {
+		std::cout << BLUE << "\rGood bye. 💞" << RESET << std::endl;
+		return EXIT_SUCCESS;
+	} catch (const SystemError& e) {
 		return EXIT_FAILURE;
 	}
-	return EXIT_SUCCESS;
 }

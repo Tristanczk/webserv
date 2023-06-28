@@ -45,6 +45,11 @@
 #define ERROR_PORT "invalid port number in listen instruction"
 #define DEFAULT_CONF "conf/valid/default.conf"
 
+#define RESET "\033[0m"
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define BLUE "\033[34m"
+
 #define LOCATION_MATCH_EXACT -2
 #define LOCATION_MATCH_REGEX -1
 #define LOCATION_MATCH_NONE 0
@@ -151,16 +156,20 @@ bool endswith(const std::string&, const std::string&);
 const std::string* findCommonString(const std::vector<std::string>&,
 									const std::vector<std::string>&);
 std::string fullRead(int, size_t);
-bool readHTML(std::string& uri, std::string& content);
+std::string getBasename(const std::string&);
+std::string getDate();
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
+bool getValidPath(std::string, char* const[], std::string&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
-bool getValidPath(std::string, char* const[], std::string&);
-std::string getDate();
+bool readHTML(std::string&, std::string&);
 
 int addEpollEvent(int, int, int);
 int modifyEpollEvent(int, int, int);
+
+void signalHandler(int);
+void syscall(int, const char*);
 
 bool parseAutoIndex(std::istringstream&, bool&);
 bool parseErrorCode(std::string&, std::vector<int>&);
