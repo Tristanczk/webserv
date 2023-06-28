@@ -112,7 +112,11 @@ private:
 	}
 
 	void buildHeader() {
-		// which headers do we need to build ?
+		_headers["Date"] = getDate();
+		_headers["Server"] = "Webserv/1.0";
+		_headers["Content-Length"] = toString(_body.length());
+		if (!_bodyType.empty())
+			_headers["Content-Type"] = _bodyType;
 	}
 
 	void buildErrorPage() {

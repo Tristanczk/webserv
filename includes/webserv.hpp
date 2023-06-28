@@ -7,8 +7,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <exception>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <istream>
 #include <map>
@@ -155,6 +157,7 @@ bool getIpValue(std::string, uint32_t&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
 bool getValidPath(std::string, char* const[], std::string&);
+std::string getDate(void);
 
 int addEpollEvent(int, int, int);
 int modifyEpollEvent(int, int, int);

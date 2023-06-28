@@ -138,3 +138,14 @@ bool getValidPath(std::string path, char* const envp[], std::string& finalPath) 
 	}
 	return false;
 }
+
+std::string getDate(void) {
+	std::time_t t = std::time(0);
+	std::tm* now = std::localtime(&t);
+	std::string weekdays[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	std::string months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+							  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+	char buffer[256];
+	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", now);
+	return static_cast<std::string>(buffer);
+}
