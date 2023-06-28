@@ -1,17 +1,21 @@
 #pragma once
 
-#include "Request.hpp"
 #include "webserv.hpp"
 
 class Response {
 public:
 	Response(std::string& rootDir, bool& autoIndex, std::map<int, std::string> errorPages,
 			 std::vector<std::string>& indexPages, std::pair<long, std::string>& redirect,
-			 bool _allowedMethods[NO_METHOD], std::string& cgiExec)
+			 bool allowedMethods[NO_METHOD], std::string& cgiExec)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
 		  _indexPages(indexPages), _return(redirect), _cgiExec(cgiExec) {
+		for (int i = 0; i < NO_METHOD; ++i)
+			_allowedMethods[i] = allowedMethods[i];
 		initKeywordMap();
 		initStatusMessageMap();
+		// TODO remove void
+		(void)_allowedMethods;
+		(void)_autoIndex;
 	}
 	~Response(){};
 
@@ -154,10 +158,8 @@ private:
 	}
 
 	std::string findFinalUri(std::string& uri) {
-		std::string finalUri;
 		int position = comparePrefix(uri, _locationUri);
-		finalUri = _rootDir + uri.substr(position);
-		return finalUri;
+		return _rootDir + uri.substr(position);
 	}
 
 	void buildHeaders(RequestParsingResult& request) { (void)request; }

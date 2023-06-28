@@ -13,7 +13,7 @@ void displayResult(const std::string& testName, bool result) {
 			  << std::endl;
 }
 
-int main(void) {
+int main() {
 	testParseConfig();
 	return status;
 }

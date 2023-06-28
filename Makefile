@@ -10,8 +10,7 @@ GARBAGE		:= .vscode
 
 CXX			:= c++
 CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -g3 -I$I
-# TODO --track-fds=yes but too annoying on VSCode
-VALGRIND	:= valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -q
+VALGRIND	:= valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --track-fds=yes -q
 
 vpath %.cpp $S $T
 

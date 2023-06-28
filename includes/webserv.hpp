@@ -157,7 +157,7 @@ bool getIpValue(std::string, uint32_t&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
 bool getValidPath(std::string, char* const[], std::string&);
-std::string getDate(void);
+std::string getDate();
 
 int addEpollEvent(int, int, int);
 int modifyEpollEvent(int, int, int);

@@ -1,6 +1,4 @@
 #include "../includes/webserv.hpp"
-#include <sstream>
-#include <string>
 
 bool configFileError(const std::string& message) {
 	std::cerr << CONFIG_FILE_ERROR << message << std::endl;
@@ -54,7 +52,7 @@ std::string fullRead(int fd, size_t bufferSize) {
 bool readHTML(std::string& uri, std::string& content) {
 	if (isDirectory(uri))
 		return false;
-	std::ifstream file(uri);
+	std::ifstream file(uri.c_str());
 	if (!file.good())
 		return false;
 	std::stringstream buffer;
@@ -139,13 +137,10 @@ bool getValidPath(std::string path, char* const envp[], std::string& finalPath) 
 	return false;
 }
 
-std::string getDate(void) {
+std::string getDate() {
 	std::time_t t = std::time(0);
 	std::tm* now = std::localtime(&t);
-	std::string weekdays[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-	std::string months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-							  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	char buffer[256];
 	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", now);
-	return static_cast<std::string>(buffer);
+	return std::string(buffer);
 }
