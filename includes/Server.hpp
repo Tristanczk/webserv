@@ -25,7 +25,8 @@ public:
 		if (!parseConfig(filename))
 			return false;
 		findVirtualServersToBind();
-		return initEpoll() && connectVirtualServers();
+		syscall(_epollFd = epoll_create1(0), "epoll_create1");
+		return connectVirtualServers();
 	}
 
 	bool parseConfig(const char* filename) {
@@ -187,15 +188,6 @@ private:
 										   " for server name: " + conflict);
 				}
 			}
-		}
-		return true;
-	}
-
-	bool initEpoll() {
-		_epollFd = epoll_create1(0);
-		if (_epollFd == -1) {
-			std::cerr << "Error when creating epoll" << std::endl;
-			return false;
 		}
 		return true;
 	}
