@@ -1,4 +1,5 @@
 #include "../includes/webserv.hpp"
+#include <sstream>
 #include <string>
 
 bool configFileError(const std::string& message) {
@@ -48,6 +49,18 @@ std::string fullRead(int fd, size_t bufferSize) {
 		if (buflen < bufferSize - 1)
 			return message;
 	}
+}
+
+bool readHTML(std::string& uri, std::string& content) {
+	if (isDirectory(uri))
+		return false;
+	std::ifstream file(uri);
+	if (!file.good())
+		return false;
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	content = buffer.str();
+	return true;
 }
 
 std::string getIpString(in_addr_t ip) {

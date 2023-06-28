@@ -122,16 +122,13 @@ private:
 			errorPageUri = _rootDir + it->second;
 		else
 			errorPageUri = _rootDir + _errorPages[DEFAULT_ERROR];
-		if (isDirectory(errorPageUri)) {
+		if (!readHTML(errorPageUri, _body)) {
+			_body = "There was an error while trying to access the specified error page for error "
+					"code " +
+					toString(_statusCode);
 			_bodyType = "text/plain";
-			_body = "Specified error page is a directory\r\n";
-		}
-		std::ifstream config(errorPageUri);
-		if (!config.good()) {
-			_body = "Cannot open specified error page\r\n";
-		}
-		// to do : finish this function to read the error page and put it in the body with type as
-		// text/html
+		} else
+			_bodyType = "text/html";
 	}
 
 	void buildHeaders(RequestParsingResult& request) { (void)request; }

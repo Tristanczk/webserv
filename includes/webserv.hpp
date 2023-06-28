@@ -149,6 +149,7 @@ bool endswith(const std::string&, const std::string&);
 const std::string* findCommonString(const std::vector<std::string>&,
 									const std::vector<std::string>&);
 std::string fullRead(int, size_t);
+bool readHTML(std::string& uri, std::string& content);
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
 bool isDirectory(const std::string&);
