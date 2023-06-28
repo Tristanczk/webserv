@@ -92,6 +92,7 @@ public:
 					// because it might indicate that the connection is only half closed and can
 					// still receive data information from the server
 					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+						// ??? Il sort d'ou ce clientFd?
 						syscall(close(clientFd), "close");
 						_clients.erase(clientFd);
 						continue;

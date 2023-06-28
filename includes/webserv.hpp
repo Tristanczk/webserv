@@ -176,7 +176,7 @@ bool parseErrorCode(std::string&, std::vector<int>&);
 bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
 bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
-bool parseString(std::istringstream& iss, std::string& content, std::string const keyword);
+bool parseString(std::istringstream&, std::string&, std::string const);
 
 class Request;
 class Response;
