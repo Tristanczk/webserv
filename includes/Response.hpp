@@ -15,16 +15,17 @@ public:
 	}
 	~Response(){};
 
-	bool buildResponse(RequestParsingResult& request) {
+	void buildResponse(RequestParsingResult& request) {
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			_statusCode = request.statusCode;
-			buildStatusLine();
 			buildErrorPage();
+			buildStatusLine();
 			buildHeader();
 		} else {
 			_statusCode = SUCCESS_OK;
+			if (!buildPage(request))
+				buildErrorPage();
 			buildStatusLine();
-			buildPage(request);
 			buildHeader();
 		}
 	}
@@ -140,7 +141,17 @@ private:
 			_bodyType = "text/html";
 	}
 
-	void buildPage(RequestParsingResult& request) { findFinalUri(request.success.uri); }
+	// for now, only handles html files
+	bool buildPage(RequestParsingResult& request) {
+		std::string uri = findFinalUri(request.success.uri);
+		if (!readHTML(uri, _body)) {
+			_statusCode = CLIENT_NOT_FOUND;
+			buildErrorPage();
+			return false;
+		}
+		_bodyType = "text/html";
+		return true;
+	}
 
 	std::string findFinalUri(std::string& uri) {
 		std::string finalUri;
