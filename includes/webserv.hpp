@@ -155,7 +155,7 @@ bool doesRegexMatch(const char*, const char*);
 bool endswith(const std::string&, const std::string&);
 const std::string* findCommonString(const std::vector<std::string>&,
 									const std::vector<std::string>&);
-std::string fullRead(int, size_t);
+std::string fullRead(int);
 std::string getBasename(const std::string&);
 std::string getDate();
 std::string getIpString(in_addr_t);

@@ -9,10 +9,7 @@ public:
 	};
 	~Client(){};
 
-	std::string readRequest() {
-		std::size_t bufferSize = BUFFER_SIZE;
-		return fullRead(_fd, bufferSize);
-	}
+	std::string readRequest() { return fullRead(_fd); }
 
 	// void handleRequests() {
 	// 	std::string request = readRequest();
@@ -106,7 +103,7 @@ public:
 				throw SystemError("execve");
 		}
 		close(pipefd[1]);
-		std::string response = fullRead(pipefd[0], BUFFER_SIZE);
+		std::string response = fullRead(pipefd[0]);
 		close(pipefd[0]);
 		return response;
 	}

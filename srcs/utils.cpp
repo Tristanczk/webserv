@@ -36,16 +36,16 @@ const std::string* findCommonString(const std::vector<std::string>& vec1,
 	return NULL;
 }
 
-std::string fullRead(int fd, size_t bufferSize) {
+std::string fullRead(int fd) {
 	std::string message;
-	char buf[bufferSize];
+	char buf[BUFFER_SIZE];
 	size_t buflen;
 
 	while (true) {
-		syscall(buflen = read(fd, buf, bufferSize - 1), "read");
+		syscall(buflen = read(fd, buf, BUFFER_SIZE - 1), "read");
 		buf[buflen] = '\0';
 		message += buf;
-		if (buflen < bufferSize - 1)
+		if (buflen < BUFFER_SIZE - 1)
 			return message;
 	}
 }
