@@ -19,8 +19,13 @@ public:
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			_statusCode = request.statusCode;
 			buildStatusLine();
-			// build header
 			buildErrorPage();
+			buildHeader();
+		} else {
+			_statusCode = SUCCESS_OK;
+			buildStatusLine();
+			buildPage(request);
+			buildHeader();
 		}
 	}
 
@@ -133,6 +138,15 @@ private:
 			_bodyType = "text/plain";
 		} else
 			_bodyType = "text/html";
+	}
+
+	void buildPage(RequestParsingResult& request) { findFinalUri(request.success.uri); }
+
+	std::string findFinalUri(std::string& uri) {
+		std::string finalUri;
+		int position = comparePrefix(uri, _locationUri);
+		finalUri = _rootDir + uri.substr(position);
+		return finalUri;
 	}
 
 	void buildHeaders(RequestParsingResult& request) { (void)request; }

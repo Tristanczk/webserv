@@ -183,6 +183,7 @@ private:
 	RequestParsingResult parsingSuccess() {
 		RequestParsingResult rpr;
 		rpr.result = REQUEST_PARSING_SUCCESS;
+		rpr.success.method = _method;
 		rpr.success.uri = _uri;
 		rpr.success.headers = _headers;
 		rpr.success.body = _body;
