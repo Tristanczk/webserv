@@ -23,10 +23,7 @@ typedef struct RequestParsingResult {
 
 class Request {
 public:
-	Request(size_t maxHeaderSize, size_t maxBodySize)
-		: _maxHeaderSize(maxHeaderSize), _maxBodySize(maxBodySize) {
-		clear();
-	}
+	Request(size_t maxBodySize) : _maxBodySize(maxBodySize) { clear(); }
 
 	RequestParsingResult parse(const unsigned char* s = NULL, size_t size = 0) {
 		for (size_t i = 0; i < size; ++i)
@@ -40,7 +37,7 @@ public:
 					return parsingSuccess();
 			} else {
 				++_headerSize;
-				if (_headerSize > _maxHeaderSize)
+				if (_headerSize > MAX_HEADER_SIZE)
 					return parsingFailure(CLIENT_REQUEST_HEADER_FIELDS_TOO_LARGE);
 				const bool expectsNewline = !_line.empty() && _line[_line.size() - 1] == '\r';
 				if (expectsNewline ? c != '\n' : c != '\r' && !isprint(c))
@@ -69,7 +66,6 @@ private:
 		HEADER_VALUE,
 	} HeaderState;
 
-	const size_t _maxHeaderSize;
 	const size_t _maxBodySize;
 
 	std::queue<unsigned char> _queue;

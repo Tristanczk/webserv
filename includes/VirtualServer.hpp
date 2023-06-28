@@ -11,7 +11,7 @@ public:
 		_address.sin_addr.s_addr = htonl(INADDR_ANY);
 		_rootDir = "./www/";
 		_autoIndex = false;
-		_bodySize = DEFAULT_SIZE;
+		_bodySize = DEFAULT_BODY_SIZE;
 		_errorPages[DEFAULT_ERROR] = "./www/default_error.html";
 		_return.first = -1;
 		initKeywordMap();
