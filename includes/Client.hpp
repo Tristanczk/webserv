@@ -89,6 +89,7 @@ public:
 		std::string finalPath;
 		if (!getValidPath(path_to_exec, envp, finalPath))
 			// do we throw an exception in this case or do we handle the error differently?
+			// TODO return internal server error probably
 			throw std::runtime_error("Invalid path for CGI");
 		if (pipe(pipefd) == -1)
 			throw std::runtime_error("pipe");

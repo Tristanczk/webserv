@@ -12,6 +12,7 @@ int comparePrefix(const std::string& s1, const std::string& s2) {
 	return i;
 }
 
+// TODO catch RegexError instead of generic exception where this function is called
 bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 	regex_t regex;
 	if (regcomp(&regex, regexStr, REG_EXTENDED) != 0)
