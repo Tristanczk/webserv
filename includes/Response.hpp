@@ -208,6 +208,7 @@ private:
 	// for now, only handles html files
 	bool buildPage(RequestParsingResult& request) {
 		std::string uri = findFinalUri(request.success.uri);
+		std::cout << "Final uri: " << uri << std::endl;
 		if (!readHTML(uri, _body)) {
 			_statusCode = CLIENT_NOT_FOUND;
 			buildErrorPage();
