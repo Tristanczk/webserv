@@ -234,4 +234,12 @@ private:
 			_listenSockets.insert(socketFd);
 		}
 	}
+
+public:
+	static void printVirtualServers(const std::vector<VirtualServer>& virtualServers) {
+		for (size_t i = 0; i < virtualServers.size(); ++i) {
+			std::cout << "Server " << i << ":" << std::endl;
+			virtualServers[i].print();
+		}
+	}
 };

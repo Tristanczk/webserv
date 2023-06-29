@@ -114,4 +114,9 @@ private:
 	in_port_t _port;
 	int _fd;
 	std::queue<Response> _responseQueue;
+
+public:
+	void printHostPort() {
+		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
+	}
 };

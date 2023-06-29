@@ -168,4 +168,28 @@ private:
 		if (_return.first == -1 && _serverReturn.first != -1)
 			_return = _serverReturn;
 	}
+
+public:
+	void print() const {
+		std::cout << "Location information:" << std::endl;
+		std::cout << "Modifier: "
+				  << (_modifier == NONE ? "none" : (_modifier == REGEX ? "regex" : "exact"))
+				  << std::endl;
+		std::cout << "URI: " << _uri << std::endl;
+		std::cout << "Root directory: " << _rootDir << std::endl;
+		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
+		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
+		std::cout << "Allowed methods: " << (_allowedMethods[GET] ? "GET " : "")
+				  << (_allowedMethods[POST] ? "POST " : "")
+				  << (_allowedMethods[DELETE] ? "DELETE " : "") << std::endl;
+		std::cout << "Error pages:" << std::endl;
+		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
+			 it != _errorPages.end(); it++)
+			std::cout << "error " << it->first << ": " << it->second << std::endl;
+		std::cout << "Index pages: ";
+		for (std::vector<std::string>::const_iterator it = _indexPages.begin();
+			 it != _indexPages.end(); it++)
+			std::cout << *it << ", ";
+		std::cout << std::endl;
+	}
 };
