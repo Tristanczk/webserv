@@ -83,8 +83,8 @@ public:
 
 private:
 	typedef bool (Location::*KeywordHandler)(std::istringstream&);
-	typedef enum e_modifier { NONE, REGEX, EXACT } t_modifier;
-	t_modifier _modifier;
+	typedef enum Modifier { NONE, REGEX, EXACT } Modifier;
+	Modifier _modifier;
 	std::string _uri;
 	std::string _rootDir;
 	std::string _cgiExec;

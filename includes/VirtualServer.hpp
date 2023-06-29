@@ -49,7 +49,7 @@ public:
 		return configFileError("missing closing bracket for server");
 	}
 
-	t_vsmatch isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
+	VirtualServerMatch isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
 		const bool addrIsAny = addr == htonl(INADDR_ANY);
 		if (port != _address.sin_port)
 			return VS_MATCH_NONE;

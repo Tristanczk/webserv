@@ -40,9 +40,10 @@ public:
 
 	VirtualServer* findBestMatch(const std::string& serverName) {
 		int bestMatch = -1;
-		t_vsmatch bestMatchLevel = VS_MATCH_NONE;
+		VirtualServerMatch bestMatchLevel = VS_MATCH_NONE;
 		for (size_t i = 0; i < _associatedServers.size(); ++i) {
-			t_vsmatch matchLevel = _associatedServers[i]->isMatching(_port, _ip, serverName);
+			VirtualServerMatch matchLevel =
+				_associatedServers[i]->isMatching(_port, _ip, serverName);
 			if (matchLevel > bestMatchLevel) {
 				bestMatch = i;
 				bestMatchLevel = matchLevel;
@@ -74,12 +75,12 @@ public:
 	}
 
 	std::string buildCgiBody(std::string path_to_exec, std::string filename, char* const envp[]) {
-		int pipefd[2];
 		std::string finalPath;
 		if (!getValidPath(path_to_exec, envp, finalPath))
 			// do we throw an exception in this case or do we handle the error differently?
 			// TODO return internal server error probably
 			throw SystemError("Invalid path for CGI");
+		int pipefd[2];
 		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
 		syscall(pid, "pipe");

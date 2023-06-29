@@ -63,13 +63,13 @@ std::string toString(T x) {
 	return ss.str();
 }
 
-typedef enum e_vsmatch {
+typedef enum VirtualServerMatch {
 	VS_MATCH_NONE = 0,
 	VS_MATCH_INADDR_ANY,
 	VS_MATCH_IP,
 	VS_MATCH_SERVER,
 	VS_MATCH_BOTH,
-} t_vsmatch;
+} VirtualServerMatch;
 
 typedef enum RequestMethod { GET = 0, POST, DELETE, NO_METHOD } RequestMethod;
 
