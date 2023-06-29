@@ -92,16 +92,15 @@ public:
 		pid_t pid = fork();
 		syscall(pid, "pipe");
 		if (pid == 0) {
-			// TODO catch errors in child or check for SIGABRT in parent
 			char* const argv[] = {const_cast<char*>(finalPath.c_str()),
 								  const_cast<char*>(filename.c_str()), NULL};
 			close(pipefd[0]);
-			if (dup2(pipefd[1], STDOUT_FILENO) == -1)
-				throw SystemError("dup2");
+			dup2(pipefd[1], STDOUT_FILENO);
 			close(pipefd[1]);
-			if (execve(finalPath.c_str(), argv, envp) == -1)
-				throw SystemError("execve");
+			execve(finalPath.c_str(), argv, envp);
+			exit(EXIT_FAILURE);
 		}
+		// TODO wait and return INTERNAL SERVER ERROR if status != EXIT_SUCCESS
 		close(pipefd[1]);
 		std::string response = fullRead(pipefd[0]);
 		close(pipefd[0]);
