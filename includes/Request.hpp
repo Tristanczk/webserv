@@ -1,6 +1,8 @@
 #pragma once
 
+#include "VirtualServer.hpp"
 #include "webserv.hpp"
+#include <netinet/in.h>
 
 typedef enum RequestParsingEnum {
 	REQUEST_PARSING_FAILURE,
@@ -13,6 +15,8 @@ typedef struct RequestParsingSuccess {
 	std::string uri;
 	std::map<std::string, std::string> headers;
 	std::vector<unsigned char> body;
+	VirtualServer* virtualServer;
+	Location* location;
 } RequestParsingSuccess;
 
 typedef struct RequestParsingResult {
@@ -23,7 +27,11 @@ typedef struct RequestParsingResult {
 
 class Request {
 public:
-	Request(size_t maxBodySize) : _maxBodySize(maxBodySize) { clear(); }
+	Request(std::vector<VirtualServer*>& associatedServers, in_addr_t& ip, in_port_t& port)
+		: _associatedServers(associatedServers), _ip(ip), _port(port),
+		  _maxBodySize(DEFAULT_BODY_SIZE), _matchingServer(NULL), _matchingLocation(NULL) {
+		clear();
+	}
 
 	RequestParsingResult parse(const char* s = NULL, size_t size = 0) {
 		for (size_t i = 0; i < size; ++i)
@@ -66,7 +74,12 @@ private:
 		HEADER_VALUE,
 	} HeaderState;
 
-	const size_t _maxBodySize;
+	std::vector<VirtualServer*>& _associatedServers;
+	in_addr_t _ip;
+	in_port_t _port;
+	size_t _maxBodySize;
+	VirtualServer* _matchingServer;
+	Location* _matchingLocation;
 
 	std::queue<unsigned char> _queue;
 	std::string _line;
@@ -148,6 +161,7 @@ private:
 			return CLIENT_BAD_REQUEST;
 		if (_headers.find("host") == _headers.end())
 			return CLIENT_BAD_REQUEST;
+		findMatchingServerAndLocation();
 		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
 		if (_method == POST) {
 			if (it == _headers.end())
@@ -160,6 +174,42 @@ private:
 				return CLIENT_PAYLOAD_TOO_LARGE;
 		}
 		return NO_STATUS_CODE;
+	}
+
+	void findMatchingServerAndLocation() {
+		std::map<std::string, std::string>::const_iterator it = _headers.find("host");
+		if (it == _headers.end()) {
+			findBestMatch("");
+			findMatchingLocation(_uri);
+		} else {
+			std::string host = it->second;
+			size_t colon = host.find(':');
+			if (colon != std::string::npos)
+				host.resize(colon);
+			findBestMatch(host);
+			findMatchingLocation(_uri);
+		}
+		_maxBodySize = _matchingServer->getBodySize();
+	}
+
+	void findBestMatch(const std::string& serverName) {
+		int bestMatch = -1;
+		VirtualServerMatch bestMatchLevel = VS_MATCH_NONE;
+		for (size_t i = 0; i < _associatedServers.size(); ++i) {
+			VirtualServerMatch matchLevel =
+				_associatedServers[i]->isMatching(_port, _ip, serverName);
+			if (matchLevel > bestMatchLevel) {
+				bestMatch = i;
+				bestMatchLevel = matchLevel;
+			}
+		}
+		_matchingServer = bestMatch == -1 ? NULL : _associatedServers[bestMatch];
+	}
+
+	void findMatchingLocation(const std::string& uri) {
+		if (_matchingServer == NULL || _matchingServer->getLocations().empty())
+			return;
+		_matchingLocation = _matchingServer->findMatchingLocation(uri);
 	}
 
 	RequestParsingResult parsingProcessing() {
@@ -183,6 +233,8 @@ private:
 		rpr.success.uri = _uri;
 		rpr.success.headers = _headers;
 		rpr.success.body = _body;
+		rpr.success.virtualServer = _matchingServer;
+		rpr.success.location = _matchingLocation;
 		clear();
 		return rpr;
 	}

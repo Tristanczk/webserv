@@ -183,13 +183,13 @@ class VirtualServer;
 class Client;
 class Server;
 
-#include "Request.hpp"
-
-#include "Response.hpp"
-
 #include "Location.hpp"
 
 #include "VirtualServer.hpp"
+
+#include "Request.hpp"
+
+#include "Response.hpp"
 
 #include "Client.hpp"
 

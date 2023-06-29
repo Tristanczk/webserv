@@ -97,8 +97,10 @@ public:
 
 	in_port_t getPort() const { return _address.sin_port; }
 	in_addr_t getAddr() const { return _address.sin_addr.s_addr; }
+	std::size_t getBodySize() const { return _bodySize; }
 	struct sockaddr_in getAddress() const { return _address; }
-	const std::vector<std::string>& getServerNames() const { return _serverNames; }
+	std::vector<std::string> const& getServerNames() const { return _serverNames; }
+	std::vector<Location> const& getLocations() const { return _locations; }
 
 private:
 	typedef bool (VirtualServer::*KeywordHandler)(std::istringstream&);

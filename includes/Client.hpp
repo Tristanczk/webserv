@@ -5,8 +5,12 @@
 
 class Client {
 public:
-	Client() : _currentMatchingServer(NULL), _addressLen(sizeof(_address)) {
+	Client()
+		: _currentMatchingServer(NULL), _currentMatchingLocation(NULL),
+		  _addressLen(sizeof(_address)) {
 		std::memset(&_address, 0, sizeof(_address));
+		(void)_currentMatchingServer;
+		(void)_currentMatchingLocation;
 	};
 	~Client(){};
 
@@ -25,11 +29,7 @@ public:
 	//  	return;
 	//  }
 
-	void printHostPort() {
-		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
-	}
-
-	bool setInfo(int fd) {
+	void setInfo(int fd) {
 		_fd = fd;
 		struct sockaddr_in localAddr;
 		socklen_t localAddrLen = sizeof(localAddr);
@@ -45,28 +45,6 @@ public:
 				_associatedServers.push_back(&vs[i]);
 			}
 		}
-	}
-
-	VirtualServer* findBestMatch(const std::string& serverName) {
-		int bestMatch = -1;
-		VirtualServerMatch bestMatchLevel = VS_MATCH_NONE;
-		for (size_t i = 0; i < _associatedServers.size(); ++i) {
-			VirtualServerMatch matchLevel =
-				_associatedServers[i]->isMatching(_port, _ip, serverName);
-			if (matchLevel > bestMatchLevel) {
-				bestMatch = i;
-				bestMatchLevel = matchLevel;
-			}
-		}
-		_currentMatchingServer = bestMatch == -1 ? NULL : _associatedServers[bestMatch];
-		return _currentMatchingServer;
-	}
-
-	Location* findMatchingLocation(const std::string& uri) {
-		if (_currentMatchingServer == NULL)
-			return NULL;
-		_currentMatchingLocation = _currentMatchingServer->findMatchingLocation(uri);
-		return _currentMatchingLocation;
 	}
 
 	std::string buildResponse(char* const envp[], std::string& filename) {
