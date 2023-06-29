@@ -20,10 +20,6 @@ public:
 	// 	return true;
 	// }
 
-	void printHostPort() {
-		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
-	}
-
 	void setInfo(int fd) {
 		_fd = fd;
 		struct sockaddr_in localAddr;

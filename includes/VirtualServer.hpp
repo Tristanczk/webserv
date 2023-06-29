@@ -100,34 +100,6 @@ public:
 	struct sockaddr_in getAddress() const { return _address; }
 	const std::vector<std::string>& getServerNames() const { return _serverNames; }
 
-	void printServerInformation() const {
-		std::cout << "Server information:" << std::endl;
-		std::cout << "Address: " << getIpString(_address.sin_addr.s_addr) << std::endl;
-		std::cout << "Port: " << ntohs(_address.sin_port) << std::endl;
-		std::cout << "Server names: ";
-		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
-			 it != _serverNames.end(); it++)
-			std::cout << *it << ", ";
-		std::cout << std::endl;
-		std::cout << "Root directory: " << _rootDir << std::endl;
-		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
-		std::cout << "Client max body size: " << _bodySize << std::endl;
-		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
-		std::cout << "Error pages:" << std::endl;
-		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
-			 it != _errorPages.end(); it++)
-			std::cout << "error " << it->first << ": " << it->second << std::endl;
-		std::cout << "Index pages: ";
-		for (std::vector<std::string>::const_iterator it = _indexPages.begin();
-			 it != _indexPages.end(); it++)
-			std::cout << *it << ", ";
-		std::cout << std::endl;
-		std::cout << "Locations:" << std::endl;
-		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end();
-			 it++)
-			it->printLocationInformation();
-	}
-
 private:
 	typedef bool (VirtualServer::*KeywordHandler)(std::istringstream&);
 	struct sockaddr_in _address;

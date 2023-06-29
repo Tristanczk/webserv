@@ -128,20 +128,6 @@ public:
 		}
 	}
 
-	void printVirtualServerList() const {
-		for (size_t i = 0; i < _virtualServers.size(); ++i) {
-			std::cout << "Server " << i << ":" << std::endl;
-			_virtualServers[i].printServerInformation();
-		}
-	}
-
-	void printVirtualServerListToBind() const {
-		for (size_t i = 0; i < _virtualServersToBind.size(); ++i) {
-			std::cout << "Server " << i << ":" << std::endl;
-			_virtualServersToBind[i]->printServerInformation();
-		}
-	}
-
 private:
 	std::vector<VirtualServer> _virtualServers;
 	std::vector<VirtualServer*> _virtualServersToBind;
