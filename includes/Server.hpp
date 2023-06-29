@@ -81,7 +81,6 @@ public:
 					client.findAssociatedServers(_virtualServers);
 					addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
 					_clients[clientFd] = client;
-					std::cout << "New client connected" << std::endl;
 				} else {
 					clientFd = _eventList[i].data.fd;
 					// should we handle error or unexpected closure differently ?
@@ -94,7 +93,6 @@ public:
 						continue;
 					} else if (_eventList[i].events & EPOLLIN) {
 						Client& client = _clients[clientFd];
-						std::cout << "received new request from client" << std::endl;
 						ResponseStatusEnum status = client.handleRequests();
 						if (status == RESPONSE_FAILURE) {
 							syscall(close(clientFd), "close");

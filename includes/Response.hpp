@@ -80,15 +80,6 @@ public:
 				buildErrorPage();
 			buildStatusLine();
 			buildHeader();
-			std::cout << "Response built" << std::endl;
-			std::cout << "Status line: " << _statusLine << std::endl;
-			std::cout << "Headers: " << std::endl;
-			for (std::map<std::string, std::string>::iterator it = _headers.begin();
-				 it != _headers.end(); it++) {
-				std::cout << it->first << ": " << it->second << std::endl;
-			}
-			std::cout << "Body: " << std::endl;
-			std::cout << _body << std::endl;
 		}
 	}
 
@@ -208,7 +199,6 @@ private:
 	// for now, only handles html files
 	bool buildPage(RequestParsingResult& request) {
 		std::string uri = findFinalUri(request.success.uri);
-		std::cout << "Final uri: " << uri << std::endl;
 		if (!readHTML(uri, _body)) {
 			_statusCode = CLIENT_NOT_FOUND;
 			buildErrorPage();
@@ -220,7 +210,7 @@ private:
 
 	std::string findFinalUri(std::string& uri) {
 		int position = comparePrefix(uri, _locationUri);
-		return _rootDir + uri.substr(position);
+		return _rootDir + "/" + uri.substr(position);
 	}
 
 	void buildHeaders(RequestParsingResult& request) { (void)request; }
