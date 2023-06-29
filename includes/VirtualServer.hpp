@@ -57,19 +57,20 @@ public:
 
 	VirtualServerMatch isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
 		const bool addrIsAny = addr == htonl(INADDR_ANY);
+		const bool serverAddrIsAny = _address.sin_addr.s_addr == htonl(INADDR_ANY);
 		if (port != _address.sin_port)
 			return VS_MATCH_NONE;
-		if (!addrIsAny && addr != _address.sin_addr.s_addr)
+		if (!addrIsAny && !serverAddrIsAny && addr != _address.sin_addr.s_addr)
 			return VS_MATCH_NONE;
 		if (serverName.empty())
-			return addrIsAny ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
+			return (addrIsAny || serverAddrIsAny) ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
 		// TODO _serverNames.find
 		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
 			 it != _serverNames.end(); it++) {
 			if (*it == serverName)
-				return addrIsAny ? VS_MATCH_SERVER : VS_MATCH_BOTH;
+				return (addrIsAny || serverAddrIsAny) ? VS_MATCH_SERVER : VS_MATCH_BOTH;
 		}
-		return addrIsAny ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
+		return (addrIsAny || serverAddrIsAny) ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
 	}
 
 	Location* findMatchingLocation(std::string const& requestPath) {

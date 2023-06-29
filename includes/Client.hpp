@@ -19,7 +19,6 @@ public:
 		if (_currentRequest == NULL)
 			_currentRequest = new Request(_associatedServers, _ip, _port);
 		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
-		std::cout << "Result received" << result.result << ": " << result.statusCode << std::endl;
 		if (result.result == REQUEST_PARSING_PROCESSING)
 			return RESPONSE_PENDING;
 		VirtualServer* vs = result.virtualServer;

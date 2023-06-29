@@ -81,6 +81,14 @@ public:
 			buildStatusLine();
 			buildHeader();
 			std::cout << "Response built" << std::endl;
+			std::cout << "Status line: " << _statusLine << std::endl;
+			std::cout << "Headers: " << std::endl;
+			for (std::map<std::string, std::string>::iterator it = _headers.begin();
+				 it != _headers.end(); it++) {
+				std::cout << it->first << ": " << it->second << std::endl;
+			}
+			std::cout << "Body: " << std::endl;
+			std::cout << _body << std::endl;
 		}
 	}
 
@@ -167,7 +175,7 @@ private:
 	}
 
 	void buildStatusLine() {
-		std::string _statusLine =
+		_statusLine =
 			"HTTP/1.1 " + toString(_statusCode) + " " + _statusMessages[_statusCode] + "\r\n";
 	}
 
@@ -265,7 +273,7 @@ private:
 		_statusMessages[CLIENT_UNAUTHORIZED] = "Unauthorized";
 		_statusMessages[CLIENT_PAYMENT_REQUIRED] = "Payment Required";
 		_statusMessages[CLIENT_FORBIDDEN] = "Forbidden";
-		_statusMessages[CLIENT_NOT_FOUND] = "Not Found";
+		_statusMessages[CLIENT_NOT_FOUND] = "NotFound";
 		_statusMessages[CLIENT_METHOD_NOT_ALLOWED] = "Method Not Allowed";
 		_statusMessages[CLIENT_NOT_ACCEPTABLE] = "Not Acceptable";
 		_statusMessages[CLIENT_PROXY_AUTHENTICATION_REQUIRED] = "Proxy Authentication Required";
