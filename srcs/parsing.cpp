@@ -26,7 +26,6 @@ bool parseAutoIndex(std::istringstream& iss, bool& autoIndex) {
 }
 
 bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
-	int codeValue;
 	size_t idx = code.find_first_not_of("0123456789");
 	if (idx != std::string::npos) {
 		if (code[idx] == '-') {
@@ -49,7 +48,7 @@ bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
 		} else
 			return configFileError("invalid error code: " + code);
 	}
-	codeValue = std::strtol(code.c_str(), NULL, 10);
+	int codeValue = std::strtol(code.c_str(), NULL, 10);
 	if (!isValidErrorCode(codeValue))
 		return configFileError("invalid error code: " + code);
 	codeList.push_back(codeValue);
@@ -60,7 +59,6 @@ bool parseErrorPages(std::istringstream& iss, std::map<int, std::string>& errorP
 	std::string code;
 	std::string tmpStr;
 	std::vector<int> codeList;
-	int codeValue;
 	if (!(iss >> code))
 		return configFileError("missing information after error_page keyword");
 	if (!parseErrorCode(code, codeList))
@@ -74,7 +72,7 @@ bool parseErrorPages(std::istringstream& iss, std::map<int, std::string>& errorP
 		code = tmpStr;
 	}
 	for (std::vector<int>::iterator it = codeList.begin(); it != codeList.end(); it++) {
-		codeValue = *it;
+		int codeValue = *it;
 		if (errorPages.find(codeValue) == errorPages.end()) {
 			errorPages[codeValue] = code;
 			// we replace the value only if the key does not exist, else it is the
