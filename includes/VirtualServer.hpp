@@ -24,15 +24,10 @@ public:
 		bool empty = true;
 		while (std::getline(config, line)) {
 			std::istringstream iss(line);
-			if (!(iss >> keyword))
+			if (!(iss >> keyword) || keyword[0] == '#')
 				continue;
-			if (keyword == "}")
-				if (!empty)
-					return true;
-				else
-					return configFileError("empty server block");
-			else if (keyword[0] == '#')
-				continue;
+			else if (keyword == "}")
+				return empty ? configFileError("empty server block") : true;
 			else if (keyword == "location") {
 				Location location(_rootDir, _autoIndex, _errorPages, _indexPages, _return);
 				if (!location.initUri(iss))
@@ -40,7 +35,6 @@ public:
 				if (!location.parseLocationContent(config))
 					return false;
 				_locations.push_back(location);
-				empty = false;
 			} else {
 				try {
 					KeywordHandler handler = _keywordHandlers.at(keyword);
@@ -49,8 +43,8 @@ public:
 				} catch (const std::exception& e) {
 					return configFileError("invalid keyword in configuration file: " + keyword);
 				}
-				empty = false;
 			}
+			empty = false;
 		}
 		return configFileError("missing closing bracket for server");
 	}

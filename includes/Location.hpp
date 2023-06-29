@@ -45,18 +45,16 @@ public:
 		bool empty = true;
 		for (; std::getline(config, line);) {
 			std::istringstream iss(line);
-			if (!(iss >> keyword))
+			if (!(iss >> keyword) || keyword[0] == '#')
 				continue;
-			if (keyword == "}") {
+			else if (keyword == "}") {
 				if (empty)
 					return configFileError("empty location block");
 				checkIndexPages();
 				checkErrorPages();
 				checkReturn();
 				return true;
-			} else if (keyword[0] == '#')
-				continue;
-			else {
+			} else {
 				try {
 					KeywordHandler handler = _keywordHandlers.at(keyword);
 					if (!(this->*handler)(iss))
