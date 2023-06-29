@@ -82,16 +82,16 @@ public:
 					_clients[clientFd] = client;
 					// std::cout << "New client connected" << std::endl;
 				} else {
+					clientFd = _eventList[i].data.fd;
 					// should we handle error or unexpected closure differently ?
 					// especially is there a need to handle EPOLLRDHUP in a specific way ?
 					// because it might indicate that the connection is only half closed and can
 					// still receive data information from the server
 					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
-						syscall(close(_eventList[i].data.fd), "close");
-						_clients.erase(_eventList[i].data.fd);
+						syscall(close(clientFd), "close");
+						_clients.erase(clientFd);
 						continue;
 					} else if (_eventList[i].events & EPOLLIN) {
-						clientFd = _eventList[i].data.fd;
 						Client& client = _clients[clientFd];
 						std::string request = client.readRequest();
 						// TODO : parsing of the request
@@ -110,7 +110,6 @@ public:
 						}
 						// std::cout << "received new request from client" << std::endl;
 					} else if (_eventList[i].events & EPOLLOUT) {
-						clientFd = _eventList[i].data.fd;
 						// TODO, send response to client
 						// int n =
 						// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
