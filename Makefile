@@ -6,7 +6,7 @@ O			:= objs/
 S			:= srcs/
 T			:= tests/
 
-GARBAGE		:= .vscode
+GARBAGE		:= .vscode cgi/__pycache__
 
 CXX			:= c++
 CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -g3 -I$I
