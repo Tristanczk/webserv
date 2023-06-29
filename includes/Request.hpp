@@ -28,7 +28,7 @@ public:
 		clear();
 	}
 
-	RequestParsingResult parse(const unsigned char* s = NULL, size_t size = 0) {
+	RequestParsingResult parse(const char* s = NULL, size_t size = 0) {
 		for (size_t i = 0; i < size; ++i)
 			_queue.push(s[i]);
 		while (!_queue.empty()) {
