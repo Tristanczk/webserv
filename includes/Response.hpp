@@ -4,7 +4,7 @@
 
 class Response {
 public:
-	Response(std::string& rootDir, bool& autoIndex, std::map<int, std::string> errorPages,
+	Response(std::string& rootDir, bool autoIndex, std::map<int, std::string> errorPages,
 			 std::vector<std::string>& indexPages, std::pair<long, std::string>& redirect,
 			 bool allowedMethods[NO_METHOD], std::string& cgiExec)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
