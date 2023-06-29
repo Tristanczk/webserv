@@ -24,17 +24,13 @@ public:
 		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
 	}
 
-	bool setInfo(int fd) {
+	void setInfo(int fd) {
 		_fd = fd;
 		struct sockaddr_in localAddr;
 		socklen_t localAddrLen = sizeof(localAddr);
-		if (getsockname(fd, (struct sockaddr*)&localAddr, &localAddrLen) == -1) {
-			std::cerr << "Error while getting local address" << std::endl;
-			return false;
-		}
+		syscall(getsockname(fd, (struct sockaddr*)&localAddr, &localAddrLen), "getsockname");
 		_ip = localAddr.sin_addr.s_addr;
 		_port = localAddr.sin_port;
-		return true;
 	}
 
 	void findAssociatedServers(std::vector<VirtualServer>& vs) {

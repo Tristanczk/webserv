@@ -7,6 +7,7 @@ extern bool run;
 class Server {
 public:
 	Server() : _epollFd(-1){};
+
 	~Server() {
 		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
 			 ++it) {
@@ -56,8 +57,6 @@ public:
 		return checkDuplicateServers();
 	}
 
-	// note: in epoll, EPOLLHUP and EPOLLERR are always monitored and do not need to be specified in
-	// events
 	void loop() {
 		int clientFd;
 		while (run) {
@@ -75,12 +74,8 @@ public:
 					syscall(clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
 											  &client.getAddressLen()),
 							"accept");
-					if (!client.setInfo(clientFd)) {
-						close(clientFd);
-						continue;
-					}
+					client.setInfo(clientFd);
 					client.findAssociatedServers(_virtualServers);
-					// client.printHostPort();
 					addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
 					_clients[clientFd] = client;
 					// std::cout << "New client connected" << std::endl;
