@@ -16,8 +16,7 @@ public:
 			 std::vector<std::string> const& indexPages)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
 		  _indexPages(indexPages), _locationUri(""), _return(-1, ""), _cgiExec("") {
-		for (int i = 0; i < NO_METHOD; ++i)
-			_allowedMethods[i] = true;
+		std::fill_n(_allowedMethods, NO_METHOD, true);
 		initKeywordMap();
 		initStatusMessageMap();
 		// TODO remove void
@@ -183,11 +182,8 @@ private:
 
 	void buildErrorPage() {
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
-		std::string errorPageUri;
-		if (it != _errorPages.end())
-			errorPageUri = _rootDir + it->second;
-		else
-			errorPageUri = _errorPages[DEFAULT_ERROR];
+		std::string errorPageUri =
+			it != _errorPages.end() ? _rootDir + it->second : "./www/default_error.html";
 		if (!readHTML(errorPageUri, _body)) {
 			_body = "There was an error while trying to access the specified error page for error "
 					"code " +
@@ -199,7 +195,7 @@ private:
 
 	// for now, only handles html files
 	bool buildPage(RequestParsingResult& request) {
-		if (_allowedMethods[request.success.method] == false) {
+		if (!_allowedMethods[request.success.method]) {
 			_statusCode = CLIENT_METHOD_NOT_ALLOWED;
 			return false;
 		}

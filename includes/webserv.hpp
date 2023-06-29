@@ -36,7 +36,6 @@
 #define BUFFER_SIZE 16384
 #define DEFAULT_BODY_SIZE 1048576
 #define MAX_HEADER_SIZE 1048576
-#define DEFAULT_ERROR 0
 
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
 #define ERROR_LISTEN_FORMAT "invalid format for host:port in listen instruction"

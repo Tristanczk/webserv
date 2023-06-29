@@ -31,16 +31,14 @@ public:
 		res.buildResponse(result);
 		delete _currentRequest;
 		_currentRequest = NULL;
-		if (!res.pushResponseToClient(_fd))
-			return RESPONSE_FAILURE;
-		return RESPONSE_SUCCESS;
+		return res.pushResponseToClient(_fd) ? RESPONSE_SUCCESS : RESPONSE_FAILURE;
 	}
 
 	void setInfo(int fd) {
 		_fd = fd;
 		struct sockaddr_in localAddr;
 		socklen_t localAddrLen = sizeof(localAddr);
-		syscall(getsockname(fd, (struct sockaddr*)&localAddr, &localAddrLen), "getsockname");
+		syscall(getsockname(_fd, (struct sockaddr*)&localAddr, &localAddrLen), "getsockname");
 		_ip = localAddr.sin_addr.s_addr;
 		_port = localAddr.sin_port;
 	}

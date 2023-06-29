@@ -12,7 +12,6 @@ public:
 		_rootDir = "./www/";
 		_autoIndex = false;
 		_bodySize = DEFAULT_BODY_SIZE;
-		_errorPages[DEFAULT_ERROR] = "./www/default_error.html";
 		_return.first = -1;
 		initKeywordMap();
 	}
