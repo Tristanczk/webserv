@@ -21,12 +21,16 @@ public:
 
 	bool init(std::istream& config) {
 		std::string line, keyword, val;
+		bool empty = true;
 		while (std::getline(config, line)) {
 			std::istringstream iss(line);
 			if (!(iss >> keyword))
 				continue;
 			if (keyword == "}")
-				return true;
+				if (!empty)
+					return true;
+				else
+					return configFileError("empty server block");
 			else if (keyword[0] == '#')
 				continue;
 			else if (keyword == "location") {
@@ -36,6 +40,7 @@ public:
 				if (!location.parseLocationContent(config))
 					return false;
 				_locations.push_back(location);
+				empty = false;
 			} else {
 				try {
 					KeywordHandler handler = _keywordHandlers.at(keyword);
@@ -44,6 +49,7 @@ public:
 				} catch (const std::exception& e) {
 					return configFileError("invalid keyword in configuration file: " + keyword);
 				}
+				empty = false;
 			}
 		}
 		return configFileError("missing closing bracket for server");

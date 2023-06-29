@@ -42,11 +42,14 @@ public:
 
 	bool parseLocationContent(std::istream& config) {
 		std::string line, keyword, val;
+		bool empty = true;
 		for (; std::getline(config, line);) {
 			std::istringstream iss(line);
 			if (!(iss >> keyword))
 				continue;
 			if (keyword == "}") {
+				if (empty)
+					return configFileError("empty location block");
 				checkIndexPages();
 				checkErrorPages();
 				checkReturn();
