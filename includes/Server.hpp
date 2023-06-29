@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Request.hpp"
 #include "webserv.hpp"
 
 extern bool run;

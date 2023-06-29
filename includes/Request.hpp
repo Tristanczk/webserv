@@ -1,8 +1,6 @@
 #pragma once
 
-#include "VirtualServer.hpp"
 #include "webserv.hpp"
-#include <netinet/in.h>
 
 typedef enum RequestParsingEnum {
 	REQUEST_PARSING_FAILURE,
