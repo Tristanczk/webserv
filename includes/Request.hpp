@@ -15,14 +15,14 @@ typedef struct RequestParsingSuccess {
 	std::string uri;
 	std::map<std::string, std::string> headers;
 	std::vector<unsigned char> body;
-	VirtualServer* virtualServer;
-	Location* location;
 } RequestParsingSuccess;
 
 typedef struct RequestParsingResult {
 	RequestParsingEnum result;
 	StatusCode statusCode;
 	RequestParsingSuccess success;
+	VirtualServer* virtualServer;
+	Location* location;
 } RequestParsingResult;
 
 class Request {
@@ -222,12 +222,16 @@ private:
 	RequestParsingResult parsingProcessing() {
 		RequestParsingResult rpr;
 		rpr.result = REQUEST_PARSING_PROCESSING;
+		rpr.virtualServer = _matchingServer;
+		rpr.location = _matchingLocation;
 		return rpr;
 	}
 
 	RequestParsingResult parsingFailure(StatusCode statusCode) {
 		RequestParsingResult rpr;
 		rpr.result = REQUEST_PARSING_FAILURE;
+		rpr.virtualServer = _matchingServer;
+		rpr.location = _matchingLocation;
 		rpr.statusCode = statusCode;
 		clear();
 		return rpr;
@@ -236,12 +240,12 @@ private:
 	RequestParsingResult parsingSuccess() {
 		RequestParsingResult rpr;
 		rpr.result = REQUEST_PARSING_SUCCESS;
+		rpr.virtualServer = _matchingServer;
+		rpr.location = _matchingLocation;
 		rpr.success.method = _method;
 		rpr.success.uri = _uri;
 		rpr.success.headers = _headers;
 		rpr.success.body = _body;
-		rpr.success.virtualServer = _matchingServer;
-		rpr.success.location = _matchingLocation;
 		clear();
 		return rpr;
 	}
