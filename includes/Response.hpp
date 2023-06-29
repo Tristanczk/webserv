@@ -187,7 +187,7 @@ private:
 		if (it != _errorPages.end())
 			errorPageUri = _rootDir + it->second;
 		else
-			errorPageUri = _rootDir + _errorPages[DEFAULT_ERROR];
+			errorPageUri = _errorPages[DEFAULT_ERROR];
 		if (!readHTML(errorPageUri, _body)) {
 			_body = "There was an error while trying to access the specified error page for error "
 					"code " +
