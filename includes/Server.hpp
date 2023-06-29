@@ -60,7 +60,6 @@ public:
 	// events
 	void loop() {
 		int clientFd;
-		// std::cout << "Server is running" << std::endl;
 		while (run) {
 			_numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1);
 			if (_numFds < 0) {
