@@ -199,6 +199,10 @@ private:
 
 	// for now, only handles html files
 	bool buildPage(RequestParsingResult& request) {
+		if (_allowedMethods[request.success.method] == false) {
+			_statusCode = CLIENT_METHOD_NOT_ALLOWED;
+			return false;
+		}
 		std::string uri = findFinalUri(request.success.uri);
 		if (!readHTML(uri, _body)) {
 			_statusCode = CLIENT_NOT_FOUND;
@@ -212,8 +216,6 @@ private:
 		int position = comparePrefix(uri, _locationUri);
 		return _rootDir + "/" + uri.substr(position);
 	}
-
-	void buildHeaders(RequestParsingResult& request) { (void)request; }
 
 	// what are the type of things we need to handle to build a response?
 	//  1. status line:
