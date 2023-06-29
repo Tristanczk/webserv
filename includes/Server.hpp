@@ -6,7 +6,10 @@ extern bool run;
 
 class Server {
 public:
-	Server() : _epollFd(-1){};
+	Server() {
+		initMimeTypes();
+		syscall(_epollFd = epoll_create1(0), "epoll_create1");
+	};
 
 	~Server() {
 		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
@@ -26,7 +29,6 @@ public:
 		if (!parseConfig(filename))
 			return false;
 		findVirtualServersToBind();
-		syscall(_epollFd = epoll_create1(0), "epoll_create1");
 		connectVirtualServers();
 		return true;
 	}
@@ -148,6 +150,7 @@ private:
 	std::set<int> _listenSockets;
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
+	std::map<std::string, std::string> _mimeTypes;
 
 	bool checkDuplicateServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
@@ -176,6 +179,28 @@ private:
 			}
 		}
 		return true;
+	}
+
+	void initMimeTypes() {
+		_mimeTypes["css"] = "text/css";
+		_mimeTypes["html"] = "text/html";
+		_mimeTypes["jpg"] = "image/jpeg";
+		_mimeTypes["js"] = "text/javascript";
+		_mimeTypes["mp4"] = "video/mp4";
+		_mimeTypes["png"] = "image/png";
+		_mimeTypes["svg"] = "image/svg+xml";
+
+		std::ifstream ifs(PATH_MIME_TYPES);
+		std::string line, mime, extension;
+		while (true) {
+			if (!std::getline(ifs, line))
+				return;
+			std::stringstream lineStream(line);
+			if (line.empty() || line[0] == '#' || !(lineStream >> mime))
+				continue;
+			while (lineStream >> extension)
+				_mimeTypes[extension] = mime;
+		}
 	}
 
 	void findVirtualServersToBind() {
