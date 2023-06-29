@@ -12,8 +12,7 @@ public:
 		  _return(-1, ""), _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
-		for (int i = 0; i < NO_METHOD; i++)
-			_allowedMethods[i] = true;
+		std::fill_n(_allowedMethods, NO_METHOD, true);
 	}
 
 	~Location(){};
@@ -144,8 +143,7 @@ private:
 		std::string method;
 		if (!(iss >> method))
 			return configFileError("missing information after limit_except keyword");
-		for (int i = 0; i < NO_METHOD; i++)
-			_allowedMethods[i] = false;
+		std::fill_n(_allowedMethods, NO_METHOD, false);
 		if (!updateMethod(method))
 			return false;
 		while (iss >> method) {
