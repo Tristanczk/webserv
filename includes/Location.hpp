@@ -58,12 +58,13 @@ public:
 				continue;
 			else {
 				try {
-					KeywordHandler handler = _keywordHandlers[keyword];
+					KeywordHandler handler = _keywordHandlers.at(keyword);
 					if (!(this->*handler)(iss))
 						return false;
 				} catch (const std::exception& e) {
 					return configFileError("invalid keyword in location block: " + keyword);
 				}
+				empty = false;
 			}
 		}
 		return configFileError("missing closing bracket for location block");
