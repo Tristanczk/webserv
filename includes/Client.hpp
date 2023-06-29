@@ -7,7 +7,7 @@ class Client {
 public:
 	Client()
 		: _currentMatchingServer(NULL), _currentMatchingLocation(NULL),
-		  _addressLen(sizeof(_address)) {
+		  _addressLen(sizeof(_address)), _currentRequest(NULL) {
 		std::memset(&_address, 0, sizeof(_address));
 		(void)_currentMatchingServer;
 		(void)_currentMatchingLocation;
@@ -16,18 +16,21 @@ public:
 
 	std::string readRequest() { return fullRead(_fd); }
 
-	// TODO: finish handle request with the modified request class --> build the response using the
-	// data from information of the corresponding virtual server and location
-	//  void handleRequests() {
-	//  	std::string request = readRequest();
-	//  	Request req(MAX_HEADER_SIZE, DEFAULT_SIZE);
-	//  	RequestParsingResult result = req.parse(request.c_str(), request.size());
-	//  	// TODO: parse header
-	//  	// get the server name in the host part
-	//  	// find the best matching server (using the findBestMatch method)
-	//  	// get the value for the max body size
-	//  	return;
-	//  }
+	// void handleRequests() {
+	// 	std::string request = readRequest();
+	// 	if (_currentRequest == NULL)
+	// 		_currentRequest = new Request(_associatedServers, _ip, _port);
+	// 	RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
+	// 	if (result.result == REQUEST_PARSING_PROCESSING)
+	// 		return;
+	// 	VirtualServer* vs = result.success.virtualServer;
+	// 	Location* loc = result.success.location;
+	// 	// TODO: parse header
+	// 	// get the server name in the host part
+	// 	// find the best matching server (using the findBestMatch method)
+	// 	// get the value for the max body size
+	// 	return;
+	// }
 
 	void setInfo(int fd) {
 		_fd = fd;
@@ -102,6 +105,7 @@ private:
 	in_port_t _port;
 	int _fd;
 	std::queue<Response> _responseQueue;
+	Request* _currentRequest;
 
 public:
 	void printHostPort() {

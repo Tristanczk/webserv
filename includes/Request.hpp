@@ -27,9 +27,12 @@ typedef struct RequestParsingResult {
 
 class Request {
 public:
+	// we consider the first corresponding server to be the default one in case there is an error
+	// before finishing parsing the headers
 	Request(std::vector<VirtualServer*>& associatedServers, in_addr_t& ip, in_port_t& port)
 		: _associatedServers(associatedServers), _ip(ip), _port(port),
-		  _maxBodySize(DEFAULT_BODY_SIZE), _matchingServer(NULL), _matchingLocation(NULL) {
+		  _maxBodySize(DEFAULT_BODY_SIZE), _matchingServer(associatedServers[0]),
+		  _matchingLocation(NULL) {
 		clear();
 	}
 
@@ -125,6 +128,9 @@ private:
 			return CLIENT_URI_TOO_LONG;
 		if (version != "HTTP/1.1")
 			return SERVER_HTTP_VERSION_NOT_SUPPORTED;
+		// at this point we have a valid request line so we can parse the location in the default
+		// server
+		findMatchingLocation(_uri);
 		return NO_STATUS_CODE;
 	}
 
@@ -161,6 +167,7 @@ private:
 			return CLIENT_BAD_REQUEST;
 		if (_headers.find("host") == _headers.end())
 			return CLIENT_BAD_REQUEST;
+		// at this point we have a host field so we can identify the correct server
 		findMatchingServerAndLocation();
 		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
 		if (_method == POST) {
@@ -207,7 +214,7 @@ private:
 	}
 
 	void findMatchingLocation(const std::string& uri) {
-		if (_matchingServer == NULL || _matchingServer->getLocations().empty())
+		if (_matchingServer == NULL || _matchingServer->getLocations().empty() || uri.empty())
 			return;
 		_matchingLocation = _matchingServer->findMatchingLocation(uri);
 	}
