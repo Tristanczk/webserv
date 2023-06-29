@@ -10,10 +10,7 @@ public:
 	};
 	~Client(){};
 
-	std::string readRequest() {
-		std::size_t bufferSize = BUFFER_SIZE;
-		return fullRead(_fd, bufferSize);
-	}
+	std::string readRequest() { return fullRead(_fd); }
 
 	// TODO: finish handle request with the modified request class --> build the response using the
 	// data from information of the corresponding virtual server and location
@@ -36,13 +33,9 @@ public:
 		_fd = fd;
 		struct sockaddr_in localAddr;
 		socklen_t localAddrLen = sizeof(localAddr);
-		if (getsockname(fd, (struct sockaddr*)&localAddr, &localAddrLen) == -1) {
-			std::cerr << "Error while getting local address" << std::endl;
-			return false;
-		}
+		syscall(getsockname(fd, (struct sockaddr*)&localAddr, &localAddrLen), "getsockname");
 		_ip = localAddr.sin_addr.s_addr;
 		_port = localAddr.sin_port;
-		return true;
 	}
 
 	void findAssociatedServers(std::vector<VirtualServer>& vs) {
@@ -56,9 +49,10 @@ public:
 
 	VirtualServer* findBestMatch(const std::string& serverName) {
 		int bestMatch = -1;
-		t_vsmatch bestMatchLevel = VS_MATCH_NONE;
+		VirtualServerMatch bestMatchLevel = VS_MATCH_NONE;
 		for (size_t i = 0; i < _associatedServers.size(); ++i) {
-			t_vsmatch matchLevel = _associatedServers[i]->isMatching(_port, _ip, serverName);
+			VirtualServerMatch matchLevel =
+				_associatedServers[i]->isMatching(_port, _ip, serverName);
 			if (matchLevel > bestMatchLevel) {
 				bestMatch = i;
 				bestMatchLevel = matchLevel;
@@ -90,28 +84,27 @@ public:
 	}
 
 	std::string buildCgiBody(std::string path_to_exec, std::string filename, char* const envp[]) {
-		int pipefd[2];
 		std::string finalPath;
 		if (!getValidPath(path_to_exec, envp, finalPath))
 			// do we throw an exception in this case or do we handle the error differently?
-			throw std::runtime_error("Invalid path for CGI");
-		if (pipe(pipefd) == -1)
-			throw std::runtime_error("pipe");
+			// TODO return internal server error probably
+			throw SystemError("Invalid path for CGI");
+		int pipefd[2];
+		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
-		if (pid == -1)
-			throw std::runtime_error("fork");
+		syscall(pid, "pipe");
 		if (pid == 0) {
 			char* const argv[] = {const_cast<char*>(finalPath.c_str()),
 								  const_cast<char*>(filename.c_str()), NULL};
 			close(pipefd[0]);
-			if (dup2(pipefd[1], STDOUT_FILENO) == -1)
-				throw std::runtime_error("dup2");
+			dup2(pipefd[1], STDOUT_FILENO);
 			close(pipefd[1]);
-			if (execve(finalPath.c_str(), argv, envp) == -1)
-				throw std::runtime_error("execve");
+			execve(finalPath.c_str(), argv, envp);
+			exit(EXIT_FAILURE);
 		}
+		// TODO wait and return INTERNAL SERVER ERROR if status != EXIT_SUCCESS
 		close(pipefd[1]);
-		std::string response = fullRead(pipefd[0], BUFFER_SIZE);
+		std::string response = fullRead(pipefd[0]);
 		close(pipefd[0]);
 		return response;
 	}
@@ -131,4 +124,18 @@ private:
 	in_port_t _port;
 	int _fd;
 	std::queue<Response> _responseQueue;
+
+public:
+	void printHostPort() {
+		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
+	}
+
+	// void handleRequests() {
+	// 	std::string request = readRequest();
+	// 	// TODO: parse header
+	// 	// get the server name in the host part
+	// 	// find the best matching server (using the findBestMatch method)
+	// 	// get the value for the max body size
+	// 	return true;
+	// }
 };

@@ -12,8 +12,7 @@ public:
 		  _return(-1, ""), _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
-		for (int i = 0; i < NO_METHOD; i++)
-			_allowedMethods[i] = true;
+		std::fill_n(_allowedMethods, NO_METHOD, true);
 	}
 
 	~Location(){};
@@ -80,42 +79,18 @@ public:
 		return LOCATION_MATCH_NONE;
 	}
 
-	void printLocationInformation() const {
-		std::cout << "Location information:" << std::endl;
-		std::cout << "Modifier: "
-				  << (_modifier == NONE ? "none" : (_modifier == REGEX ? "regex" : "exact"))
-				  << std::endl;
-		std::cout << "URI: " << _uri << std::endl;
-		std::cout << "Root directory: " << _rootDir << std::endl;
-		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
-		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
-		std::cout << "Allowed methods: " << (_allowedMethods[GET] ? "GET " : "")
-				  << (_allowedMethods[POST] ? "POST " : "")
-				  << (_allowedMethods[DELETE] ? "DELETE " : "") << std::endl;
-		std::cout << "Error pages:" << std::endl;
-		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
-			 it != _errorPages.end(); it++)
-			std::cout << "error " << it->first << ": " << it->second << std::endl;
-		std::cout << "Index pages: ";
-		for (std::vector<std::string>::const_iterator it = _indexPages.begin();
-			 it != _indexPages.end(); it++)
-			std::cout << *it << ", ";
-		std::cout << std::endl;
-	}
-
 	std::string getCgiExec() const { return _cgiExec; }
 
 private:
 	typedef bool (Location::*KeywordHandler)(std::istringstream&);
-	typedef enum e_modifier { NONE, REGEX, EXACT } t_modifier;
-	t_modifier _modifier;
+	typedef enum Modifier { NONE, REGEX, EXACT } Modifier;
+	Modifier _modifier;
 	std::string _uri;
 	std::string _rootDir;
 	std::string _cgiExec;
 	bool _autoIndex;
 	std::pair<long, std::string> _return;
-	bool _allowedMethods[NO_METHOD]; // NO_METHOD is equivalent to the number of methods in the
-									 // RequestMethod enum
+	bool _allowedMethods[NO_METHOD];
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
 	const std::map<int, std::string>& _serverErrorPages;
@@ -144,14 +119,11 @@ private:
 		std::string method;
 		if (!(iss >> method))
 			return configFileError("missing information after limit_except keyword");
-		for (int i = 0; i < NO_METHOD; i++)
-			_allowedMethods[i] = false;
-		if (!updateMethod(method))
-			return false;
-		while (iss >> method) {
+		std::fill_n(_allowedMethods, NO_METHOD, false);
+		do {
 			if (!updateMethod(method))
 				return false;
-		}
+		} while (iss >> method);
 		return true;
 	}
 
@@ -192,5 +164,29 @@ private:
 	void checkReturn() {
 		if (_return.first == -1 && _serverReturn.first != -1)
 			_return = _serverReturn;
+	}
+
+public:
+	void print() const {
+		std::cout << "Location information:" << std::endl;
+		std::cout << "Modifier: "
+				  << (_modifier == NONE ? "none" : (_modifier == REGEX ? "regex" : "exact"))
+				  << std::endl;
+		std::cout << "URI: " << _uri << std::endl;
+		std::cout << "Root directory: " << _rootDir << std::endl;
+		std::cout << "Autoindex: " << (_autoIndex ? "on" : "off") << std::endl;
+		std::cout << "Return code: " << _return.first << ", url: " << _return.second << std::endl;
+		std::cout << "Allowed methods: " << (_allowedMethods[GET] ? "GET " : "")
+				  << (_allowedMethods[POST] ? "POST " : "")
+				  << (_allowedMethods[DELETE] ? "DELETE " : "") << std::endl;
+		std::cout << "Error pages:" << std::endl;
+		for (std::map<int, std::string>::const_iterator it = _errorPages.begin();
+			 it != _errorPages.end(); it++)
+			std::cout << "error " << it->first << ": " << it->second << std::endl;
+		std::cout << "Index pages: ";
+		for (std::vector<std::string>::const_iterator it = _indexPages.begin();
+			 it != _indexPages.end(); it++)
+			std::cout << *it << ", ";
+		std::cout << std::endl;
 	}
 };

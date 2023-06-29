@@ -2,16 +2,35 @@
 
 #include "webserv.hpp"
 
+extern bool run;
+
 class Server {
 public:
-	Server() : _epollFd(-1){};
-	~Server() { cleanServer(); };
+	Server() {
+		initMimeTypes();
+		syscall(_epollFd = epoll_create1(0), "epoll_create1");
+	};
+
+	~Server() {
+		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
+			 ++it) {
+			close(*it);
+		}
+		for (int i = 0; i < _numFds; ++i) {
+			if (_eventList[i].data.fd != STDIN_FILENO) {
+				close(_eventList[i].data.fd);
+			}
+		}
+		if (_epollFd != -1)
+			close(_epollFd);
+	};
 
 	bool init(const char* filename) {
 		if (!parseConfig(filename))
 			return false;
 		findVirtualServersToBind();
-		return initEpoll() && connectVirtualServers();
+		connectVirtualServers();
+		return true;
 	}
 
 	bool parseConfig(const char* filename) {
@@ -40,108 +59,72 @@ public:
 		return checkDuplicateServers();
 	}
 
-	// note: in epoll, EPOLLHUP and EPOLLERR are always monitored and do not need to be specified in
-	// events
 	void loop() {
 		int clientFd;
-		// std::cout << "Server is running" << std::endl;
-		while (true) {
-			syscall(_numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1), "epoll_wait");
+		while (run) {
+			_numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1);
+			if (_numFds < 0) {
+				if (!run)
+					break;
+				throw SystemError("epoll_wait");
+			}
 			for (int i = 0; i < _numFds; ++i) {
-				// TODO : do we keep in the end ?
-				if (_eventList[i].data.fd == STDIN_FILENO) {
-					std::string message = fullRead(STDIN_FILENO, BUFFER_SIZE);
-					if (message == "quit\n") {
-						std::cout << "Exiting program" << std::endl;
-						return;
-					}
+				std::set<int>::iterator it = _listenSockets.find(_eventList[i].data.fd);
+				if (it != _listenSockets.end()) {
+					Client client;
+					// TODO : should we exit the server in case of accept error ?
+					syscall(clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
+											  &client.getAddressLen()),
+							"accept");
+					client.setInfo(clientFd);
+					client.findAssociatedServers(_virtualServers);
+					addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
+					_clients[clientFd] = client;
+					// std::cout << "New client connected" << std::endl;
 				} else {
-					std::set<int>::iterator it = _listenSockets.find(_eventList[i].data.fd);
-					if (it != _listenSockets.end()) {
-						Client client;
-						// TODO : should we exit the server in case of accept error ?
-						syscall(clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
-												  &client.getAddressLen()),
-								"accept");
-						if (!client.setInfo(clientFd)) {
-							close(clientFd);
-							continue;
-						}
-						client.findAssociatedServers(_virtualServers);
-						// client.printHostPort();
-						if (addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLET | EPOLLRDHUP) ==
-							-1) {
-							// TODO : handle error appropriately
-						} else {
-							_clients[clientFd] = client;
-							// std::cout << "New client connected" << std::endl;
-						}
-					} else {
-						// should we handle error or unexpected closure differently ?
-						// especially is there a need to handle EPOLLRDHUP in a specific way ?
-						// because it might indicate that the connection is only half closed and can
-						// still receive data information from the server
-						if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+					// should we handle error or unexpected closure differently ?
+					// especially is there a need to handle EPOLLRDHUP in a specific way ?
+					// because it might indicate that the connection is only half closed and can
+					// still receive data information from the server
+					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+						// ??? Il sort d'ou ce clientFd?
+						syscall(close(clientFd), "close");
+						_clients.erase(clientFd);
+						continue;
+					} else if (_eventList[i].events & EPOLLIN) {
+						clientFd = _eventList[i].data.fd;
+						Client& client = _clients[clientFd];
+						std::string request = client.readRequest();
+						// TODO : parsing of the request
+						// TODO : get the server name in order to find the best matching server
+						// for the request
+						// std::string serverName =
+						// client.findServerName(request); VirtualServer* server =
+						// client.findBestMatch(serverName); TODO : building of the response
+						if (request.empty()) {
 							syscall(close(clientFd), "close");
 							_clients.erase(clientFd);
-							continue;
-						} else if (_eventList[i].events & EPOLLIN) {
-							clientFd = _eventList[i].data.fd;
-							Client& client = _clients[clientFd];
-							std::string request = client.readRequest();
-							// TODO : parsing of the request
-							// TODO : get the server name in order to find the best matching server
-							// for the request
-							// std::string serverName =
-							// client.findServerName(request); VirtualServer* server =
-							// client.findBestMatch(serverName); TODO : building of the response
-							if (request.empty()) {
-								syscall(close(clientFd), "close");
-								_clients.erase(clientFd);
-							} else {
-								// TODO: check if the request is complete before swapping to
-								// EPOLLOUT
-								if (modifyEpollEvent(_epollFd, clientFd,
-													 EPOLLOUT | EPOLLET | EPOLLRDHUP) == -1) {
-									syscall(close(clientFd), "close");
-									_clients.erase(clientFd);
-								}
-							}
-							// std::cout << "received new request from client" << std::endl;
-						} else if (_eventList[i].events & EPOLLOUT) {
-							clientFd = _eventList[i].data.fd;
-							// TODO, send response to client
-							// int n =
-							// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
-							// if (n == -1) {
-							// 	std::cerr << "Error while sending response" << std::endl;
-							// 	syscall(close(clientFd), "close");
-							// 	_clients.erase(clientFd);
-							// }
-							// std::cout << "sent response to client" << std::endl;
-							if (modifyEpollEvent(_epollFd, clientFd,
-												 EPOLLIN | EPOLLET | EPOLLRDHUP) == -1) {
-								syscall(close(clientFd), "close");
-								_clients.erase(clientFd);
-							}
+						} else {
+							// TODO: check if the request is complete before swapping to
+							// EPOLLOUT
+							modifyEpollEvent(_epollFd, clientFd, EPOLLOUT | EPOLLRDHUP);
 						}
+						// std::cout << "received new request from client" << std::endl;
+					} else if (_eventList[i].events & EPOLLOUT) {
+						clientFd = _eventList[i].data.fd;
+						// TODO, send response to client
+						// int n =
+						// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
+						// if (n == -1) {
+						// 	std::cerr << "Error while sending response" << std::endl;
+						// 	syscall(close(clientFd), "close");
+						// 	_clients.erase(clientFd);
+						// }
+						// std::cout << "sent response to client" << std::endl;
+						modifyEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
 					}
 				}
 			}
-		}
-	}
-
-	void printVirtualServerList() const {
-		for (size_t i = 0; i < _virtualServers.size(); ++i) {
-			std::cout << "Server " << i << ":" << std::endl;
-			_virtualServers[i].printServerInformation();
-		}
-	}
-
-	void printVirtualServerListToBind() const {
-		for (size_t i = 0; i < _virtualServersToBind.size(); ++i) {
-			std::cout << "Server " << i << ":" << std::endl;
-			_virtualServersToBind[i]->printServerInformation();
 		}
 	}
 
@@ -153,6 +136,7 @@ private:
 	std::set<int> _listenSockets;
 	struct epoll_event _eventList[MAX_CLIENTS];
 	std::map<int, Client> _clients;
+	std::map<std::string, std::string> _mimeTypes;
 
 	bool checkDuplicateServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
@@ -183,15 +167,26 @@ private:
 		return true;
 	}
 
-	bool initEpoll() {
-		_epollFd = epoll_create1(0);
-		if (_epollFd == -1) {
-			std::cerr << "Error when creating epoll" << std::endl;
-			return false;
+	void initMimeTypes() {
+		_mimeTypes["css"] = "text/css";
+		_mimeTypes["html"] = "text/html";
+		_mimeTypes["jpg"] = "image/jpeg";
+		_mimeTypes["js"] = "text/javascript";
+		_mimeTypes["mp4"] = "video/mp4";
+		_mimeTypes["png"] = "image/png";
+		_mimeTypes["svg"] = "image/svg+xml";
+
+		std::ifstream ifs("/etc/mime.types");
+		std::string line, mime, extension;
+		while (true) {
+			if (!std::getline(ifs, line))
+				return;
+			std::stringstream lineStream(line);
+			if (line.empty() || line[0] == '#' || !(lineStream >> mime))
+				continue;
+			while (lineStream >> extension)
+				_mimeTypes[extension] = mime;
 		}
-		if (addEpollEvent(_epollFd, STDIN_FILENO, EPOLLIN | EPOLLET) == -1)
-			return false;
-		return true;
 	}
 
 	void findVirtualServersToBind() {
@@ -225,52 +220,26 @@ private:
 		}
 	}
 
-	bool connectVirtualServers() {
+	void connectVirtualServers() {
+		int reuse = 1;
 		for (size_t i = 0; i < _virtualServersToBind.size(); ++i) {
-			int socketFd = socket(AF_INET, SOCK_STREAM, 0);
-			if (socketFd == -1) {
-				std::cerr << "Error when creating socket" << std::endl;
-				return false;
-			}
-			int reuse = 1;
-			if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
-				std::cerr << "Error when setting socket options" << std::endl;
-				return false;
-			}
+			int socketFd;
+			syscall(socketFd = socket(AF_INET, SOCK_STREAM, 0), "socket");
+			syscall(setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)),
+					"setsockopt");
 			struct sockaddr_in addr = _virtualServersToBind[i]->getAddress();
-			if (bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-				std::perror("bind");
-				return false;
-			}
-			if (listen(socketFd, SOMAXCONN) == -1) {
-				std::cerr << "Error when listening on socket" << std::endl;
-				return false;
-			}
-			if (addEpollEvent(_epollFd, socketFd, EPOLLIN | EPOLLET) == -1)
-				return false;
+			syscall(bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)), "bind");
+			syscall(listen(socketFd, SOMAXCONN), "listen");
+			addEpollEvent(_epollFd, socketFd, EPOLLIN);
 			_listenSockets.insert(socketFd);
 		}
-		return true;
 	}
 
-	void cleanServer() {
-		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
-			 ++it) {
-			close(*it);
-		}
-		for (int i = 0; i < _numFds; ++i) {
-			if (_eventList[i].data.fd != STDIN_FILENO) {
-				close(_eventList[i].data.fd);
-			}
-		}
-		if (_epollFd != -1)
-			close(_epollFd);
-	}
-
-	void syscall(int returnValue, const char* funcName) {
-		if (returnValue == -1) {
-			std::perror(funcName);
-			throw SystemError(funcName);
+public:
+	static void printVirtualServers(const std::vector<VirtualServer>& virtualServers) {
+		for (size_t i = 0; i < virtualServers.size(); ++i) {
+			std::cout << "Server " << i << ":" << std::endl;
+			virtualServers[i].print();
 		}
 	}
 };

@@ -34,16 +34,19 @@
 #define MAX_URI_SIZE 2048
 #define SIZE_LIMIT 1073741824
 #define BUFFER_SIZE 16384
-#define DEFAULT_SIZE 1048576
+#define DEFAULT_BODY_SIZE 1048576
 #define MAX_HEADER_SIZE 1048576
 #define DEFAULT_ERROR 0
 
-#define CONFIG_FILE_ERROR "Configuration error: "
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
 #define ERROR_LISTEN_FORMAT "invalid format for host:port in listen instruction"
 #define ERROR_LOCATION "wrong syntax for location, syntax must be 'location [modifier] uri {'"
 #define ERROR_PORT "invalid port number in listen instruction"
-#define DEFAULT_CONF "conf/valid/default.conf"
+
+#define RESET "\033[0m"
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define BLUE "\033[34m"
 
 #define LOCATION_MATCH_EXACT -2
 #define LOCATION_MATCH_REGEX -1
@@ -56,13 +59,13 @@ std::string toString(T x) {
 	return ss.str();
 }
 
-typedef enum e_vsmatch {
+typedef enum VirtualServerMatch {
 	VS_MATCH_NONE = 0,
 	VS_MATCH_INADDR_ANY,
 	VS_MATCH_IP,
 	VS_MATCH_SERVER,
 	VS_MATCH_BOTH,
-} t_vsmatch;
+} VirtualServerMatch;
 
 typedef enum RequestMethod { GET = 0, POST, DELETE, NO_METHOD } RequestMethod;
 
@@ -150,24 +153,28 @@ bool doesRegexMatch(const char*, const char*);
 bool endswith(const std::string&, const std::string&);
 const std::string* findCommonString(const std::vector<std::string>&,
 									const std::vector<std::string>&);
-std::string fullRead(int, size_t);
-bool readHTML(std::string& uri, std::string& content);
+std::string fullRead(int);
+std::string getBasename(const std::string&);
+std::string getDate();
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
+bool getValidPath(std::string, char* const[], std::string&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
-bool getValidPath(std::string, char* const[], std::string&);
-std::string getDate(void);
+bool readHTML(std::string&, std::string&);
 
-int addEpollEvent(int, int, int);
-int modifyEpollEvent(int, int, int);
+void addEpollEvent(int, int, int);
+void modifyEpollEvent(int, int, int);
+
+void signalHandler(int);
+void syscall(int, const char*);
 
 bool parseAutoIndex(std::istringstream&, bool&);
 bool parseErrorCode(std::string&, std::vector<int>&);
 bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
 bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
-bool parseString(std::istringstream& iss, std::string& content, std::string const keyword);
+bool parseString(std::istringstream&, std::string&, std::string const);
 
 class Request;
 class Response;
