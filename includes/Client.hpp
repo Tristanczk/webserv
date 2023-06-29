@@ -14,15 +14,14 @@ public:
 	};
 	~Client(){};
 
-	std::string readRequest() { return fullRead(_fd); }
-
-	void handleRequests() {
+	ResponseStatusEnum handleRequests() {
 		std::string request = readRequest();
 		if (_currentRequest == NULL)
 			_currentRequest = new Request(_associatedServers, _ip, _port);
 		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
+		std::cout << "Result received" << result.result << ": " << result.statusCode << std::endl;
 		if (result.result == REQUEST_PARSING_PROCESSING)
-			return;
+			return RESPONSE_PENDING;
 		VirtualServer* vs = result.virtualServer;
 		Location* loc = result.location;
 		Response res(vs->getRootDir(), vs->getAutoIndex(), vs->getErrorPages(),
@@ -31,12 +30,12 @@ public:
 			res = Response(loc->getRootDir(), loc->getAutoIndex(), loc->getErrorPages(),
 						   loc->getIndexPages(), loc->getUri(), loc->getReturn(),
 						   loc->getAllowedMethod(), loc->getCgiExec());
-		(void)res;
-		// TODO: parse header
-		// get the server name in the host part
-		// find the best matching server (using the findBestMatch method)
-		// get the value for the max body size
-		return;
+		res.buildResponse(result);
+		delete _currentRequest;
+		_currentRequest = NULL;
+		if (!res.pushResponseToClient(_fd))
+			return RESPONSE_FAILURE;
+		return RESPONSE_SUCCESS;
 	}
 
 	void setInfo(int fd) {
@@ -54,20 +53,6 @@ public:
 				(vs[i].getAddr() == _ip || vs[i].getAddr() == INADDR_ANY)) {
 				_associatedServers.push_back(&vs[i]);
 			}
-		}
-	}
-
-	std::string buildResponse(char* const envp[], std::string& filename) {
-		std::string cgiExec = _currentMatchingLocation->getCgiExec();
-		if (cgiExec.empty()) {
-			// TODO
-			//  return buildResponseHTML();
-			return "";
-		} else {
-			// build the header
-			std::string body = buildCgiBody(cgiExec, filename, envp);
-			// TODO
-			return "";
 		}
 	}
 
@@ -113,6 +98,8 @@ private:
 	int _fd;
 	std::queue<Response> _responseQueue;
 	Request* _currentRequest;
+
+	std::string readRequest() { return fullRead(_fd); }
 
 public:
 	void printHostPort() {

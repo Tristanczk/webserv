@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Request.hpp"
 #include "webserv.hpp"
 
 extern bool run;
@@ -80,7 +81,7 @@ public:
 					client.findAssociatedServers(_virtualServers);
 					addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
 					_clients[clientFd] = client;
-					// std::cout << "New client connected" << std::endl;
+					std::cout << "New client connected" << std::endl;
 				} else {
 					clientFd = _eventList[i].data.fd;
 					// should we handle error or unexpected closure differently ?
@@ -93,22 +94,13 @@ public:
 						continue;
 					} else if (_eventList[i].events & EPOLLIN) {
 						Client& client = _clients[clientFd];
-						std::string request = client.readRequest();
-						// TODO : parsing of the request
-						// TODO : get the server name in order to find the best matching server
-						// for the request
-						// std::string serverName =
-						// client.findServerName(request); VirtualServer* server =
-						// client.findBestMatch(serverName); TODO : building of the response
-						if (request.empty()) {
+						std::cout << "received new request from client" << std::endl;
+						ResponseStatusEnum status = client.handleRequests();
+						if (status == RESPONSE_FAILURE) {
 							syscall(close(clientFd), "close");
 							_clients.erase(clientFd);
-						} else {
-							// TODO: check if the request is complete before swapping to
-							// EPOLLOUT
+						} else if (status == RESPONSE_SUCCESS)
 							modifyEpollEvent(_epollFd, clientFd, EPOLLOUT | EPOLLRDHUP);
-						}
-						// std::cout << "received new request from client" << std::endl;
 					} else if (_eventList[i].events & EPOLLOUT) {
 						// TODO, send response to client
 						// int n =

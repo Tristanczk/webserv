@@ -51,8 +51,10 @@ public:
 				if (_headerSize > MAX_HEADER_SIZE)
 					return parsingFailure(CLIENT_REQUEST_HEADER_FIELDS_TOO_LARGE);
 				const bool expectsNewline = !_line.empty() && _line[_line.size() - 1] == '\r';
-				if (expectsNewline ? c != '\n' : c != '\r' && !isprint(c))
+				if (expectsNewline ? c != '\n' : c != '\r' && !isprint(c)) {
+					// std::cout << "here1" << std::endl;
 					return parsingFailure(CLIENT_BAD_REQUEST);
+				}
 				_line += c;
 				if (endswith(_line, "\r\n")) {
 					_line.resize(_line.size() - 2);
@@ -114,8 +116,10 @@ private:
 		std::string methodString, version, check;
 		std::istringstream iss(_line);
 		_isRequestLine = false;
-		if (!(iss >> methodString >> _uri >> version) || (iss >> check) || _uri[0] != '/')
+		if (!(iss >> methodString >> _uri >> version) || (iss >> check) || _uri[0] != '/') {
+			// std::cout << "here6" << std::endl;
 			return CLIENT_BAD_REQUEST;
+		}
 		if (methodString == "DELETE")
 			_method = DELETE;
 		else if (methodString == "GET")
@@ -147,26 +151,36 @@ private:
 					key += tolower(c);
 				break;
 			case HEADER_SKIP:
-				if (c != ' ')
+				if (c != ' ') {
 					headerState = HEADER_VALUE;
+					value += c;
+				}
 				break;
 			case HEADER_VALUE:
 				value += c;
 				break;
 			}
 		}
-		if (key.empty() || value.empty())
+		// std::cout << "key: " << key << std::endl;
+		// std::cout << "value: " << value << std::endl;
+		if (key.empty() || value.empty()) {
+			// std::cout << "here5" << std::endl;
 			return CLIENT_BAD_REQUEST;
+		}
 		// TODO handle duplicates
 		_headers[key] = value;
 		return NO_STATUS_CODE;
 	}
 
 	StatusCode checkHeaders() {
-		if (_isRequestLine)
+		if (_isRequestLine) {
+			// std::cout << "here4" << std::endl;
 			return CLIENT_BAD_REQUEST;
-		if (_headers.find("host") == _headers.end())
+		}
+		if (_headers.find("host") == _headers.end()) {
+			// std::cout << "here3" << std::endl;
 			return CLIENT_BAD_REQUEST;
+		}
 		// at this point we have a host field so we can identify the correct server
 		findMatchingServerAndLocation();
 		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
@@ -174,8 +188,10 @@ private:
 			if (it == _headers.end())
 				return CLIENT_LENGTH_REQUIRED;
 			const std::string contentLengthString = it->second;
-			if (contentLengthString.find_first_not_of("0123456789") != std::string::npos)
+			if (contentLengthString.find_first_not_of("0123456789") != std::string::npos) {
+				// std::cout << "here2" << std::endl;
 				return CLIENT_BAD_REQUEST;
+			}
 			_contentLength = std::strtol(contentLengthString.c_str(), NULL, 10);
 			if (_contentLength > _maxBodySize)
 				return CLIENT_PAYLOAD_TOO_LARGE;
