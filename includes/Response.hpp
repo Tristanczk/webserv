@@ -4,11 +4,27 @@
 
 class Response {
 public:
-	Response(std::string& rootDir, bool autoIndex, std::map<int, std::string> errorPages,
-			 std::vector<std::string>& indexPages, std::pair<long, std::string>& redirect,
-			 bool allowedMethods[NO_METHOD], std::string& cgiExec)
+	// constructor in case of non matching location block, there won't be a locationUri, a redirect,
+	// allowedMethods or link to cgiExec as they are exclusively defined in the location block
+	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
+			 std::vector<std::string> const& indexPages)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
-		  _indexPages(indexPages), _return(redirect), _cgiExec(cgiExec) {
+		  _indexPages(indexPages), _locationUri(""), _return(-1, ""), _cgiExec("") {
+		for (int i = 0; i < NO_METHOD; ++i)
+			_allowedMethods[i] = true;
+		initKeywordMap();
+		initStatusMessageMap();
+		// TODO remove void
+		(void)_allowedMethods;
+		(void)_autoIndex;
+	}
+
+	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
+			 std::vector<std::string> const& indexPages, std::string locationUri,
+			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
+			 std::string cgiExec)
+		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
+		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
 		initKeywordMap();
@@ -17,7 +33,34 @@ public:
 		(void)_allowedMethods;
 		(void)_autoIndex;
 	}
+
+	Response(const Response& copy) {
+		*this = copy;
+		initKeywordMap();
+		initStatusMessageMap();
+	}
 	~Response(){};
+
+	Response& operator=(const Response& assign) {
+		if (this == &assign)
+			return *this;
+		_statusLine = assign._statusLine;
+		_headers = assign._headers;
+		_tmpBody = assign._tmpBody;
+		_body = assign._body;
+		_bodyType = assign._bodyType;
+		_statusCode = assign._statusCode;
+		_rootDir = assign._rootDir;
+		_autoIndex = assign._autoIndex;
+		_errorPages = assign._errorPages;
+		_indexPages = assign._indexPages;
+		_locationUri = assign._locationUri;
+		_return = assign._return;
+		_cgiExec = assign._cgiExec;
+		for (int i = 0; i < NO_METHOD; ++i)
+			_allowedMethods[i] = assign._allowedMethods[i];
+		return *this;
+	}
 
 	void buildResponse(RequestParsingResult& request) {
 		if (request.result == REQUEST_PARSING_FAILURE) {
@@ -48,11 +91,11 @@ private:
 
 	// these variables will be extracted from the correct location or from the correct virtual
 	// server if needed
-	std::string _locationUri;
 	std::string _rootDir;
 	bool _autoIndex;
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
+	std::string _locationUri;
 	std::pair<long, std::string> _return;
 	bool _allowedMethods[NO_METHOD];
 	std::string _cgiExec;

@@ -16,21 +16,28 @@ public:
 
 	std::string readRequest() { return fullRead(_fd); }
 
-	// void handleRequests() {
-	// 	std::string request = readRequest();
-	// 	if (_currentRequest == NULL)
-	// 		_currentRequest = new Request(_associatedServers, _ip, _port);
-	// 	RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
-	// 	if (result.result == REQUEST_PARSING_PROCESSING)
-	// 		return;
-	// 	VirtualServer* vs = result.success.virtualServer;
-	// 	Location* loc = result.success.location;
-	// 	// TODO: parse header
-	// 	// get the server name in the host part
-	// 	// find the best matching server (using the findBestMatch method)
-	// 	// get the value for the max body size
-	// 	return;
-	// }
+	void handleRequests() {
+		std::string request = readRequest();
+		if (_currentRequest == NULL)
+			_currentRequest = new Request(_associatedServers, _ip, _port);
+		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
+		if (result.result == REQUEST_PARSING_PROCESSING)
+			return;
+		VirtualServer* vs = result.virtualServer;
+		Location* loc = result.location;
+		Response res(vs->getRootDir(), vs->getAutoIndex(), vs->getErrorPages(),
+					 vs->getIndexPages());
+		if (loc != NULL)
+			res = Response(loc->getRootDir(), loc->getAutoIndex(), loc->getErrorPages(),
+						   loc->getIndexPages(), loc->getUri(), loc->getReturn(),
+						   loc->getAllowedMethod(), loc->getCgiExec());
+		(void)res;
+		// TODO: parse header
+		// get the server name in the host part
+		// find the best matching server (using the findBestMatch method)
+		// get the value for the max body size
+		return;
+	}
 
 	void setInfo(int fd) {
 		_fd = fd;

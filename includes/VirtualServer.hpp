@@ -103,10 +103,14 @@ public:
 
 	in_port_t getPort() const { return _address.sin_port; }
 	in_addr_t getAddr() const { return _address.sin_addr.s_addr; }
+	std::string getRootDir() const { return _rootDir; }
+	bool getAutoIndex() const { return _autoIndex; }
 	std::size_t getBodySize() const { return _bodySize; }
 	struct sockaddr_in getAddress() const { return _address; }
 	std::vector<std::string> const& getServerNames() const { return _serverNames; }
 	std::vector<Location> const& getLocations() const { return _locations; }
+	std::map<int, std::string> const& getErrorPages() const { return _errorPages; }
+	std::vector<std::string> const& getIndexPages() const { return _indexPages; }
 
 private:
 	typedef bool (VirtualServer::*KeywordHandler)(std::istringstream&);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <string>
 
 class Location {
 public:
@@ -83,7 +84,14 @@ public:
 		return LOCATION_MATCH_NONE;
 	}
 
+	std::string getUri() const { return _uri; }
+	std::string getRootDir() const { return _rootDir; }
 	std::string getCgiExec() const { return _cgiExec; }
+	bool getAutoIndex() const { return _autoIndex; }
+	std::pair<long, std::string> getReturn() const { return _return; }
+	const bool* getAllowedMethod() const { return _allowedMethods; }
+	std::map<int, std::string> const& getErrorPages() const { return _errorPages; }
+	std::vector<std::string> const& getIndexPages() const { return _indexPages; }
 
 private:
 	typedef bool (Location::*KeywordHandler)(std::istringstream&);
