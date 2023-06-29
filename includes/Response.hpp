@@ -94,23 +94,25 @@ public:
 
 	bool pushResponseToClient(int fd) {
 		std::string line;
-		if (!pushLineToClient(fd, _statusLine))
+		if (!pushStringToClient(fd, _statusLine))
 			return false;
 		for (std::map<std::string, std::string>::iterator it = _headers.begin();
 			 it != _headers.end(); it++) {
 			line = it->first + ": " + it->second + "\r\n";
-			if (!pushLineToClient(fd, line))
+			if (!pushStringToClient(fd, line))
 				return false;
 		}
 		line = "\r\n";
-		if (!pushLineToClient(fd, line))
+		if (!pushStringToClient(fd, line))
 			return false;
-		for (std::vector<char>::iterator it = _tmpBody.begin(); it != _tmpBody.end(); it++) {
-			if (send(fd, &(*it), 1, 0) == -1) {
-				std::cerr << "Error: send failed" << std::endl;
-				return false;
-			}
-		}
+		// for (std::vector<char>::iterator it = _tmpBody.begin(); it != _tmpBody.end(); it++) {
+		// 	if (send(fd, &(*it), 1, 0) == -1) {
+		// 		std::cerr << "Error: send failed" << std::endl;
+		// 		return false;
+		// 	}
+		// }
+		if (!pushStringToClient(fd, _body))
+			return false;
 		return true;
 	}
 
@@ -159,7 +161,7 @@ private:
 		return true;
 	}
 
-	bool pushLineToClient(int fd, std::string& line) {
+	bool pushStringToClient(int fd, std::string& line) {
 		size_t len = line.length();
 		size_t sent = 0;
 		int cur_sent;
