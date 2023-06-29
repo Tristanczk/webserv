@@ -90,9 +90,9 @@ public:
 			throw SystemError("Invalid path for CGI");
 		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
-		if (pid == -1)
-			throw SystemError("fork");
+		syscall(pid, "pipe");
 		if (pid == 0) {
+			// TODO catch errors in child or check for SIGABRT in parent
 			char* const argv[] = {const_cast<char*>(finalPath.c_str()),
 								  const_cast<char*>(filename.c_str()), NULL};
 			close(pipefd[0]);

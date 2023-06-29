@@ -165,8 +165,8 @@ bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
 bool readHTML(std::string&, std::string&);
 
-int addEpollEvent(int, int, int);
-int modifyEpollEvent(int, int, int);
+void addEpollEvent(int, int, int);
+void modifyEpollEvent(int, int, int);
 
 void signalHandler(int);
 void syscall(int, const char*);

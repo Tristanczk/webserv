@@ -26,7 +26,8 @@ public:
 			return false;
 		findVirtualServersToBind();
 		syscall(_epollFd = epoll_create1(0), "epoll_create1");
-		return connectVirtualServers();
+		connectVirtualServers();
+		return true;
 	}
 
 	bool parseConfig(const char* filename) {
@@ -81,12 +82,9 @@ public:
 					}
 					client.findAssociatedServers(_virtualServers);
 					// client.printHostPort();
-					if (addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP) == -1) {
-						// TODO : handle error appropriately
-					} else {
-						_clients[clientFd] = client;
-						// std::cout << "New client connected" << std::endl;
-					}
+					addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
+					_clients[clientFd] = client;
+					// std::cout << "New client connected" << std::endl;
 				} else {
 					// should we handle error or unexpected closure differently ?
 					// especially is there a need to handle EPOLLRDHUP in a specific way ?
@@ -113,10 +111,7 @@ public:
 						} else {
 							// TODO: check if the request is complete before swapping to
 							// EPOLLOUT
-							if (modifyEpollEvent(_epollFd, clientFd, EPOLLOUT | EPOLLRDHUP) == -1) {
-								syscall(close(clientFd), "close");
-								_clients.erase(clientFd);
-							}
+							modifyEpollEvent(_epollFd, clientFd, EPOLLOUT | EPOLLRDHUP);
 						}
 						// std::cout << "received new request from client" << std::endl;
 					} else if (_eventList[i].events & EPOLLOUT) {
@@ -130,10 +125,7 @@ public:
 						// 	_clients.erase(clientFd);
 						// }
 						// std::cout << "sent response to client" << std::endl;
-						if (modifyEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP) == -1) {
-							syscall(close(clientFd), "close");
-							_clients.erase(clientFd);
-						}
+						modifyEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
 					}
 				}
 			}
@@ -223,31 +215,18 @@ private:
 		}
 	}
 
-	bool connectVirtualServers() {
+	void connectVirtualServers() {
+		int reuse = 1;
 		for (size_t i = 0; i < _virtualServersToBind.size(); ++i) {
-			int socketFd = socket(AF_INET, SOCK_STREAM, 0);
-			if (socketFd == -1) {
-				std::cerr << "Error when creating socket" << std::endl;
-				return false;
-			}
-			int reuse = 1;
-			if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
-				std::cerr << "Error when setting socket options" << std::endl;
-				return false;
-			}
+			int socketFd;
+			syscall(socketFd = socket(AF_INET, SOCK_STREAM, 0), "socket");
+			syscall(setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)),
+					"setsockopt");
 			struct sockaddr_in addr = _virtualServersToBind[i]->getAddress();
-			if (bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-				std::perror("bind");
-				return false;
-			}
-			if (listen(socketFd, SOMAXCONN) == -1) {
-				std::cerr << "Error when listening on socket" << std::endl;
-				return false;
-			}
-			if (addEpollEvent(_epollFd, socketFd, EPOLLIN) == -1)
-				return false;
+			syscall(bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)), "bind");
+			syscall(listen(socketFd, SOMAXCONN), "listen");
+			addEpollEvent(_epollFd, socketFd, EPOLLIN);
 			_listenSockets.insert(socketFd);
 		}
-		return true;
 	}
 };
