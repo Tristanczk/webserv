@@ -178,6 +178,7 @@ private:
 		_headers["Content-Length"] = toString(_body.length());
 		if (!_bodyType.empty())
 			_headers["Content-Type"] = _bodyType;
+		//_headers["Connection"] = "close";
 	}
 
 	void buildErrorPage() {
@@ -201,7 +202,6 @@ private:
 		std::string uri = findFinalUri(request.success.uri);
 		if (!readHTML(uri, _body)) {
 			_statusCode = CLIENT_NOT_FOUND;
-			buildErrorPage();
 			return false;
 		}
 		_bodyType = "text/html";
@@ -266,7 +266,7 @@ private:
 		_statusMessages[CLIENT_UNAUTHORIZED] = "Unauthorized";
 		_statusMessages[CLIENT_PAYMENT_REQUIRED] = "Payment Required";
 		_statusMessages[CLIENT_FORBIDDEN] = "Forbidden";
-		_statusMessages[CLIENT_NOT_FOUND] = "NotFound";
+		_statusMessages[CLIENT_NOT_FOUND] = "Not Found";
 		_statusMessages[CLIENT_METHOD_NOT_ALLOWED] = "Method Not Allowed";
 		_statusMessages[CLIENT_NOT_ACCEPTABLE] = "Not Acceptable";
 		_statusMessages[CLIENT_PROXY_AUTHENTICATION_REQUIRED] = "Proxy Authentication Required";
