@@ -176,7 +176,7 @@ private:
 		_mimeTypes["png"] = "image/png";
 		_mimeTypes["svg"] = "image/svg+xml";
 
-		std::ifstream ifs(PATH_MIME_TYPES);
+		std::ifstream ifs("/etc/mime.types");
 		std::string line, mime, extension;
 		while (true) {
 			if (!std::getline(ifs, line))

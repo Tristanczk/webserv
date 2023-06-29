@@ -90,8 +90,7 @@ private:
 	std::string _cgiExec;
 	bool _autoIndex;
 	std::pair<long, std::string> _return;
-	bool _allowedMethods[NO_METHOD]; // NO_METHOD is equivalent to the number of methods in the
-									 // RequestMethod enum
+	bool _allowedMethods[NO_METHOD];
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
 	const std::map<int, std::string>& _serverErrorPages;
@@ -121,12 +120,10 @@ private:
 		if (!(iss >> method))
 			return configFileError("missing information after limit_except keyword");
 		std::fill_n(_allowedMethods, NO_METHOD, false);
-		if (!updateMethod(method))
-			return false;
-		while (iss >> method) {
+		do {
 			if (!updateMethod(method))
 				return false;
-		}
+		} while (iss >> method);
 		return true;
 	}
 

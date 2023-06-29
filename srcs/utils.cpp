@@ -1,7 +1,7 @@
 #include "../includes/webserv.hpp"
 
 bool configFileError(const std::string& message) {
-	std::cerr << CONFIG_FILE_ERROR << message << std::endl;
+	std::cerr << "Configuration error: " << message << std::endl;
 	return false;
 }
 

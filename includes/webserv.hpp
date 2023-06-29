@@ -38,14 +38,10 @@
 #define MAX_HEADER_SIZE 1048576
 #define DEFAULT_ERROR 0
 
-#define CONFIG_FILE_ERROR "Configuration error: "
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
 #define ERROR_LISTEN_FORMAT "invalid format for host:port in listen instruction"
 #define ERROR_LOCATION "wrong syntax for location, syntax must be 'location [modifier] uri {'"
 #define ERROR_PORT "invalid port number in listen instruction"
-
-#define DEFAULT_CONF "conf/valid/default.conf"
-#define PATH_MIME_TYPES "/etc/mime.types"
 
 #define RESET "\033[0m"
 #define RED "\033[31m"

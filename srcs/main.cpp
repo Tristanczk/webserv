@@ -4,7 +4,7 @@ bool run = true;
 
 int main(int argc, char* argv[]) {
 	signal(SIGINT, signalHandler);
-	const char* conf = argc == 2 ? argv[1] : DEFAULT_CONF;
+	const char* conf = argc == 2 ? argv[1] : "conf/valid/default.conf";
 	if (argc > 2 || !endswith(conf, ".conf")) {
 		std::cerr << "Usage: " << argv[0] << " [filename.conf]" << std::endl;
 		return EXIT_FAILURE;

@@ -11,15 +11,6 @@ public:
 
 	std::string readRequest() { return fullRead(_fd); }
 
-	// void handleRequests() {
-	// 	std::string request = readRequest();
-	// 	// TODO: parse header
-	// 	// get the server name in the host part
-	// 	// find the best matching server (using the findBestMatch method)
-	// 	// get the value for the max body size
-	// 	return true;
-	// }
-
 	void setInfo(int fd) {
 		_fd = fd;
 		struct sockaddr_in localAddr;
@@ -120,4 +111,13 @@ public:
 	void printHostPort() {
 		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
 	}
+
+	// void handleRequests() {
+	// 	std::string request = readRequest();
+	// 	// TODO: parse header
+	// 	// get the server name in the host part
+	// 	// find the best matching server (using the findBestMatch method)
+	// 	// get the value for the max body size
+	// 	return true;
+	// }
 };
