@@ -94,13 +94,7 @@ public:
 		}
 		line = "\r\n";
 		if (!pushStringToClient(fd, line))
-			return false;
-		// for (std::vector<char>::iterator it = _tmpBody.begin(); it != _tmpBody.end(); it++) {
-		// 	if (send(fd, &(*it), 1, 0) == -1) {
-		// 		std::cerr << "Error: send failed" << std::endl;
-		// 		return false;
-		// 	}
-		// }
+			return false; // ???
 		if (!pushStringToClient(fd, _body))
 			return false;
 		return true;
@@ -111,7 +105,7 @@ private:
 	std::map<RequestMethod, KeywordHandler> _keywordHandlers;
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
-	std::vector<char> _tmpBody;
+	std::vector<char> _tmpBody; // TODO remove?
 	std::string _body;
 	std::string _bodyType;
 	StatusCode _statusCode;
@@ -152,12 +146,11 @@ private:
 	}
 
 	bool pushStringToClient(int fd, std::string& line) {
-		size_t len = line.length();
+		// TODO tout ca me parait tres louche et potentiellement bloquant
 		size_t sent = 0;
-		int cur_sent;
-		while (sent < len) {
-			cur_sent = send(fd, line.c_str() + sent, len - sent, 0);
-			if (cur_sent == -1) {
+		while (sent < line.size()) {
+			int cur_sent = send(fd, line.c_str() + sent, line.size() - sent, MSG_NOSIGNAL);
+			if (cur_sent <= 0) {
 				std::cerr << "Error: send failed" << std::endl;
 				return false;
 			}
@@ -173,7 +166,7 @@ private:
 
 	void buildHeader() {
 		_headers["Date"] = getDate();
-		_headers["Server"] = "Webserv/1.0";
+		_headers["Server"] = "webserv/4.2";
 		_headers["Content-Length"] = toString(_body.length());
 		if (!_bodyType.empty())
 			_headers["Content-Type"] = _bodyType;
@@ -185,6 +178,7 @@ private:
 		std::string errorPageUri =
 			it != _errorPages.end() ? _rootDir + it->second : "./www/default_error.html";
 		if (!readHTML(errorPageUri, _body)) {
+			// TODO return 500 Internal Server Error instead maybe
 			_body = "There was an error while trying to access the specified error page for error "
 					"code " +
 					toString(_statusCode);

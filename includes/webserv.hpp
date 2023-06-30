@@ -161,6 +161,9 @@ bool getValidPath(std::string, char* const[], std::string&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
 bool readHTML(std::string&, std::string&);
+std::string strlower(const std::string&);
+std::string strtrim(const std::string&, const std::string&);
+bool validateUrl(const std::string&, const std::string&);
 
 void addEpollEvent(int, int, int);
 void modifyEpollEvent(int, int, int);

@@ -3,10 +3,10 @@
 bool parseString(std::istringstream& iss, std::string& content, std::string const keyword) {
 	std::string value;
 	if (!(iss >> value))
-		return configFileError("missing information after " + keyword + "keyword");
+		return configFileError("missing information after " + keyword + " keyword");
 	content = value;
 	if (iss >> value)
-		return configFileError("too many arguments after " + keyword + "keyword");
+		return configFileError("too many arguments after " + keyword + " keyword");
 	return true;
 }
 

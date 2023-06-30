@@ -178,7 +178,10 @@ private:
 	bool parseErrorPages(std::istringstream& iss) { return ::parseErrorPages(iss, _errorPages); }
 	bool parseIndex(std::istringstream& iss) { return ::parseIndex(iss, _indexPages); }
 	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
-	bool parseRoot(std::istringstream& iss) { return ::parseString(iss, _rootDir, "root"); }
+
+	bool parseRoot(std::istringstream& iss) {
+		return ::parseString(iss, _rootDir, "root") && validateUrl(_rootDir, "server root");
+	}
 
 	bool parseClientMaxBodySize(std::istringstream& iss) {
 		return parseSize(iss, _bodySize, "client_max_body_size", 0, SIZE_LIMIT);

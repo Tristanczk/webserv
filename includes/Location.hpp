@@ -8,8 +8,8 @@ public:
 			 const std::map<int, std::string>& serverErrorPages,
 			 const std::vector<std::string>& serverIndexPages,
 			 const std::pair<long, std::string>& serverReturn)
-		: _modifier(NONE), _uri(""), _rootDir(rootDir), _cgiExec(""), _autoIndex(autoIndex),
-		  _return(-1, ""), _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
+		: _modifier(NONE), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
+		  _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
 		std::fill_n(_allowedMethods, NO_METHOD, true);
@@ -84,6 +84,7 @@ public:
 	std::string getUri() const { return _uri; }
 	std::string getRootDir() const { return _rootDir; }
 	std::string getCgiExec() const { return _cgiExec; }
+	std::string getCgiScript() const { return _cgiScript; }
 	bool getAutoIndex() const { return _autoIndex; }
 	std::pair<long, std::string> getReturn() const { return _return; }
 	const bool* getAllowedMethod() const { return _allowedMethods; }
@@ -93,10 +94,12 @@ public:
 private:
 	typedef bool (Location::*KeywordHandler)(std::istringstream&);
 	typedef enum Modifier { NONE, REGEX, EXACT } Modifier;
+
 	Modifier _modifier;
 	std::string _uri;
 	std::string _rootDir;
 	std::string _cgiExec;
+	std::string _cgiScript;
 	bool _autoIndex;
 	std::pair<long, std::string> _return;
 	bool _allowedMethods[NO_METHOD];
@@ -113,18 +116,38 @@ private:
 		_keywordHandlers["error_page"] = &Location::parseErrorPages;
 		_keywordHandlers["index"] = &Location::parseIndex;
 		_keywordHandlers["return"] = &Location::parseReturn;
-		_keywordHandlers["limit_except"] = &Location::parseMethods;
+		_keywordHandlers["limit_except"] = &Location::parseLimitExcept;
 		_keywordHandlers["cgi"] = &Location::parseCgi;
 	}
 
-	bool parseRoot(std::istringstream& iss) { return ::parseString(iss, _rootDir, "root"); }
 	bool parseAutoIndex(std::istringstream& iss) { return ::parseAutoIndex(iss, _autoIndex); }
 	bool parseErrorPages(std::istringstream& iss) { return ::parseErrorPages(iss, _errorPages); }
 	bool parseIndex(std::istringstream& iss) { return ::parseIndex(iss, _indexPages); }
 	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
-	bool parseCgi(std::istringstream& iss) { return ::parseString(iss, _cgiExec, "cgi"); }
 
-	bool parseMethods(std::istringstream& iss) {
+	bool parseCgi(std::istringstream& iss) {
+		std::string lang, check;
+		if (!(iss >> lang) || !(iss >> _cgiScript))
+			return configFileError("missing information after cgi keyword");
+		if (iss >> check)
+			return configFileError("too many arguments after cgi keyword");
+		const std::string lowerLang = strlower(lang);
+		if (lowerLang == "javascript")
+			_cgiExec = "/usr/bin/node";
+		else if (lowerLang == "php")
+			_cgiExec = "/usr/bin/php-cgi";
+		else if (lowerLang == "python")
+			_cgiExec = "/usr/bin/python3";
+		else
+			return configFileError("invalid lang for cgi: " + lang);
+		return validateUrl(_cgiScript, "cgi");
+	}
+
+	bool parseRoot(std::istringstream& iss) {
+		return ::parseString(iss, _rootDir, "root") && validateUrl(_rootDir, "location root");
+	}
+
+	bool parseLimitExcept(std::istringstream& iss) {
 		std::string method;
 		if (!(iss >> method))
 			return configFileError("missing information after limit_except keyword");

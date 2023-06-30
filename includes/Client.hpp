@@ -15,6 +15,9 @@ public:
 
 	ResponseStatusEnum handleRequests() {
 		std::string request = readRequest();
+		std::cout << "=== REQUEST START ===" << std::endl;
+		std::cout << strtrim(request, "\r\n") << std::endl;
+		std::cout << "=== REQUEST END ===" << std::endl;
 		if (_currentRequest == NULL)
 			_currentRequest = new Request(_associatedServers, _ip, _port);
 		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());

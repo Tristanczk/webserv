@@ -4,6 +4,5 @@ a.out
 webserv
 webtest
 test-cgi.cpp
-*.php
 test.cpp
 __pycache__

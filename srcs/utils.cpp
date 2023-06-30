@@ -1,15 +1,15 @@
 #include "../includes/webserv.hpp"
 
-bool configFileError(const std::string& message) {
-	std::cerr << "Configuration error: " << message << std::endl;
-	return false;
-}
-
 int comparePrefix(const std::string& s1, const std::string& s2) {
 	int i = 0;
 	while (s1[i] && s2[i] && s1[i] == s2[i])
 		++i;
 	return i;
+}
+
+bool configFileError(const std::string& message) {
+	std::cerr << "Configuration error: " << message << std::endl;
+	return false;
 }
 
 // TODO catch RegexError instead of generic exception where this function is called
@@ -50,16 +50,14 @@ std::string fullRead(int fd) {
 	}
 }
 
-bool readHTML(std::string& uri, std::string& content) {
-	if (isDirectory(uri))
-		return false;
-	std::ifstream file(uri.c_str());
-	if (!file.good())
-		return false;
-	std::stringstream buffer;
-	buffer << file.rdbuf();
-	content = buffer.str();
-	return true;
+std::string getBasename(const std::string& path) { return path.substr(path.find_last_of("/") + 1); }
+
+std::string getDate() {
+	std::time_t t = std::time(0);
+	std::tm* now = std::localtime(&t);
+	char buffer[256];
+	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", now);
+	return std::string(buffer);
 }
 
 std::string getIpString(in_addr_t ip) {
@@ -104,13 +102,6 @@ bool getIpValue(std::string ip, uint32_t& res) {
 	return true;
 }
 
-bool isDirectory(const std::string& path) {
-	struct stat buf;
-	return stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode);
-}
-
-bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
-
 bool getValidPath(std::string path, char* const envp[], std::string& finalPath) {
 	if (path.find('/') != std::string::npos) {
 		finalPath = path;
@@ -138,12 +129,45 @@ bool getValidPath(std::string path, char* const envp[], std::string& finalPath) 
 	return false;
 }
 
-std::string getBasename(const std::string& path) { return path.substr(path.find_last_of("/") + 1); }
+bool isDirectory(const std::string& path) {
+	struct stat buf;
+	return stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode);
+}
 
-std::string getDate() {
-	std::time_t t = std::time(0);
-	std::tm* now = std::localtime(&t);
-	char buffer[256];
-	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", now);
-	return std::string(buffer);
+bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
+
+bool readHTML(std::string& uri, std::string& content) {
+	if (isDirectory(uri))
+		return false;
+	std::ifstream file(uri.c_str());
+	if (!file.good())
+		return false;
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	content = buffer.str();
+	return true;
+}
+
+std::string strlower(const std::string& s) {
+	std::string l;
+	for (size_t i = 0; i < s.size(); ++i)
+		l += tolower(s[i]);
+	return l;
+}
+
+std::string strtrim(const std::string& s, const std::string& remove) {
+	std::string result = s;
+	std::string::size_type pos = result.find_first_not_of(remove);
+	if (pos == std::string::npos)
+		return result;
+	result.erase(0, pos);
+	pos = result.find_last_not_of(remove);
+	result.erase(pos + 1);
+	return result;
+}
+
+bool validateUrl(const std::string& url, const std::string& keyword) {
+	return url.empty() || url[0] != '/' || url.find("..") != std::string::npos
+			   ? configFileError("invalid path for " + keyword + ": " + url)
+			   : true;
 }
