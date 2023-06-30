@@ -1,10 +1,13 @@
 #include "../includes/webserv.hpp"
 
-int comparePrefix(const std::string& s1, const std::string& s2) {
+int comparePrefix(const std::string& locationUri, const std::string& requestPath) {
 	int i = 0;
-	while (s1[i] && s2[i] && s1[i] == s2[i])
+	while (locationUri[i] && requestPath[i] && locationUri[i] == requestPath[i])
 		++i;
-	return i;
+	if (locationUri[i] == '\0')
+		return i;
+	else
+		return 0;
 }
 
 bool configFileError(const std::string& message) {
