@@ -74,7 +74,7 @@ public:
 			int matchLevel;
 			try {
 				matchLevel = _locations[i].isMatching(requestPath);
-			} catch (const std::exception& e) { // ???
+			} catch (const RegexError& e) {
 				std::cerr << e.what() << std::endl;
 				return NULL;
 			}

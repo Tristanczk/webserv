@@ -62,7 +62,7 @@ public:
 		}
 		line = "\r\n";
 		if (!pushStringToClient(fd, line))
-			return false; // ???
+			return false;
 		if (!pushStringToClient(fd, _body))
 			return false;
 		return true;
