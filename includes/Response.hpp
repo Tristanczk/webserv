@@ -163,7 +163,6 @@ private:
 			_bodyType = "text/html";
 	}
 
-	// for now, only handles html files
 	bool buildPage(RequestParsingResult& request) {
 		if (_cgiScript.empty()) {
 			if (!_allowedMethods[request.success.method]) {
@@ -176,26 +175,46 @@ private:
 				_statusCode = CLIENT_NOT_FOUND;
 				return false;
 			}
-			_bodyType = "text/html";
+			_bodyType = "text/html"; // TODO MIME types
 			return true;
 		} else {
-			// int pipefd[2];
-			// syscall(pipe(pipefd), "pipe");
-			// pid_t pid = fork();
-			// syscall(pid, "pipe");
-			// if (pid == 0) {
-			// 	char* const argv[] = {const_cast<char*>(_cgiExec.c_str()),
-			// 						  const_cast<char*>(_cgiScript.c_str()), NULL};
-			// 	close(pipefd[0]);
-			// 	dup2(pipefd[1], STDOUT_FILENO);
-			// 	close(pipefd[1]);
-			// 	execve(finalPath.c_str(), argv, envp);
-			// 	exit(EXIT_FAILURE);
-			// }
-			// // TODO wait and return INTERNAL SERVER ERROR if status != EXIT_SUCCESS
-			// close(pipefd[1]);
-			// std::string response = fullRead(pipefd[0]);
-			// close(pipefd[0]);
+			return buildCgiPage(request);
+		}
+	}
+
+	bool buildCgiPage(RequestParsingResult& request) {
+		(void)request;
+		char* strExec = const_cast<char*>(_cgiExec.c_str());
+		const std::string dotSlash = "." + _cgiScript;
+		char* strScript = const_cast<char*>(dotSlash.c_str());
+		int pipefd[2];
+		syscall(pipe(pipefd), "pipe");
+		pid_t pid = fork();
+		syscall(pid, "fork");
+		if (pid == 0) {
+			close(pipefd[0]);
+			dup2(pipefd[1], STDOUT_FILENO);
+			close(pipefd[1]);
+			char* argv[] = {strExec, strScript, NULL};
+			execve(strExec, argv, (char* const[]){NULL});
+			std::perror("execve");
+			exit(EXIT_FAILURE);
+		}
+		close(pipefd[1]);
+		std::string response = fullRead(pipefd[0]);
+		close(pipefd[0]);
+		std::cout << "=== CGI RESPONSE BEGIN (" << response.size() << ") ===" << std::endl;
+		std::cout << strtrim(response, "\r\n") << std::endl;
+		std::cout << "=== CGI RESPONSE END ===" << std::endl;
+		int wstatus;
+		wait(&wstatus);
+		const int exitCode = WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
+		if (exitCode == 0) {
+			_statusCode = SUCCESS_OK;
+			return true;
+		} else {
+			std::cerr << RED << _cgiExec << " " << dotSlash << " failed with exit code " << exitCode
+					  << RESET << std::endl;
 			_statusCode = SERVER_INTERNAL_SERVER_ERROR;
 			return false;
 		}

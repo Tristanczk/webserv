@@ -1,5 +1,7 @@
 #include "../includes/webserv.hpp"
 
+// TODO only one function, which accepts int operation
+
 void addEpollEvent(int epollFd, int eventFd, int flags) {
 	struct epoll_event event;
 	event.data.fd = eventFd;

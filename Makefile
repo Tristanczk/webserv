@@ -6,11 +6,11 @@ O			:= objs/
 S			:= srcs/
 T			:= tests/
 
-GARBAGE		:= .vscode cgi/__pycache__
+GARBAGE		:= .vscode cgi-bin/__pycache__
 
 CXX			:= c++
 CXXFLAGS	:= -Wall -Wextra -Werror -std=c++98 -g3 -I$I
-VALGRIND	:= valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --track-fds=yes -q
+VALGRIND	:= valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --trace-children=yes --track-fds=yes -q
 
 vpath %.cpp $S $T
 

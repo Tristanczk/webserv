@@ -87,7 +87,7 @@ public:
 					// because it might indicate that the connection is only half closed and can
 					// still receive data information from the server
 					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
-						syscall(close(clientFd), "close");
+						close(clientFd);
 						_clients.erase(clientFd);
 						continue;
 					} else if (_eventList[i].events & EPOLLIN) {
@@ -104,7 +104,7 @@ public:
 						// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
 						// if (n == -1) {
 						// 	std::cerr << "Error while sending response" << std::endl;
-						// 	syscall(close(clientFd), "close");
+						// 	close(clientFd);
 						// 	_clients.erase(clientFd);
 						// }
 						// std::cout << "sent response to client" << std::endl;
