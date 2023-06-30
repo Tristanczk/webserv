@@ -24,13 +24,15 @@ public:
 		if (result.result == REQUEST_PARSING_PROCESSING)
 			return RESPONSE_PENDING;
 		VirtualServer* vs = result.virtualServer;
-		Location* loc = result.location;
-		Response res(vs->getRootDir(), vs->getAutoIndex(), vs->getErrorPages(),
-					 vs->getIndexPages());
-		if (loc != NULL)
-			res = Response(loc->getRootDir(), loc->getAutoIndex(), loc->getErrorPages(),
-						   loc->getIndexPages(), loc->getUri(), loc->getReturn(),
-						   loc->getAllowedMethod(), loc->getCgiExec());
+		Response res =
+			result.location
+				? Response(result.location->getRootDir(), result.location->getAutoIndex(),
+						   result.location->getErrorPages(), result.location->getIndexPages(),
+						   result.location->getUri(), result.location->getReturn(),
+						   result.location->getAllowedMethod(), result.location->getCgiExec(),
+						   result.location->getCgiScript())
+				: Response(vs->getRootDir(), vs->getAutoIndex(), vs->getErrorPages(),
+						   vs->getIndexPages());
 		res.buildResponse(result);
 		delete _currentRequest;
 		_currentRequest = NULL;
@@ -53,32 +55,6 @@ public:
 				_associatedServers.push_back(&vs[i]);
 			}
 		}
-	}
-
-	std::string buildCgiBody(std::string path_to_exec, std::string filename, char* const envp[]) {
-		std::string finalPath;
-		if (!getValidPath(path_to_exec, envp, finalPath))
-			// do we throw an exception in this case or do we handle the error differently?
-			// TODO return internal server error probably
-			throw SystemError("Invalid path for CGI");
-		int pipefd[2];
-		syscall(pipe(pipefd), "pipe");
-		pid_t pid = fork();
-		syscall(pid, "pipe");
-		if (pid == 0) {
-			char* const argv[] = {const_cast<char*>(finalPath.c_str()),
-								  const_cast<char*>(filename.c_str()), NULL};
-			close(pipefd[0]);
-			dup2(pipefd[1], STDOUT_FILENO);
-			close(pipefd[1]);
-			execve(finalPath.c_str(), argv, envp);
-			exit(EXIT_FAILURE);
-		}
-		// TODO wait and return INTERNAL SERVER ERROR if status != EXIT_SUCCESS
-		close(pipefd[1]);
-		std::string response = fullRead(pipefd[0]);
-		close(pipefd[0]);
-		return response;
 	}
 
 	struct sockaddr_in& getAddress() { return _address; }

@@ -15,7 +15,7 @@ public:
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
-		  _indexPages(indexPages), _locationUri(""), _return(-1, ""), _cgiExec("") {
+		  _indexPages(indexPages), _return(-1, "") {
 		std::fill_n(_allowedMethods, NO_METHOD, true);
 		initKeywordMap();
 		initStatusMessageMap();
@@ -27,9 +27,10 @@ public:
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages, std::string locationUri,
 			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
-			 std::string cgiExec)
+			 std::string cgiExec, std::string cgiScript)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
-		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
+		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec),
+		  _cgiScript(cgiScript) {
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
 		initKeywordMap();
@@ -39,45 +40,18 @@ public:
 		(void)_autoIndex;
 	}
 
-	Response(const Response& copy) {
-		*this = copy;
-		initKeywordMap();
-		initStatusMessageMap();
-	}
 	~Response(){};
 
-	Response& operator=(const Response& assign) {
-		if (this == &assign)
-			return *this;
-		_statusLine = assign._statusLine;
-		_headers = assign._headers;
-		_tmpBody = assign._tmpBody;
-		_body = assign._body;
-		_bodyType = assign._bodyType;
-		_statusCode = assign._statusCode;
-		_rootDir = assign._rootDir;
-		_autoIndex = assign._autoIndex;
-		_errorPages = assign._errorPages;
-		_indexPages = assign._indexPages;
-		_locationUri = assign._locationUri;
-		_return = assign._return;
-		_cgiExec = assign._cgiExec;
-		for (int i = 0; i < NO_METHOD; ++i)
-			_allowedMethods[i] = assign._allowedMethods[i];
-		return *this;
-	}
-
 	void buildResponse(RequestParsingResult& request) {
+		buildStatusLine();
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			_statusCode = request.statusCode;
 			buildErrorPage();
-			buildStatusLine();
 			buildHeader();
 		} else {
 			_statusCode = SUCCESS_OK;
 			if (!buildPage(request))
 				buildErrorPage();
-			buildStatusLine();
 			buildHeader();
 		}
 	}
@@ -122,6 +96,7 @@ private:
 	std::pair<long, std::string> _return;
 	bool _allowedMethods[NO_METHOD];
 	std::string _cgiExec;
+	std::string _cgiScript;
 
 	void initKeywordMap() {
 		_keywordHandlers[GET] = &Response::buildGet;
@@ -175,8 +150,9 @@ private:
 
 	void buildErrorPage() {
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
-		std::string errorPageUri =
-			it != _errorPages.end() ? _rootDir + it->second : "./www/default_error.html";
+		std::string errorPageUri = it != _errorPages.end() ? "." + _rootDir + it->second
+														   : "./www/error/default_error.html";
+		std::cout << errorPageUri << std::endl;
 		if (!readHTML(errorPageUri, _body)) {
 			// TODO return 500 Internal Server Error instead maybe
 			_body = "There was an error while trying to access the specified error page for error "
@@ -189,17 +165,40 @@ private:
 
 	// for now, only handles html files
 	bool buildPage(RequestParsingResult& request) {
-		if (!_allowedMethods[request.success.method]) {
-			_statusCode = CLIENT_METHOD_NOT_ALLOWED;
+		if (_cgiScript.empty()) {
+			if (!_allowedMethods[request.success.method]) {
+				_statusCode = CLIENT_METHOD_NOT_ALLOWED;
+				return false;
+			}
+			std::string uri = findFinalUri(request.success.uri);
+			std::cout << "final uri: " << uri << std::endl;
+			if (!readHTML(uri, _body)) {
+				_statusCode = CLIENT_NOT_FOUND;
+				return false;
+			}
+			_bodyType = "text/html";
+			return true;
+		} else {
+			// int pipefd[2];
+			// syscall(pipe(pipefd), "pipe");
+			// pid_t pid = fork();
+			// syscall(pid, "pipe");
+			// if (pid == 0) {
+			// 	char* const argv[] = {const_cast<char*>(_cgiExec.c_str()),
+			// 						  const_cast<char*>(_cgiScript.c_str()), NULL};
+			// 	close(pipefd[0]);
+			// 	dup2(pipefd[1], STDOUT_FILENO);
+			// 	close(pipefd[1]);
+			// 	execve(finalPath.c_str(), argv, envp);
+			// 	exit(EXIT_FAILURE);
+			// }
+			// // TODO wait and return INTERNAL SERVER ERROR if status != EXIT_SUCCESS
+			// close(pipefd[1]);
+			// std::string response = fullRead(pipefd[0]);
+			// close(pipefd[0]);
+			_statusCode = SERVER_INTERNAL_SERVER_ERROR;
 			return false;
 		}
-		std::string uri = findFinalUri(request.success.uri);
-		if (!readHTML(uri, _body)) {
-			_statusCode = CLIENT_NOT_FOUND;
-			return false;
-		}
-		_bodyType = "text/html";
-		return true;
 	}
 
 	std::string findFinalUri(std::string& uri) {

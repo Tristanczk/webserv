@@ -94,7 +94,7 @@ public:
 						Client& client = _clients[clientFd];
 						ResponseStatusEnum status = client.handleRequests();
 						if (status == RESPONSE_FAILURE) {
-							syscall(close(clientFd), "close");
+							close(clientFd);
 							_clients.erase(clientFd);
 						} else if (status == RESPONSE_SUCCESS)
 							modifyEpollEvent(_epollFd, clientFd, EPOLLOUT | EPOLLRDHUP);
