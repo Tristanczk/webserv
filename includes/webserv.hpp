@@ -52,12 +52,12 @@
 #define LOCATION_MATCH_REGEX -1
 #define LOCATION_MATCH_NONE 0
 
+class Client;
+class Location;
 class Request;
 class Response;
-class Location;
-class VirtualServer;
-class Client;
 class Server;
+class VirtualServer;
 
 template <typename T>
 std::string toString(T x) {
