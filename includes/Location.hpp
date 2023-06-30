@@ -81,6 +81,7 @@ public:
 		return LOCATION_MATCH_NONE;
 	}
 
+	LocationModifierEnum getModifier() const { return _modifier; }
 	std::string getUri() const { return _uri; }
 	std::string getRootDir() const { return _rootDir; }
 	std::string getCgiExec() const { return _cgiExec; }
@@ -93,9 +94,8 @@ public:
 
 private:
 	typedef bool (Location::*KeywordHandler)(std::istringstream&);
-	typedef enum Modifier { NONE, REGEX, EXACT } Modifier;
 
-	Modifier _modifier;
+	LocationModifierEnum _modifier;
 	std::string _uri;
 	std::string _rootDir;
 	std::string _cgiExec;

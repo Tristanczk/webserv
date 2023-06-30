@@ -169,6 +169,12 @@ typedef enum ResponseStatusEnum {
 	RESPONSE_SUCCESS,
 } ResponseStatusEnum;
 
+typedef enum LocationModifierEnum {
+	NONE,
+	REGEX,
+	EXACT,
+} LocationModifierEnum;
+
 class SystemError : public std::runtime_error {
 public:
 	explicit SystemError(const char* funcName) : std::runtime_error(funcName), funcName(funcName) {}

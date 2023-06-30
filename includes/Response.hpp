@@ -163,7 +163,7 @@ private:
 				_statusCode = CLIENT_METHOD_NOT_ALLOWED;
 				return false;
 			}
-			std::string uri = findFinalUri(request.success.uri);
+			std::string uri = findFinalUri(request);
 			std::cout << "final uri: " << uri << std::endl;
 			if (!readHTML(uri, _body)) {
 				_statusCode = CLIENT_NOT_FOUND;
@@ -214,9 +214,22 @@ private:
 		}
 	}
 
-	std::string findFinalUri(std::string& uri) {
-		int position = comparePrefix(uri, _locationUri);
-		return _rootDir + "/" + uri.substr(position);
+	std::string findFinalUri(RequestParsingResult& request) {
+		// note : this function will be called after checking if the requested uri is a file or a
+		// directory
+		Location* location = request.location;
+		std::string uri = request.success.uri;
+		LocationModifierEnum modifier = location->getModifier();
+		if (modifier == NONE) {
+			int position = comparePrefix(uri, _locationUri);
+			return _rootDir + "/" + uri.substr(position);
+		} else if (modifier == REGEX) {
+			// in case of a matching regex, we append the whole path to the root directory
+			return _rootDir + "/" + uri;
+		} else {
+			// in case of an exact match, we append only the file name to the root directory
+			return _rootDir + "/" + getBasename(uri);
+		}
 	}
 
 	// what are the type of things we need to handle to build a response?
