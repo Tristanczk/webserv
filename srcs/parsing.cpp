@@ -1,6 +1,6 @@
 #include "../includes/webserv.hpp"
 
-bool parseString(std::istringstream& iss, std::string& content, std::string const keyword) {
+bool parseString(std::istringstream& iss, std::string& content, const std::string& keyword) {
 	std::string value;
 	if (!(iss >> value))
 		return configFileError("missing information after " + keyword + " keyword");
