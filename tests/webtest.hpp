@@ -19,3 +19,5 @@
 void displayTitle(const std::string&);
 void displayResult(const std::string&, bool);
 void testParseConfig();
+void testServer();
+void testLocation();

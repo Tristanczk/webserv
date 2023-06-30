@@ -115,6 +115,8 @@ public:
 		}
 	}
 
+	std::vector<VirtualServer>& getVirtualServers() { return _virtualServers; }
+
 private:
 	std::vector<VirtualServer> _virtualServers;
 	std::vector<VirtualServer*> _virtualServersToBind;

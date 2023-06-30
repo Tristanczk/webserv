@@ -16,5 +16,7 @@ void displayResult(const std::string& testName, bool result) {
 
 int main() {
 	testParseConfig();
+	testServer();
+	testLocation();
 	return status;
 }

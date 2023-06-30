@@ -1,0 +1,8 @@
+#format is ip | port | server_name | expected server number (based on order in file), -2 is an error in ip, -1 is no match
+#if no server_name, just put * instead of the server name
+0.0.0.0 8080 website.com 0
+127.0.0.2 8080 * 0
+127.0.0.2 8082 * 3
+127.0.0.3 8082 * 4
+127.0.0.17 8082 * 2
+0.0.0.0 8080 example.com 6
