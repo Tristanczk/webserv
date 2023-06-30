@@ -57,7 +57,11 @@ public:
 			return VS_MATCH_NONE;
 		if (serverName.empty())
 			return (addrIsAny || serverAddrIsAny) ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
-		// TODO _serverNames.find
+		// TODO _serverNames.find, investigate why it doesn't work (std::find error when compiling)
+		// std::vector<std::string>::iterator it =
+		// 	std::find(_serverNames.begin(), _serverNames.end(), serverName);
+		// if (it != _serverNames.end())
+		// 	return (addrIsAny || serverAddrIsAny) ? VS_MATCH_SERVER : VS_MATCH_BOTH;
 		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
 			 it != _serverNames.end(); it++) {
 			if (*it == serverName)
