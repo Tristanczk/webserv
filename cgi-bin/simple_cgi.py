@@ -2,6 +2,7 @@
 import os
 import html
 
+url = os.environ.get("REQUEST_URI", "not found, server operator probably goofed")
 print(f"""Content-type: text/html\r\n\r
 <!DOCTYPE html>
 <html>
@@ -10,6 +11,6 @@ print(f"""Content-type: text/html\r\n\r
 </head>
 <body>
     <h1>Welcome to my website!</h1>
-    <p>This is the URL you requested: {html.escape(os.environ.get('REQUEST_URI', ''))}</p>
+    <p>This is the URL you requested: {url}</p>
 </body>
 </html>""")
