@@ -2,27 +2,6 @@
 
 #include "webserv.hpp"
 
-typedef enum RequestParsingEnum {
-	REQUEST_PARSING_FAILURE,
-	REQUEST_PARSING_PROCESSING,
-	REQUEST_PARSING_SUCCESS,
-} RequestParsingEnum;
-
-typedef struct RequestParsingSuccess {
-	RequestMethod method;
-	std::string uri;
-	std::map<std::string, std::string> headers;
-	std::vector<unsigned char> body;
-} RequestParsingSuccess;
-
-typedef struct RequestParsingResult {
-	RequestParsingEnum result;
-	StatusCode statusCode;
-	RequestParsingSuccess success;
-	VirtualServer* virtualServer;
-	Location* location;
-} RequestParsingResult;
-
 class Request {
 public:
 	// we consider the first corresponding server to be the default one in case there is an error

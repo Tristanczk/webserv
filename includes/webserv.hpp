@@ -52,6 +52,13 @@
 #define LOCATION_MATCH_REGEX -1
 #define LOCATION_MATCH_NONE 0
 
+class Request;
+class Response;
+class Location;
+class VirtualServer;
+class Client;
+class Server;
+
 template <typename T>
 std::string toString(T x) {
 	std::stringstream ss;
@@ -135,6 +142,33 @@ typedef enum StatusCode {
 	SERVER_NETWORK_AUTHENTICATION_REQUIRED = 511,
 } StatusCode;
 
+typedef enum RequestParsingEnum {
+	REQUEST_PARSING_FAILURE,
+	REQUEST_PARSING_PROCESSING,
+	REQUEST_PARSING_SUCCESS,
+} RequestParsingEnum;
+
+typedef struct RequestParsingSuccess {
+	RequestMethod method;
+	std::string uri;
+	std::map<std::string, std::string> headers;
+	std::vector<unsigned char> body;
+} RequestParsingSuccess;
+
+typedef struct RequestParsingResult {
+	RequestParsingEnum result;
+	StatusCode statusCode;
+	RequestParsingSuccess success;
+	VirtualServer* virtualServer;
+	Location* location;
+} RequestParsingResult;
+
+typedef enum ResponseStatusEnum {
+	RESPONSE_FAILURE,
+	RESPONSE_PENDING,
+	RESPONSE_SUCCESS,
+} ResponseStatusEnum;
+
 class SystemError : public std::runtime_error {
 public:
 	explicit SystemError(const char* funcName) : std::runtime_error(funcName), funcName(funcName) {}
@@ -178,13 +212,6 @@ bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
 bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
 bool parseString(std::istringstream&, std::string&, std::string const);
-
-class Request;
-class Response;
-class Location;
-class VirtualServer;
-class Client;
-class Server;
 
 #include "Location.hpp"
 

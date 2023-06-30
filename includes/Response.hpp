@@ -2,12 +2,6 @@
 
 #include "webserv.hpp"
 
-typedef enum ResponseStatusEnum {
-	RESPONSE_FAILURE,
-	RESPONSE_PENDING,
-	RESPONSE_SUCCESS,
-} ResponseStatusEnum;
-
 class Response {
 public:
 	// constructor in case of non matching location block, there won't be a locationUri, a redirect,
