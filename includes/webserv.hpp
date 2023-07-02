@@ -195,13 +195,14 @@ const std::string* findCommonString(const std::vector<std::string>&,
 									const std::vector<std::string>&);
 std::string fullRead(int);
 std::string getBasename(const std::string&);
+std::string getExtension(const std::string& path);
 std::string getDate();
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
 bool getValidPath(std::string, char* const[], std::string&);
 bool isDirectory(const std::string&);
 bool isValidErrorCode(int);
-bool readHTML(std::string&, std::string&);
+bool readContent(std::string&, std::string&);
 bool startswith(const std::string&, const std::string&);
 std::string strlower(const std::string&);
 std::string strtrim(const std::string&, const std::string&);

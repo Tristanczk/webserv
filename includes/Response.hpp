@@ -37,15 +37,16 @@ public:
 	~Response(){};
 
 	void buildResponse(RequestParsingResult& request) {
-		buildStatusLine();
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			_statusCode = request.statusCode;
 			buildErrorPage();
+			buildStatusLine();
 			buildHeader();
-		} else {
+		} else if (request.success.method == GET) {
 			_statusCode = SUCCESS_OK;
 			if (!buildPage(request))
 				buildErrorPage();
+			buildStatusLine();
 			buildHeader();
 		}
 	}
@@ -69,7 +70,7 @@ public:
 	}
 
 private:
-	typedef bool (Response::*KeywordHandler)(RequestParsingResult&);
+	typedef void (Response::*KeywordHandler)(RequestParsingResult&);
 	std::map<RequestMethod, KeywordHandler> _keywordHandlers;
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
@@ -99,19 +100,29 @@ private:
 	}
 
 	// function templates
-	bool buildGet(RequestParsingResult& request) {
-		(void)request;
-		return true;
+	void buildGet(RequestParsingResult& request) {
+		_statusCode = SUCCESS_OK;
+		if (request.success.uri[request.success.uri.size() - 1] == '/')
+		{
+			//TODO
+			//handleIndex(request);
+			return ;
+		}
+		if (!buildPage(request))
+			buildErrorPage();
+		buildStatusLine();
+		buildHeader();
+		return;
 	}
 
-	bool buildPost(RequestParsingResult& request) {
+	void buildPost(RequestParsingResult& request) {
 		(void)request;
-		return true;
+		return;
 	}
 
-	bool buildDelete(RequestParsingResult& request) {
+	void buildDelete(RequestParsingResult& request) {
 		(void)request;
-		return true;
+		return;
 	}
 
 	bool pushStringToClient(int fd, std::string& line) {
@@ -147,7 +158,7 @@ private:
 		std::string errorPageUri = it != _errorPages.end() ? "." + _rootDir + it->second
 														   : "./www/error/default_error.html";
 		std::cout << errorPageUri << std::endl;
-		if (!readHTML(errorPageUri, _body)) {
+		if (!readContent(errorPageUri, _body)) {
 			// TODO return 500 Internal Server Error instead maybe
 			_body = "There was an error while trying to access the specified error page for error "
 					"code " +
@@ -165,11 +176,15 @@ private:
 			}
 			std::string uri = findFinalUri(request);
 			std::cout << "final uri: " << uri << std::endl;
-			if (!readHTML(uri, _body)) {
+			if (!readContent(uri, _body)) {
 				_statusCode = CLIENT_NOT_FOUND;
 				return false;
 			}
-			_bodyType = "text/html"; // TODO MIME types
+			std::string extension = getExtension(uri);
+			if (extension.empty()) {
+				_bodyType = "application/octet-stream";
+			}
+			_bodyType = "text/html"; // TODO MIME types when maps are definitely implemented
 			return true;
 		} else {
 			return buildCgiPage(request);
@@ -220,9 +235,9 @@ private:
 		Location* location = request.location;
 		std::string uri = request.success.uri;
 		//to ensure that the final link will be well formated whether the user put a trailing slash at the end of the location and at the beginning of the uri or not
-		if (_rootDir.back() == '/')
-			_rootDir.pop_back();
-		if (uri.front() == '/')
+		if (_rootDir[_rootDir.size() - 1] == '/')
+			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
+		if (uri[0] == '/')
 			uri = uri.substr(1);
 		if (location == NULL)
 			return _rootDir + "/" + uri;

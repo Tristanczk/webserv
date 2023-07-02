@@ -48,6 +48,11 @@ std::string fullRead(int fd) {
 
 std::string getBasename(const std::string& path) { return path.substr(path.find_last_of("/") + 1); }
 
+std::string getExtension(const std::string& path) {
+	std::string basename = getBasename(path);
+	return basename.substr(basename.find_last_of(".") + 1);
+}
+
 std::string getDate() {
 	std::time_t t = std::time(0);
 	std::tm* now = std::localtime(&t);
@@ -132,7 +137,7 @@ bool isDirectory(const std::string& path) {
 
 bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
 
-bool readHTML(std::string& uri, std::string& content) {
+bool readContent(std::string& uri, std::string& content) {
 	if (isDirectory(uri))
 		return false;
 	std::ifstream file(uri.c_str());
