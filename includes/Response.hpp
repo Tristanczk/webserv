@@ -219,6 +219,13 @@ private:
 		// directory
 		Location* location = request.location;
 		std::string uri = request.success.uri;
+		//to ensure that the final link will be well formated whether the user put a trailing slash at the end of the location and at the beginning of the uri or not
+		if (_rootDir.back() == '/')
+			_rootDir.pop_back();
+		if (uri.front() == '/')
+			uri = uri.substr(1);
+		if (location == NULL)
+			return _rootDir + "/" + uri;
 		LocationModifierEnum modifier = location->getModifier();
 		if (modifier == NONE)
 			return _rootDir + "/" + uri.substr(_locationUri.size());
