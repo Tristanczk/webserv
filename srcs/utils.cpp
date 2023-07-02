@@ -1,13 +1,7 @@
 #include "../includes/webserv.hpp"
 
 int comparePrefix(const std::string& locationUri, const std::string& requestPath) {
-	int i = 0;
-	while (locationUri[i] && requestPath[i] && locationUri[i] == requestPath[i])
-		++i;
-	if (locationUri[i] == '\0')
-		return i;
-	else
-		return 0;
+	return startswith(requestPath, locationUri) ? locationUri.size() : 0;
 }
 
 bool configFileError(const std::string& message) {
@@ -26,8 +20,7 @@ bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 }
 
 bool endswith(const std::string& str, const std::string& end) {
-	return str.length() >= end.length() &&
-		   !str.compare(str.length() - end.length(), end.length(), end);
+	return str.size() >= end.size() && !str.compare(str.size() - end.size(), end.size(), end);
 }
 
 const std::string* findCommonString(const std::vector<std::string>& vec1,
@@ -115,14 +108,14 @@ bool getValidPath(std::string path, char* const envp[], std::string& finalPath) 
 	std::string pathEnv;
 	while (envp[i]) {
 		std::string env(envp[i]);
-		if (env.substr(0, cmp.length()) == cmp) {
-			pathEnv = env.substr(cmp.length());
+		if (env.substr(0, cmp.size()) == cmp) {
+			pathEnv = env.substr(cmp.size());
 			break;
 		}
 	}
 	while (!pathEnv.empty()) {
 		std::string pathToCheck = pathEnv.substr(0, pathEnv.find(':'));
-		pathEnv = pathEnv.substr(pathToCheck.length() + 1);
+		pathEnv = pathEnv.substr(pathToCheck.size() + 1);
 		std::string fullPath = pathToCheck + '/' + path;
 		if (access(fullPath.c_str(), X_OK) == 0) {
 			finalPath = fullPath;
@@ -149,6 +142,10 @@ bool readHTML(std::string& uri, std::string& content) {
 	buffer << file.rdbuf();
 	content = buffer.str();
 	return true;
+}
+
+bool startswith(const std::string& str, const std::string& start) {
+	return str.size() >= start.size() && !str.compare(0, start.size(), start);
 }
 
 std::string strlower(const std::string& s) {
