@@ -220,10 +220,9 @@ private:
 		Location* location = request.location;
 		std::string uri = request.success.uri;
 		LocationModifierEnum modifier = location->getModifier();
-		if (modifier == NONE) {
-			int position = comparePrefix(uri, _locationUri);
-			return _rootDir + "/" + uri.substr(position);
-		} else if (modifier == REGEX) {
+		if (modifier == NONE)
+			return _rootDir + "/" + uri.substr(_locationUri.size());
+		else if (modifier == REGEX) {
 			// in case of a matching regex, we append the whole path to the root directory
 			return _rootDir + "/" + uri;
 		} else {
