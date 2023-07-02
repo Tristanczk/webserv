@@ -102,6 +102,7 @@ private:
 	// function templates
 	void buildGet(RequestParsingResult& request) {
 		_statusCode = SUCCESS_OK;
+		// no need to check if it is a directory as we only want to know if the requested uri has the form of a directory, not that it is a necessarily valid directory
 		if (request.success.uri[request.success.uri.size() - 1] == '/')
 		{
 			//TODO
@@ -251,6 +252,39 @@ private:
 			// in case of an exact match, we append only the file name to the root directory
 			return _rootDir + "/" + getBasename(uri);
 		}
+	}
+
+	void handleIndex(RequestParsingResult& request) {
+		bool validIndexFile = false;
+		if (!_indexPages.empty())
+		{
+			std::string filepath;
+			for (std::vector<std::string>::iterator it = _indexPages.begin(); it != _indexPages.end(); it++)
+			{
+				if (_rootDir[_rootDir.size() - 1] == '/')
+					_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
+				filepath = (*it)[0] == '/' ? _rootDir + (*it).substr(1) : _rootDir + *it;
+				if (isValidFile(filepath)) {
+					validIndexFile = true;
+					break;
+				}
+			}
+			if (validIndexFile)
+			{
+				//TODO
+				//handle the redirection to the index page indicated by filepath --> requires to rehandle finding the right location as it can be different (example of a php file)
+				return ;
+			}
+		}
+		if (!validIndexFile && _autoIndex)
+		{
+			//TODO
+			//handle the building of the autoindex page
+			return ;
+		}
+		_statusCode = CLIENT_FORBIDDEN;
+		//we need to return and handle the building of an error page
+		return;
 	}
 
 	// what are the type of things we need to handle to build a response?

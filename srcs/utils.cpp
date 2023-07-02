@@ -135,6 +135,11 @@ bool isDirectory(const std::string& path) {
 	return stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode);
 }
 
+bool isValidFile(const std::string& path) {
+	struct stat buf;
+	return stat(path.c_str(), &buf) == 0 && S_ISREG(buf.st_mode);
+}
+
 bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
 
 bool readContent(std::string& uri, std::string& content) {
