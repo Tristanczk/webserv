@@ -46,10 +46,7 @@ public:
 			buildHeader();
 		} else if (request.success.method == GET) {
 			_statusCode = SUCCESS_OK;
-			if (!buildPage(request))
-				buildErrorPage();
-			buildStatusLine();
-			buildHeader();
+			buildGet(request);
 		}
 	}
 
@@ -107,8 +104,8 @@ private:
 		// no need to check if it is a directory as we only want to know if the requested uri has
 		// the form of a directory, not that it is a necessarily valid directory
 		if (request.success.uri[request.success.uri.size() - 1] == '/') {
-			// TODO
-			// handleIndex(request);
+			std::cout << RED << "Index handling" << RESET << std::endl;
+			handleIndex(request);
 			return;
 		}
 		if (!buildPage(request))
@@ -244,16 +241,16 @@ private:
 		if (uri[0] == '/')
 			uri = uri.substr(1);
 		if (location == NULL)
-			return _rootDir + "/" + uri;
+			return "." + _rootDir + "/" + uri;
 		LocationModifierEnum modifier = location->getModifier();
 		if (modifier == NONE)
-			return _rootDir + "/" + uri.substr(_locationUri.size());
+			return "." + _rootDir + "/" + uri.substr(_locationUri.size() - 1);
 		else if (modifier == REGEX) {
 			// in case of a matching regex, we append the whole path to the root directory
-			return _rootDir + "/" + uri;
+			return "." + _rootDir + "/" + uri;
 		} else {
 			// in case of an exact match, we append only the file name to the root directory
-			return _rootDir + "/" + getBasename(uri);
+			return "." + _rootDir + "/" + getBasename(uri);
 		}
 	}
 
@@ -266,12 +263,15 @@ private:
 				 it != _indexPages.end(); it++) {
 				if (_rootDir[_rootDir.size() - 1] == '/')
 					_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
-				filepath = (*it)[0] == '/' ? _rootDir + (*it).substr(1) : _rootDir + *it;
+				filepath = (*it)[0] == '/' ? "." + _rootDir + (*it) : "." + _rootDir + "/" + *it;
+				std::cout << "filepath: " << filepath << std::endl;
 				if (isValidFile(filepath)) {
+					std::cout << "valid index file: " << *it << std::endl;
 					validIndexFile = true;
 					indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
 					break;
 				}
+				std::cout << "invalid index file: " << *it << std::endl;
 			}
 			if (validIndexFile) {
 				request.success.uri = request.success.uri + indexFile;
@@ -290,7 +290,9 @@ private:
 			return;
 		}
 		_statusCode = CLIENT_FORBIDDEN;
-		// we need to return and handle the building of an error page
+		buildErrorPage();
+		buildStatusLine();
+		buildHeader();
 		return;
 	}
 
@@ -302,7 +304,8 @@ private:
 			_errorPages = vs->getErrorPages();
 			_indexPages = vs->getIndexPages();
 			_locationUri = "";
-			_return = {-1, ""};
+			_return.first = -1;
+			_return.second = "";
 			for (int i = 0; i < NO_METHOD; i++)
 				_allowedMethods[i] = true;
 			_cgiExec = "";
