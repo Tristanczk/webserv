@@ -104,7 +104,7 @@ bool parseReturn(std::istringstream& iss, std::pair<long, std::string>& redirect
 		redirection.second = value;
 	} else {
 		redirection.first = std::strtol(value.c_str(), NULL, 10);
-		if (300 <= redirection.first && redirection.first <= 399)
+		if (redirection.first < 300 || redirection.first > 399)
 			return configFileError("invalid return code: " + toString(redirection.first));
 		if (!(iss >> value))
 			return configFileError("missing redirection url or text after return code");
