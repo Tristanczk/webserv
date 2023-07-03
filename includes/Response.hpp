@@ -103,7 +103,7 @@ private:
 		_statusCode = SUCCESS_OK;
 		// no need to check if it is a directory as we only want to know if the requested uri has
 		// the form of a directory, not that it is a necessarily valid directory
-		if (request.success.uri[request.success.uri.size() - 1] == '/') {
+		if (isDirectory(findFinalUri(request))) {
 			std::cout << RED << "Index handling" << RESET << std::endl;
 			handleIndex(request);
 			return;
