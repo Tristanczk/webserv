@@ -50,7 +50,8 @@ std::string getBasename(const std::string& path) { return path.substr(path.find_
 
 std::string getExtension(const std::string& path) {
 	std::string basename = getBasename(path);
-	return basename.substr(basename.find_last_of(".") + 1);
+	size_t pos = basename.find_last_of(".");
+	return pos == std::string::npos ? "" : basename.substr(pos + 1);
 }
 
 std::string getDate() {
