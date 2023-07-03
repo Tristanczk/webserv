@@ -1,6 +1,8 @@
 #pragma once
 
+#include "Location.hpp"
 #include "webserv.hpp"
+#include <string>
 
 class Response {
 public:
@@ -102,12 +104,12 @@ private:
 	// function templates
 	void buildGet(RequestParsingResult& request) {
 		_statusCode = SUCCESS_OK;
-		// no need to check if it is a directory as we only want to know if the requested uri has the form of a directory, not that it is a necessarily valid directory
-		if (request.success.uri[request.success.uri.size() - 1] == '/')
-		{
-			//TODO
-			//handleIndex(request);
-			return ;
+		// no need to check if it is a directory as we only want to know if the requested uri has
+		// the form of a directory, not that it is a necessarily valid directory
+		if (request.success.uri[request.success.uri.size() - 1] == '/') {
+			// TODO
+			// handleIndex(request);
+			return;
 		}
 		if (!buildPage(request))
 			buildErrorPage();
@@ -235,7 +237,8 @@ private:
 		// directory
 		Location* location = request.location;
 		std::string uri = request.success.uri;
-		//to ensure that the final link will be well formated whether the user put a trailing slash at the end of the location and at the beginning of the uri or not
+		// to ensure that the final link will be well formated whether the user put a trailing slash
+		// at the end of the location and at the beginning of the uri or not
 		if (_rootDir[_rootDir.size() - 1] == '/')
 			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 		if (uri[0] == '/')
@@ -256,35 +259,67 @@ private:
 
 	void handleIndex(RequestParsingResult& request) {
 		bool validIndexFile = false;
-		if (!_indexPages.empty())
-		{
+		std::string indexFile;
+		if (!_indexPages.empty()) {
 			std::string filepath;
-			for (std::vector<std::string>::iterator it = _indexPages.begin(); it != _indexPages.end(); it++)
-			{
+			for (std::vector<std::string>::iterator it = _indexPages.begin();
+				 it != _indexPages.end(); it++) {
 				if (_rootDir[_rootDir.size() - 1] == '/')
 					_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 				filepath = (*it)[0] == '/' ? _rootDir + (*it).substr(1) : _rootDir + *it;
 				if (isValidFile(filepath)) {
 					validIndexFile = true;
+					indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
 					break;
 				}
 			}
-			if (validIndexFile)
-			{
-				//TODO
-				//handle the redirection to the index page indicated by filepath --> requires to rehandle finding the right location as it can be different (example of a php file)
-				return ;
+			if (validIndexFile) {
+				request.success.uri = request.success.uri + indexFile;
+				request.location = request.virtualServer->findMatchingLocation(request.success.uri);
+				reinitResponseVariables(request);
+				if (!buildPage(request))
+					buildErrorPage();
+				buildStatusLine();
+				buildHeader();
+				return;
 			}
 		}
-		if (!validIndexFile && _autoIndex)
-		{
-			//TODO
-			//handle the building of the autoindex page
-			return ;
+		if (!validIndexFile && _autoIndex) {
+			// TODO
+			// handle the building of the autoindex page
+			return;
 		}
 		_statusCode = CLIENT_FORBIDDEN;
-		//we need to return and handle the building of an error page
+		// we need to return and handle the building of an error page
 		return;
+	}
+
+	void reinitResponseVariables(RequestParsingResult& request) {
+		if (request.location == NULL) {
+			VirtualServer* vs = request.virtualServer;
+			_rootDir = vs->getRootDir();
+			_autoIndex = vs->getAutoIndex();
+			_errorPages = vs->getErrorPages();
+			_indexPages = vs->getIndexPages();
+			_locationUri = "";
+			_return = {-1, ""};
+			for (int i = 0; i < NO_METHOD; i++)
+				_allowedMethods[i] = true;
+			_cgiExec = "";
+			_cgiScript = "";
+		} else {
+			Location* location = request.location;
+			_rootDir = location->getRootDir();
+			_autoIndex = location->getAutoIndex();
+			_errorPages = location->getErrorPages();
+			_indexPages = location->getIndexPages();
+			_locationUri = location->getUri();
+			_return = location->getReturn();
+			for (int i = 0; i < NO_METHOD; i++)
+				_allowedMethods[i] = location->getAllowedMethod()[i];
+			_cgiExec = location->getCgiExec();
+			_cgiScript = location->getCgiScript();
+		}
 	}
 
 	// what are the type of things we need to handle to build a response?

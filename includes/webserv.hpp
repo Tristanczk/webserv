@@ -201,6 +201,7 @@ std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
 bool getValidPath(std::string, char* const[], std::string&);
 bool isDirectory(const std::string&);
+bool isValidFile(const std::string& path);
 bool isValidErrorCode(int);
 bool readContent(std::string&, std::string&);
 bool startswith(const std::string&, const std::string&);
