@@ -104,8 +104,11 @@ private:
 		// no need to check if it is a directory as we only want to know if the requested uri has
 		// the form of a directory, not that it is a necessarily valid directory
 		if (request.success.uri[request.success.uri.size() - 1] == '/') {
-			std::cout << RED << "Index handling" << RESET << std::endl;
 			handleIndex(request);
+			return;
+		}
+		if (_return.first != -1) {
+			handleRedirect();
 			return;
 		}
 		if (!buildPage(request))
@@ -296,6 +299,15 @@ private:
 		buildErrorPage();
 		buildStatusLine();
 		buildHeader();
+		return;
+	}
+
+	void handleRedirect() {
+		_statusCode = static_cast<StatusCode>(_return.first);
+		buildErrorPage();
+		buildStatusLine();
+		buildHeader();
+		_headers["Location"] = _return.second;
 		return;
 	}
 
