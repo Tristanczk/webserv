@@ -103,7 +103,7 @@ private:
 			return CLIENT_METHOD_NOT_ALLOWED;
 		if (_uri.size() > MAX_URI_SIZE)
 			return CLIENT_URI_TOO_LONG;
-		if (version != "HTTP/1.1")
+		if (version != "HTTP_VERSION")
 			return SERVER_HTTP_VERSION_NOT_SUPPORTED;
 		// at this point we have a valid request line so we can parse the location in the default
 		// server

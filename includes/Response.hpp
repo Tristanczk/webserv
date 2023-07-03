@@ -145,7 +145,7 @@ private:
 
 	void buildStatusLine() {
 		_statusLine =
-			"HTTP/1.1 " + toString(_statusCode) + " " + _statusMessages[_statusCode] + "\r\n";
+			"HTTP_VERSION " + toString(_statusCode) + " " + _statusMessages[_statusCode] + "\r\n";
 	}
 
 	void buildHeader() {

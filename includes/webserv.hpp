@@ -39,6 +39,8 @@
 #define DEFAULT_BODY_SIZE 1048576
 #define MAX_HEADER_SIZE 1048576
 
+#define CGI_VERSION "CGI/1.1"
+#define HTTP_VERSION "HTTP/1.1"
 #define SERVER_VERSION "webserv/4.2"
 
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
