@@ -39,6 +39,8 @@
 #define DEFAULT_BODY_SIZE 1048576
 #define MAX_HEADER_SIZE 1048576
 
+#define SERVER_VERSION "webserv/4.2"
+
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
 #define ERROR_LISTEN_FORMAT "invalid format for host:port in listen instruction"
 #define ERROR_LOCATION "wrong syntax for location, syntax must be 'location [modifier] uri {'"

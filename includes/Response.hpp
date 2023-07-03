@@ -150,7 +150,7 @@ private:
 
 	void buildHeader() {
 		_headers["Date"] = getDate();
-		_headers["Server"] = "webserv/4.2";
+		_headers["Server"] = SERVER_VERSION;
 		_headers["Content-Length"] = toString(_body.length());
 		if (!_bodyType.empty())
 			_headers["Content-Type"] = _bodyType;
