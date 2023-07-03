@@ -103,7 +103,8 @@ private:
 		_statusCode = SUCCESS_OK;
 		// no need to check if it is a directory as we only want to know if the requested uri has
 		// the form of a directory, not that it is a necessarily valid directory
-		if (request.success.uri[request.success.uri.size() - 1] == '/') {
+		if (isDirectory(findFinalUri(request))) {
+			std::cout << RED << "Index handling" << RESET << std::endl;
 			handleIndex(request);
 			return;
 		}
@@ -400,11 +401,12 @@ private:
 	std::string getAutoIndexEntry(struct dirent* entry) {
 		std::string html = "<tr>\n\
 					<td><a href=\"";
-		html += entry->d_type == DT_DIR ? static_cast<std::string>(entry->d_name) + "/"
-										: static_cast<std::string>(entry->d_name);
+		std::string name = static_cast<std::string>(entry->d_name);
+		if (entry->d_type == DT_DIR)
+			name += '/';
+		html += name;
 		html += "\">";
-		html += entry->d_type == DT_DIR ? static_cast<std::string>(entry->d_name) + "/"
-										: static_cast<std::string>(entry->d_name);
+		html += name;
 		html += "</a></td>\n\
 					</tr>\n";
 		return html;
