@@ -108,6 +108,10 @@ private:
 			handleIndex(request);
 			return;
 		}
+		if (_return.first != -1) {
+			handleRedirect();
+			return;
+		}
 		if (!buildPage(request))
 			buildErrorPage();
 		buildStatusLine();
@@ -296,6 +300,15 @@ private:
 		buildErrorPage();
 		buildStatusLine();
 		buildHeader();
+		return;
+	}
+
+	void handleRedirect() {
+		_statusCode = static_cast<StatusCode>(_return.first);
+		buildErrorPage();
+		buildStatusLine();
+		buildHeader();
+		_headers["Location"] = _return.second;
 		return;
 	}
 
