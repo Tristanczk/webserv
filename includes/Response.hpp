@@ -286,8 +286,10 @@ private:
 			}
 		}
 		if (!validIndexFile && _autoIndex) {
-			// TODO
-			// handle the building of the autoindex page
+			_statusCode = SUCCESS_OK;
+			buildAutoIndexPage(request);
+			buildStatusLine();
+			buildHeader();
 			return;
 		}
 		_statusCode = CLIENT_FORBIDDEN;
@@ -295,6 +297,63 @@ private:
 		buildStatusLine();
 		buildHeader();
 		return;
+	}
+
+	void buildAutoIndexPage(RequestParsingResult& request) {
+		DIR* dir = opendir(findFinalUri(request).c_str());
+		if (dir == NULL) {
+			_statusCode = SERVER_INTERNAL_SERVER_ERROR;
+			buildErrorPage();
+			buildStatusLine();
+			buildHeader();
+			return;
+		}
+		_body = "<head>\n"
+				"    <title>Index of " +
+				request.success.uri +
+				"</title>\n"
+				"    <style>\n"
+				"        body {\n"
+				"            font-family: Arial, sans-serif;\n"
+				"            margin: 20px;\n"
+				"        }\n"
+				"\n"
+				"        table {\n"
+				"            width: 100%;\n"
+				"            border-collapse: collapse;\n"
+				"        }\n"
+				"\n"
+				"        th,\n"
+				"        td {\n"
+				"            padding: 8px;\n"
+				"            text-align: left;\n"
+				"            border-bottom: 1px solid #ddd;\n"
+				"        }\n"
+				"\n"
+				"        th {\n"
+				"            background-color: #f2f2f2;\n"
+				"        }\n"
+				"    </style>\n"
+				"</head>";
+		_body += "<body>\n\
+				<h1>Index of " +
+				 request.success.uri + "</h1>\n\
+				<table>\n\
+				<thead>\n\
+				<tr>\n\
+				<th>Name</th>\n\
+				</tr>\n\
+				</thead >\n\
+				<tbody>\n ";
+		struct dirent* entry;
+		while ((entry = readdir(dir)) != NULL) {
+			_body += getAutoIndexEntry(entry);
+		}
+		_body += "</tbody>\n\
+				</table>\n\
+				</body>\n\
+				</html>\n";
+		_bodyType = "text/html";
 	}
 
 	void reinitResponseVariables(RequestParsingResult& request) {
@@ -324,6 +383,19 @@ private:
 			_cgiExec = location->getCgiExec();
 			_cgiScript = location->getCgiScript();
 		}
+	}
+
+	std::string getAutoIndexEntry(struct dirent* entry) {
+		std::string html = "<tr>\n\
+					<td><a href=\"";
+		html += entry->d_type == DT_DIR ? static_cast<std::string>(entry->d_name) + "/"
+										: static_cast<std::string>(entry->d_name);
+		html += "\">";
+		html += entry->d_type == DT_DIR ? static_cast<std::string>(entry->d_name) + "/"
+										: static_cast<std::string>(entry->d_name);
+		html += "</a></td>\n\
+					</tr>\n";
+		return html;
 	}
 
 	// what are the type of things we need to handle to build a response?
