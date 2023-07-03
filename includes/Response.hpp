@@ -388,11 +388,12 @@ private:
 	std::string getAutoIndexEntry(struct dirent* entry) {
 		std::string html = "<tr>\n\
 					<td><a href=\"";
-		html += entry->d_type == DT_DIR ? static_cast<std::string>(entry->d_name) + "/"
-										: static_cast<std::string>(entry->d_name);
+		std::string name = static_cast<std::string>(entry->d_name);
+		if (entry->d_type == DT_DIR)
+			name += '/';
+		html += name;
 		html += "\">";
-		html += entry->d_type == DT_DIR ? static_cast<std::string>(entry->d_name) + "/"
-										: static_cast<std::string>(entry->d_name);
+		html += name;
 		html += "</a></td>\n\
 					</tr>\n";
 		return html;
