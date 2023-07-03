@@ -263,7 +263,8 @@ private:
 				 it != _indexPages.end(); it++) {
 				if (_rootDir[_rootDir.size() - 1] == '/')
 					_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
-				filepath = (*it)[0] == '/' ? "." + _rootDir + (*it) : "." + _rootDir + "/" + *it;
+				filepath = (*it)[0] == '/' ? findFinalUri(request) + (*it).substr(1)
+										   : findFinalUri(request) + *it;
 				std::cout << "filepath: " << filepath << std::endl;
 				if (isValidFile(filepath)) {
 					std::cout << "valid index file: " << *it << std::endl;
