@@ -15,9 +15,6 @@ public:
 		std::fill_n(_allowedMethods, NO_METHOD, true);
 		initKeywordMap();
 		initStatusMessageMap();
-		// TODO remove void
-		(void)_allowedMethods;
-		(void)_autoIndex;
 	}
 
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
@@ -31,9 +28,6 @@ public:
 			_allowedMethods[i] = allowedMethods[i];
 		initKeywordMap();
 		initStatusMessageMap();
-		// TODO remove void
-		(void)_allowedMethods;
-		(void)_autoIndex;
 	}
 
 	~Response(){};
@@ -73,7 +67,6 @@ private:
 	std::map<RequestMethod, KeywordHandler> _keywordHandlers;
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
-	std::vector<char> _tmpBody; // TODO remove?
 	std::string _body;
 	std::string _bodyType;
 	StatusCode _statusCode;
@@ -101,8 +94,9 @@ private:
 	// function templates
 	void buildGet(RequestParsingResult& request) {
 		_statusCode = SUCCESS_OK;
-		// no need to check if it is a directory as we only want to know if the requested uri has
-		// the form of a directory, not that it is a necessarily valid directory
+		//TODO: how to handle the fact that a get /error/ and a get /error won't necessarily have the same location ?
+		//and we need to know the location in order to know if the directory exists where we want to seach it
+		//I suggest we go back to handling only links that end by / as directory as it is more in line with the project prerequisites
 		if (isDirectory(findFinalUri(request))) {
 			std::cout << RED << "Index handling" << RESET << std::endl;
 			handleIndex(request);
@@ -257,7 +251,7 @@ private:
 			return "." + _rootDir + "/" + getBasename(uri);
 		}
 	}
-
+	//TODO : should we handle it as a redirection and let the client do another request rather than displaying the index page directly ourselves ?
 	void handleIndex(RequestParsingResult& request) {
 		bool validIndexFile = false;
 		std::string indexFile;
