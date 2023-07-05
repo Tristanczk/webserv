@@ -46,6 +46,7 @@ public:
 
 	bool pushResponseToClient(int fd) {
 		std::string line;
+		std::cout << "=== RESPONSE START ===" << std::endl;
 		if (!pushStringToClient(fd, _statusLine))
 			return false;
 		for (std::map<std::string, std::string>::iterator it = _headers.begin();
@@ -59,6 +60,7 @@ public:
 			return false;
 		if (!pushStringToClient(fd, _body))
 			return false;
+		std::cout << "=== RESPONSE END ===" << std::endl;
 		return true;
 	}
 
@@ -126,6 +128,7 @@ private:
 
 	bool pushStringToClient(int fd, std::string& line) {
 		// TODO tout ca me parait tres louche et potentiellement bloquant
+		std::cout << strtrim(line, "\r\n") << std::endl;
 		size_t sent = 0;
 		while (sent < line.size()) {
 			int cur_sent = send(fd, line.c_str() + sent, line.size() - sent, MSG_NOSIGNAL);
