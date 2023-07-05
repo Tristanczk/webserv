@@ -23,7 +23,6 @@ public:
 		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
 		if (result.result == REQUEST_PARSING_PROCESSING)
 			return RESPONSE_PENDING;
-		VirtualServer* vs = result.virtualServer;
 		Response res =
 			result.location
 				? Response(result.location->getRootDir(), result.location->getAutoIndex(),
@@ -31,8 +30,9 @@ public:
 						   result.location->getUri(), result.location->getReturn(),
 						   result.location->getAllowedMethod(), result.location->getCgiExec(),
 						   result.location->getCgiScript())
-				: Response(vs->getRootDir(), vs->getAutoIndex(), vs->getErrorPages(),
-						   vs->getIndexPages());
+				: Response(result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
+						   result.virtualServer->getErrorPages(),
+						   result.virtualServer->getIndexPages());
 		res.buildResponse(result);
 		delete _currentRequest;
 		_currentRequest = NULL;

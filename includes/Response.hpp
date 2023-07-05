@@ -94,9 +94,10 @@ private:
 	// function templates
 	void buildGet(RequestParsingResult& request) {
 		_statusCode = SUCCESS_OK;
-		//TODO: how to handle the fact that a get /error/ and a get /error won't necessarily have the same location ?
-		//and we need to know the location in order to know if the directory exists where we want to seach it
-		//I suggest we go back to handling only links that end by / as directory as it is more in line with the project prerequisites
+		// TODO: how to handle the fact that a get /error/ and a get /error won't necessarily have
+		// the same location ? and we need to know the location in order to know if the directory
+		// exists where we want to seach it I suggest we go back to handling only links that end by
+		// / as directory as it is more in line with the project prerequisites
 		if (isDirectory(findFinalUri(request))) {
 			std::cout << RED << "Index handling" << RESET << std::endl;
 			handleIndex(request);
@@ -152,6 +153,7 @@ private:
 	}
 
 	void buildErrorPage() {
+		std::cout << _statusCode << std::endl;
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
 		std::string errorPageUri = it != _errorPages.end() ? "." + _rootDir + it->second
 														   : "./www/error/default_error.html";
@@ -251,7 +253,8 @@ private:
 			return "." + _rootDir + "/" + getBasename(uri);
 		}
 	}
-	//TODO : should we handle it as a redirection and let the client do another request rather than displaying the index page directly ourselves ?
+	// TODO : should we handle it as a redirection and let the client do another request rather than
+	// displaying the index page directly ourselves ?
 	void handleIndex(RequestParsingResult& request) {
 		bool validIndexFile = false;
 		std::string indexFile;
