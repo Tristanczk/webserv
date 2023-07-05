@@ -4,17 +4,20 @@
 #include "webserv.hpp"
 #include <string>
 
+extern std::map<StatusCode, std::string> STATUS_MESSAGES;
+extern std::map<std::string, std::string> MIME_TYPES;
+
 class Response {
 public:
 	// constructor in case of non matching location block, there won't be a locationUri, a redirect,
 	// allowedMethods or link to cgiExec as they are exclusively defined in the location block
+	// TODO: no delete as allowed method
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
 		  _indexPages(indexPages), _return(-1, "") {
 		std::fill_n(_allowedMethods, NO_METHOD, true);
 		initKeywordMap();
-		initStatusMessageMap();
 	}
 
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
@@ -27,7 +30,6 @@ public:
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
 		initKeywordMap();
-		initStatusMessageMap();
 	}
 
 	~Response(){};
@@ -77,8 +79,6 @@ private:
 	std::string _body;
 	std::string _bodyType;
 	StatusCode _statusCode;
-
-	std::map<StatusCode, std::string> _statusMessages;
 
 	// these variables will be extracted from the correct location or from the correct virtual
 	// server if needed
@@ -166,7 +166,7 @@ private:
 
 	void buildStatusLine() {
 		_statusLine = std::string(HTTP_VERSION) + " " + toString(_statusCode) + " " +
-					  _statusMessages[_statusCode] + "\r\n";
+					  STATUS_MESSAGES[_statusCode] + "\r\n";
 	}
 
 	void buildHeader() {
@@ -195,23 +195,19 @@ private:
 	}
 
 	bool buildPage(RequestParsingResult& request) {
-		std::cout << RED << "buildPage\n" << RESET;
-		if (_cgiScript.empty()) {
-			std::string uri = findFinalUri(request);
-			std::cout << "final uri: " << uri << std::endl;
-			if (!readContent(uri, _body)) {
-				_statusCode = CLIENT_NOT_FOUND;
-				return false;
-			}
-			std::string extension = getExtension(uri);
-			if (extension.empty()) {
-				_bodyType = "application/octet-stream";
-			}
-			_bodyType = "text/html"; // TODO MIME types when maps are definitely implemented
-			return true;
-		} else {
-			return buildCgiPage(request);
+		std::string uri = findFinalUri(request);
+		std::cout << "final uri: " << uri << std::endl;
+		if (!readContent(uri, _body)) {
+			_statusCode = CLIENT_NOT_FOUND;
+			return false;
 		}
+		std::string extension = getExtension(uri);
+		std::map<std::string, std::string>::iterator it = MIME_TYPES.find(extension);
+		if (it != MIME_TYPES.end())
+			_bodyType = it->second;
+		else
+			_bodyType = "application/octet-stream";
+		return true;
 	}
 
 	bool buildCgiPage(RequestParsingResult& request) {
@@ -455,70 +451,4 @@ private:
 	//		- handle differently whether the uri is a directory or a file
 	//		- if it is a directory, we need to handle it according to the index and autoindex
 	// options
-
-	// TODO: see how to implement to be more efficient and not regenerate for every response
-	void initStatusMessageMap() {
-		_statusMessages[INFORMATIONAL_CONTINUE] = "Continue";
-		_statusMessages[INFORMATIONAL_SWITCHING_PROTOCOLS] = "Switching Protocols";
-		_statusMessages[INFORMATIONAL_PROCESSING] = "Processing";
-		_statusMessages[INFORMATIONAL_EARLY_HINTS] = "Early Hints";
-		_statusMessages[SUCCESS_OK] = "OK";
-		_statusMessages[SUCCESS_CREATED] = "Created";
-		_statusMessages[SUCCESS_ACCEPTED] = "Accepted";
-		_statusMessages[SUCCESS_NON_AUTHORITATIVE_INFORMATION] = "Non-Authoritative Information";
-		_statusMessages[SUCCESS_NO_CONTENT] = "No Content";
-		_statusMessages[SUCCESS_RESET_CONTENT] = "Reset Content";
-		_statusMessages[SUCCESS_PARTIAL_CONTENT] = "Partial Content";
-		_statusMessages[SUCCESS_MULTI_STATUS] = "Multi-Status";
-		_statusMessages[SUCCESS_ALREADY_REPORTED] = "Already Reported";
-		_statusMessages[SUCCESS_IM_USED] = "IM Used";
-		_statusMessages[REDIRECTION_MULTIPLE_CHOICES] = "Multiple Choices";
-		_statusMessages[REDIRECTION_MOVED_PERMANENTLY] = "Moved Permanently";
-		_statusMessages[REDIRECTION_FOUND] = "Found";
-		_statusMessages[REDIRECTION_SEE_OTHER] = "See Other";
-		_statusMessages[REDIRECTION_NOT_MODIFIED] = "Not Modified";
-		_statusMessages[REDIRECTION_USE_PROXY] = "Use Proxy";
-		_statusMessages[REDIRECTION_TEMPORARY_REDIRECT] = "Temporary Redirect";
-		_statusMessages[REDIRECTION_PERMANENT_REDIRECT] = "Permanent Redirect";
-		_statusMessages[CLIENT_BAD_REQUEST] = "Bad Request";
-		_statusMessages[CLIENT_UNAUTHORIZED] = "Unauthorized";
-		_statusMessages[CLIENT_PAYMENT_REQUIRED] = "Payment Required";
-		_statusMessages[CLIENT_FORBIDDEN] = "Forbidden";
-		_statusMessages[CLIENT_NOT_FOUND] = "Not Found";
-		_statusMessages[CLIENT_METHOD_NOT_ALLOWED] = "Method Not Allowed";
-		_statusMessages[CLIENT_NOT_ACCEPTABLE] = "Not Acceptable";
-		_statusMessages[CLIENT_PROXY_AUTHENTICATION_REQUIRED] = "Proxy Authentication Required";
-		_statusMessages[CLIENT_REQUEST_TIMEOUT] = "Request Timeout";
-		_statusMessages[CLIENT_CONFLICT] = "Conflict";
-		_statusMessages[CLIENT_GONE] = "Gone";
-		_statusMessages[CLIENT_LENGTH_REQUIRED] = "Length Required";
-		_statusMessages[CLIENT_PRECONDITION_FAILED] = "Precondition Failed";
-		_statusMessages[CLIENT_PAYLOAD_TOO_LARGE] = "Payload Too Large";
-		_statusMessages[CLIENT_URI_TOO_LONG] = "URI Too Long";
-		_statusMessages[CLIENT_UNSUPPORTED_MEDIA_TYPE] = "Unsupported Media Type";
-		_statusMessages[CLIENT_RANGE_NOT_SATISFIABLE] = "Range Not Satisfiable";
-		_statusMessages[CLIENT_EXPECTATION_FAILED] = "Expectation Failed";
-		_statusMessages[CLIENT_IM_A_TEAPOT] = "I'm a teapot";
-		_statusMessages[CLIENT_MISDIRECTED_REQUEST] = "Misdirected Request";
-		_statusMessages[CLIENT_UNPROCESSABLE_ENTITY] = "Unprocessable Entity";
-		_statusMessages[CLIENT_LOCKED] = "Locked";
-		_statusMessages[CLIENT_FAILED_DEPENDENCY] = "Failed Dependency";
-		_statusMessages[CLIENT_TOO_EARLY] = "Too Early";
-		_statusMessages[CLIENT_UPGRADE_REQUIRED] = "Upgrade Required";
-		_statusMessages[CLIENT_PRECONDITION_REQUIRED] = "Precondition Required";
-		_statusMessages[CLIENT_TOO_MANY_REQUESTS] = "Too Many Requests";
-		_statusMessages[CLIENT_REQUEST_HEADER_FIELDS_TOO_LARGE] = "Request Header Fields Too Large";
-		_statusMessages[CLIENT_UNAVAILABLE_FOR_LEGAL_REASONS] = "Unavailable For Legal Reasons";
-		_statusMessages[SERVER_INTERNAL_SERVER_ERROR] = "Internal Server Error";
-		_statusMessages[SERVER_NOT_IMPLEMENTED] = "Not Implemented";
-		_statusMessages[SERVER_BAD_GATEWAY] = "Bad Gateway";
-		_statusMessages[SERVER_SERVICE_UNAVAILABLE] = "Service Unavailable";
-		_statusMessages[SERVER_GATEWAY_TIMEOUT] = "Gateway Timeout";
-		_statusMessages[SERVER_HTTP_VERSION_NOT_SUPPORTED] = "HTTP Version Not Supported";
-		_statusMessages[SERVER_VARIANT_ALSO_NEGOTIATES] = "Variant Also Negotiates";
-		_statusMessages[SERVER_INSUFFICIENT_STORAGE] = "Insufficient Storage";
-		_statusMessages[SERVER_LOOP_DETECTED] = "Loop Detected";
-		_statusMessages[SERVER_NOT_EXTENDED] = "Not Extended";
-		_statusMessages[SERVER_NETWORK_AUTHENTICATION_REQUIRED] = "Network Authentication Required";
-	}
 };

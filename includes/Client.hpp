@@ -11,7 +11,10 @@ public:
 		(void)_currentMatchingServer;
 		(void)_currentMatchingLocation;
 	};
-	~Client(){};
+	~Client() {
+		if (_currentRequest != NULL)
+			delete _currentRequest;
+	};
 
 	ResponseStatusEnum handleRequests() {
 		std::string request = readRequest();
