@@ -172,6 +172,7 @@ private:
 	}
 
 	bool buildPage(RequestParsingResult& request) {
+		std::cout << RED << "buildPage\n" << RESET;
 		if (_cgiScript.empty()) {
 			if (!_allowedMethods[request.success.method]) {
 				_statusCode = CLIENT_METHOD_NOT_ALLOWED;
@@ -199,6 +200,7 @@ private:
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
 		const std::string dotSlash = "." + _cgiScript;
 		char* strScript = const_cast<char*>(dotSlash.c_str());
+		std::cout << strExec << " " << strScript << std::endl;
 		int pipefd[2];
 		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
