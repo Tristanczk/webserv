@@ -103,7 +103,7 @@ private:
 			return CLIENT_METHOD_NOT_ALLOWED;
 		if (_uri.size() > MAX_URI_SIZE)
 			return CLIENT_URI_TOO_LONG;
-		if (version != "HTTP/1.1")
+		if (version != HTTP_VERSION)
 			return SERVER_HTTP_VERSION_NOT_SUPPORTED;
 		// at this point we have a valid request line so we can parse the location in the default
 		// server
@@ -144,10 +144,10 @@ private:
 	StatusCode checkHeaders() {
 		if (_isRequestLine)
 			return CLIENT_BAD_REQUEST;
-		if (_headers.find("host") == _headers.end())
+		std::map<std::string, std::string>::iterator host = _headers.find("host");
+		if (host == _headers.end())
 			return CLIENT_BAD_REQUEST;
-		// at this point we have a host field so we can identify the correct server
-		findMatchingServerAndLocation();
+		findMatchingServerAndLocation(host->second);
 		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
 		if (_method == POST) {
 			if (it == _headers.end())
@@ -162,19 +162,10 @@ private:
 		return NO_STATUS_CODE;
 	}
 
-	void findMatchingServerAndLocation() {
-		std::map<std::string, std::string>::const_iterator it = _headers.find("host");
-		if (it == _headers.end()) {
-			findBestMatch("");
-			findMatchingLocation(_uri);
-		} else {
-			std::string host = it->second;
-			size_t colon = host.find(':');
-			if (colon != std::string::npos)
-				host.resize(colon);
-			findBestMatch(host);
-			findMatchingLocation(_uri);
-		}
+	void findMatchingServerAndLocation(const std::string& host) {
+		const size_t colon = host.find(':');
+		findBestMatch(colon == std::string::npos ? host : host.substr(0, colon));
+		findMatchingLocation(_uri);
 		_maxBodySize = _matchingServer->getBodySize();
 	}
 

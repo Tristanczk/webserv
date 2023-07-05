@@ -15,9 +15,6 @@ public:
 		std::fill_n(_allowedMethods, NO_METHOD, true);
 		initKeywordMap();
 		initStatusMessageMap();
-		// TODO remove void
-		(void)_allowedMethods;
-		(void)_autoIndex;
 	}
 
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
@@ -31,9 +28,6 @@ public:
 			_allowedMethods[i] = allowedMethods[i];
 		initKeywordMap();
 		initStatusMessageMap();
-		// TODO remove void
-		(void)_allowedMethods;
-		(void)_autoIndex;
 	}
 
 	~Response(){};
@@ -52,6 +46,7 @@ public:
 
 	bool pushResponseToClient(int fd) {
 		std::string line;
+		std::cout << "=== RESPONSE START ===" << std::endl;
 		if (!pushStringToClient(fd, _statusLine))
 			return false;
 		for (std::map<std::string, std::string>::iterator it = _headers.begin();
@@ -65,6 +60,7 @@ public:
 			return false;
 		if (!pushStringToClient(fd, _body))
 			return false;
+		std::cout << "=== RESPONSE END ===" << std::endl;
 		return true;
 	}
 
@@ -73,7 +69,6 @@ private:
 	std::map<RequestMethod, KeywordHandler> _keywordHandlers;
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
-	std::vector<char> _tmpBody; // TODO remove?
 	std::string _body;
 	std::string _bodyType;
 	StatusCode _statusCode;
@@ -101,8 +96,10 @@ private:
 	// function templates
 	void buildGet(RequestParsingResult& request) {
 		_statusCode = SUCCESS_OK;
-		// no need to check if it is a directory as we only want to know if the requested uri has
-		// the form of a directory, not that it is a necessarily valid directory
+		// TODO: how to handle the fact that a get /error/ and a get /error won't necessarily have
+		// the same location ? and we need to know the location in order to know if the directory
+		// exists where we want to seach it I suggest we go back to handling only links that end by
+		// / as directory as it is more in line with the project prerequisites
 		if (isDirectory(findFinalUri(request))) {
 			std::cout << RED << "Index handling" << RESET << std::endl;
 			handleIndex(request);
@@ -131,6 +128,7 @@ private:
 
 	bool pushStringToClient(int fd, std::string& line) {
 		// TODO tout ca me parait tres louche et potentiellement bloquant
+		std::cout << strtrim(line, "\r\n") << std::endl;
 		size_t sent = 0;
 		while (sent < line.size()) {
 			int cur_sent = send(fd, line.c_str() + sent, line.size() - sent, MSG_NOSIGNAL);
@@ -144,13 +142,13 @@ private:
 	}
 
 	void buildStatusLine() {
-		_statusLine =
-			"HTTP/1.1 " + toString(_statusCode) + " " + _statusMessages[_statusCode] + "\r\n";
+		_statusLine = std::string(HTTP_VERSION) + " " + toString(_statusCode) + " " +
+					  _statusMessages[_statusCode] + "\r\n";
 	}
 
 	void buildHeader() {
 		_headers["Date"] = getDate();
-		_headers["Server"] = "webserv/4.2";
+		_headers["Server"] = SERVER_VERSION;
 		_headers["Content-Length"] = toString(_body.length());
 		if (!_bodyType.empty())
 			_headers["Content-Type"] = _bodyType;
@@ -158,6 +156,7 @@ private:
 	}
 
 	void buildErrorPage() {
+		std::cout << _statusCode << std::endl;
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
 		std::string errorPageUri = it != _errorPages.end() ? "." + _rootDir + it->second
 														   : "./www/error/default_error.html";
@@ -173,6 +172,7 @@ private:
 	}
 
 	bool buildPage(RequestParsingResult& request) {
+		std::cout << RED << "buildPage\n" << RESET;
 		if (_cgiScript.empty()) {
 			if (!_allowedMethods[request.success.method]) {
 				_statusCode = CLIENT_METHOD_NOT_ALLOWED;
@@ -200,6 +200,7 @@ private:
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
 		const std::string dotSlash = "." + _cgiScript;
 		char* strScript = const_cast<char*>(dotSlash.c_str());
+		std::cout << strExec << " " << strScript << std::endl;
 		int pipefd[2];
 		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
@@ -257,7 +258,8 @@ private:
 			return "." + _rootDir + "/" + getBasename(uri);
 		}
 	}
-
+	// TODO : should we handle it as a redirection and let the client do another request rather than
+	// displaying the index page directly ourselves ?
 	void handleIndex(RequestParsingResult& request) {
 		bool validIndexFile = false;
 		std::string indexFile;

@@ -34,10 +34,14 @@
 #define MAX_PORT 65535
 #define MAX_CLIENTS 1024
 #define MAX_URI_SIZE 2048
-#define SIZE_LIMIT 1073741824
+#define SIZE_LIMIT 33554432
 #define BUFFER_SIZE 16384
 #define DEFAULT_BODY_SIZE 1048576
 #define MAX_HEADER_SIZE 1048576
+
+#define CGI_VERSION "CGI/1.1"
+#define HTTP_VERSION "HTTP/1.1"
+#define SERVER_VERSION "webserv/4.2"
 
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
 #define ERROR_LISTEN_FORMAT "invalid format for host:port in listen instruction"
