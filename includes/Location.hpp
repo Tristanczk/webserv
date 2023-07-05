@@ -126,21 +126,18 @@ private:
 	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
 
 	bool parseCgi(std::istringstream& iss) {
-		std::string lang, check;
-		if (!(iss >> lang) || !(iss >> _cgiScript))
+		if (!(iss >> _cgiExec))
 			return configFileError("missing information after cgi keyword");
-		if (iss >> check)
+		if (!iss.eof())
 			return configFileError("too many arguments after cgi keyword");
-		const std::string lowerLang = strlower(lang);
-		if (lowerLang == "javascript")
-			_cgiExec = "/usr/bin/node";
-		else if (lowerLang == "php")
-			_cgiExec = "/usr/bin/php-cgi";
-		else if (lowerLang == "python")
-			_cgiExec = "/usr/bin/python3";
-		else
-			return configFileError("invalid lang for cgi: " + lang);
-		return validateUrl(_cgiScript, "cgi");
+		if (!validateUrl(_cgiExec, "cgi"))
+			return false;
+		struct stat sb;
+		if (stat(_cgiExec.c_str(), &sb) != 0)
+			return configFileError("cgi interpreter not found: " + _cgiExec);
+		if (!S_ISREG(sb.st_mode) || access(_cgiExec.c_str(), X_OK) != 0)
+			return configFileError("cgi interpreter is not executable: " + _cgiExec);
+		return true;
 	}
 
 	bool parseRoot(std::istringstream& iss) {
