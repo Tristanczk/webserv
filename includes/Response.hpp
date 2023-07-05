@@ -203,10 +203,7 @@ private:
 		}
 		std::string extension = getExtension(uri);
 		std::map<std::string, std::string>::iterator it = MIME_TYPES.find(extension);
-		if (it != MIME_TYPES.end())
-			_bodyType = it->second;
-		else
-			_bodyType = "application/octet-stream";
+		_bodyType = it != MIME_TYPES.end() ? it->second : "application/octet-stream";
 		return true;
 	}
 
