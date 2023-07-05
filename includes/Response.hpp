@@ -2,6 +2,7 @@
 
 #include "Location.hpp"
 #include "webserv.hpp"
+#include <iostream>
 #include <string>
 
 extern std::map<StatusCode, std::string> STATUS_MESSAGES;
@@ -118,12 +119,41 @@ private:
 			buildErrorPage();
 		buildStatusLine();
 		buildHeader();
-		return;
 	}
 
 	void buildPost(RequestParsingResult& request) {
-		(void)request;
-		return;
+		std::cout << RED << "POST" << RESET << std::endl;
+		std::map<std::string, std::string>::iterator it =
+			request.success.headers.find("content-type");
+		bool error = false;
+		if (it == request.success.headers.end()) {
+			_statusCode = CLIENT_BAD_REQUEST;
+			error = true;
+		} else if (it->second == "application/x-www-form-urlencoded" ||
+				   it->second == "multipart/form-data") {
+			_statusCode = CLIENT_UNSUPPORTED_MEDIA_TYPE;
+			error = true;
+		}
+		if (error) {
+			buildErrorPage();
+			buildStatusLine();
+			buildHeader();
+			return;
+		}
+		std::ofstream ofs(findFinalUri(request).c_str());
+		if (ofs.fail()) {
+			_statusCode = CLIENT_BAD_REQUEST;
+			buildErrorPage();
+			buildStatusLine();
+			buildHeader();
+			return;
+		}
+		std::string bodyStr(request.success.body.begin(), request.success.body.end());
+		ofs << bodyStr;
+		ofs.close();
+		_statusCode = SUCCESS_CREATED;
+		buildStatusLine();
+		buildHeader();
 	}
 
 	void buildDelete(RequestParsingResult& request) {

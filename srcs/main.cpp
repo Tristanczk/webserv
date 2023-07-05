@@ -9,6 +9,8 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Usage: " << argv[0] << " [filename.conf]" << std::endl;
 		return EXIT_FAILURE;
 	}
+	initStatusMessageMap();
+	initMimeTypes();
 	Server server;
 	if (!server.init(conf))
 		return EXIT_FAILURE;

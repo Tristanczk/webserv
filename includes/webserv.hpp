@@ -227,6 +227,9 @@ bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
 bool parseString(std::istringstream&, std::string&, const std::string&);
 
+void initStatusMessageMap();
+void initMimeTypes();
+
 #include "Location.hpp"
 
 #include "VirtualServer.hpp"
