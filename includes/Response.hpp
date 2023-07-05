@@ -38,9 +38,14 @@ public:
 			buildErrorPage();
 			buildStatusLine();
 			buildHeader();
-		} else if (request.success.method == GET) {
-			_statusCode = SUCCESS_OK;
-			buildGet(request);
+		} else if (!_allowedMethods[request.success.method]) {
+			_statusCode = CLIENT_METHOD_NOT_ALLOWED;
+			buildErrorPage();
+			buildStatusLine();
+			buildHeader();
+		} else {
+			KeywordHandler handler = _keywordHandlers[request.success.method];
+			(this->*handler)(request);
 		}
 	}
 
@@ -174,10 +179,6 @@ private:
 	bool buildPage(RequestParsingResult& request) {
 		std::cout << RED << "buildPage\n" << RESET;
 		if (_cgiScript.empty()) {
-			if (!_allowedMethods[request.success.method]) {
-				_statusCode = CLIENT_METHOD_NOT_ALLOWED;
-				return false;
-			}
 			std::string uri = findFinalUri(request);
 			std::cout << "final uri: " << uri << std::endl;
 			if (!readContent(uri, _body)) {
