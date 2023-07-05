@@ -127,8 +127,26 @@ private:
 	}
 
 	void buildDelete(RequestParsingResult& request) {
-		(void)request;
-		return;
+		std::string uri = findFinalUri(request);
+		bool error = false;
+		if (isDirectory(uri)) {
+			_statusCode = CLIENT_FORBIDDEN;
+			error = true;
+		} else if (!isValidFile(uri)) {
+			_statusCode = CLIENT_NOT_FOUND;
+			error = true;
+		} else {
+			if (remove(uri.c_str()) == -1) {
+				_statusCode = CLIENT_FORBIDDEN;
+				error = true;
+			} else {
+				_statusCode = SUCCESS_NO_CONTENT;
+			}
+		}
+		if (error)
+			buildErrorPage();
+		buildStatusLine();
+		buildHeader();
 	}
 
 	bool pushStringToClient(int fd, std::string& line) {
