@@ -59,7 +59,7 @@ public:
 	void loop() {
 		int clientFd;
 		while (run) {
-			_numFds = epoll_wait(_epollFd, _eventList, MAX_CLIENTS, -1);
+			_numFds = epoll_wait(_epollFd, _eventList, MAX_EVENTS, -1);
 			if (_numFds < 0) {
 				if (!run)
 					break;
@@ -120,7 +120,7 @@ private:
 	int _epollFd;
 	int _numFds;
 	std::set<int> _listenSockets;
-	struct epoll_event _eventList[MAX_CLIENTS];
+	struct epoll_event _eventList[MAX_EVENTS];
 	std::map<int, Client> _clients;
 
 	bool checkDuplicateServers() const {
