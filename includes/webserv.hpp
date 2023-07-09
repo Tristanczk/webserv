@@ -214,18 +214,16 @@ std::string strlower(const std::string&);
 std::string strtrim(const std::string&, const std::string&);
 bool validateUrl(const std::string&, const std::string&);
 
-void addEpollEvent(int, int, int);
-void modifyEpollEvent(int, int, int);
-
 void signalHandler(int);
 void syscall(int, const char*);
+void syscallEpoll(int, int, int, int, const char*);
 
 bool parseAutoIndex(std::istringstream&, bool&);
 bool parseErrorCode(std::string&, std::vector<int>&);
 bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
 bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
-bool parseString(std::istringstream&, std::string&, const std::string&);
+bool parseRoot(std::istringstream&, std::string&, const std::string&);
 
 void initStatusMessageMap();
 void initMimeTypes();

@@ -184,7 +184,7 @@ private:
 	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
 
 	bool parseRoot(std::istringstream& iss) {
-		return ::parseString(iss, _rootDir, "root") && validateUrl(_rootDir, "server root");
+		return ::parseRoot(iss, _rootDir, "server") && validateUrl(_rootDir, "server root");
 	}
 
 	bool parseClientMaxBodySize(std::istringstream& iss) {

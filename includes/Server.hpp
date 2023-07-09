@@ -75,38 +75,22 @@ public:
 							"accept");
 					client.setInfo(clientFd);
 					client.findAssociatedServers(_virtualServers);
-					addEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
+					syscallEpoll(_epollFd, EPOLL_CTL_ADD, clientFd, EPOLLIN | EPOLLRDHUP,
+								 "EPOLL_CTL_ADD");
 					_clients[clientFd] = client;
 				} else {
 					clientFd = _eventList[i].data.fd;
-					// should we handle error or unexpected closure differently ?
-					// especially is there a need to handle EPOLLRDHUP in a specific way ?
-					// because it might indicate that the connection is only half closed and can
-					// still receive data information from the server
-					// TODO if EPOLLIN {} else if EPOLLOUT {} else {} so we don't forget a flag
-					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
-						close(clientFd);
-						_clients.erase(clientFd);
-						continue;
-					} else if (_eventList[i].events & EPOLLIN) {
+					// TODO EPOLLOUT
+					if (_eventList[i].events & EPOLLIN) {
 						Client& client = _clients[clientFd];
 						ResponseStatusEnum status = client.handleRequests();
 						if (status == RESPONSE_FAILURE) {
 							close(clientFd);
 							_clients.erase(clientFd);
-						} else if (status == RESPONSE_SUCCESS)
-							modifyEpollEvent(_epollFd, clientFd, EPOLLOUT | EPOLLRDHUP);
-					} else if (_eventList[i].events & EPOLLOUT) {
-						// TODO, send response to client
-						// int n =
-						// 	send(clientFd, HTTP_RESPONSE, strlen(HTTP_RESPONSE), MSG_NOSIGNAL);
-						// if (n == -1) {
-						// 	std::cerr << "Error while sending response" << std::endl;
-						// 	close(clientFd);
-						// 	_clients.erase(clientFd);
-						// }
-						// std::cout << "sent response to client" << std::endl;
-						modifyEpollEvent(_epollFd, clientFd, EPOLLIN | EPOLLRDHUP);
+						}
+					} else {
+						close(clientFd);
+						_clients.erase(clientFd);
 					}
 				}
 			}
@@ -194,7 +178,7 @@ private:
 			struct sockaddr_in addr = _virtualServersToBind[i]->getAddress();
 			syscall(bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)), "bind");
 			syscall(listen(socketFd, SOMAXCONN), "listen");
-			addEpollEvent(_epollFd, socketFd, EPOLLIN);
+			syscallEpoll(_epollFd, EPOLL_CTL_ADD, socketFd, EPOLLIN, "EPOLL_CTL_ADD");
 			_listenSockets.insert(socketFd);
 		}
 	}

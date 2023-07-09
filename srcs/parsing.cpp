@@ -1,12 +1,12 @@
 #include "../includes/webserv.hpp"
 
-bool parseString(std::istringstream& iss, std::string& content, const std::string& keyword) {
+bool parseRoot(std::istringstream& iss, std::string& root, const std::string& block) {
 	std::string value;
 	if (!(iss >> value))
-		return configFileError("missing information after " + keyword + " keyword");
-	content = value;
+		return configFileError("missing information after " + block + " root keyword");
+	root = value;
 	if (iss >> value)
-		return configFileError("too many arguments after " + keyword + " keyword");
+		return configFileError("too many arguments after " + block + " root keyword");
 	return true;
 }
 

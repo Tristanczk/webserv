@@ -31,8 +31,7 @@ public:
 				? Response(result.location->getRootDir(), result.location->getAutoIndex(),
 						   result.location->getErrorPages(), result.location->getIndexPages(),
 						   result.location->getUri(), result.location->getReturn(),
-						   result.location->getAllowedMethod(), result.location->getCgiExec(),
-						   result.location->getCgiScript())
+						   result.location->getAllowedMethod(), result.location->getCgiExec())
 				: Response(result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
 						   result.virtualServer->getErrorPages(),
 						   result.virtualServer->getIndexPages());

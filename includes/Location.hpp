@@ -85,7 +85,6 @@ public:
 	std::string getUri() const { return _uri; }
 	std::string getRootDir() const { return _rootDir; }
 	std::string getCgiExec() const { return _cgiExec; }
-	std::string getCgiScript() const { return _cgiScript; }
 	bool getAutoIndex() const { return _autoIndex; }
 	std::pair<long, std::string> getReturn() const { return _return; }
 	const bool* getAllowedMethod() const { return _allowedMethods; }
@@ -99,7 +98,6 @@ private:
 	std::string _uri;
 	std::string _rootDir;
 	std::string _cgiExec;
-	std::string _cgiScript;
 	bool _autoIndex;
 	std::pair<long, std::string> _return;
 	bool _allowedMethods[NO_METHOD];
@@ -141,7 +139,7 @@ private:
 	}
 
 	bool parseRoot(std::istringstream& iss) {
-		return ::parseString(iss, _rootDir, "root") && validateUrl(_rootDir, "location root");
+		return ::parseRoot(iss, _rootDir, "location") && validateUrl(_rootDir, "location root");
 	}
 
 	bool parseLimitExcept(std::istringstream& iss) {

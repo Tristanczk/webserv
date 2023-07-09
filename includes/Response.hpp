@@ -21,10 +21,9 @@ public:
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages, std::string locationUri,
 			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
-			 std::string cgiExec, std::string cgiScript)
+			 std::string cgiExec)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
-		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec),
-		  _cgiScript(cgiScript) {
+		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
 		initKeywordMap();
@@ -40,6 +39,12 @@ public:
 			buildHeader();
 		} else if (!_allowedMethods[request.success.method]) {
 			_statusCode = CLIENT_METHOD_NOT_ALLOWED;
+			buildErrorPage();
+			buildStatusLine();
+			buildHeader();
+		} else if (!_cgiExec.empty()) {
+			std::cout << RED << "CGI " << _cgiExec << " " << _locationUri << std::endl << RESET;
+			_statusCode = SUCCESS_OK;
 			buildErrorPage();
 			buildStatusLine();
 			buildHeader();
@@ -88,7 +93,6 @@ private:
 	std::pair<long, std::string> _return;
 	bool _allowedMethods[NO_METHOD];
 	std::string _cgiExec;
-	std::string _cgiScript;
 
 	void initKeywordMap() {
 		_methodHandlers[GET] = &Response::buildGet;
@@ -237,7 +241,7 @@ private:
 	bool buildCgiPage(RequestParsingResult& request) {
 		(void)request;
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
-		const std::string dotSlash = "." + _cgiScript;
+		const std::string dotSlash = "." + _locationUri;
 		char* strScript = const_cast<char*>(dotSlash.c_str());
 		std::cout << strExec << " " << strScript << std::endl;
 		int pipefd[2];
@@ -423,7 +427,6 @@ private:
 			for (int i = 0; i < NO_METHOD; i++)
 				_allowedMethods[i] = true;
 			_cgiExec = "";
-			_cgiScript = "";
 		} else {
 			Location* location = request.location;
 			_rootDir = location->getRootDir();
@@ -435,7 +438,6 @@ private:
 			for (int i = 0; i < NO_METHOD; i++)
 				_allowedMethods[i] = location->getAllowedMethod()[i];
 			_cgiExec = location->getCgiExec();
-			_cgiScript = location->getCgiScript();
 		}
 	}
 
