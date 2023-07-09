@@ -131,6 +131,12 @@ bool getValidPath(std::string path, char* const envp[], std::string& finalPath) 
 	return false;
 }
 
+void initAllowedMethods(bool allowedMethods[NO_METHOD]) {
+	std::fill_n(allowedMethods, NO_METHOD, false);
+	allowedMethods[GET] = true;
+	allowedMethods[POST] = true;
+}
+
 bool isDirectory(const std::string& path) {
 	struct stat buf;
 	return stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode);

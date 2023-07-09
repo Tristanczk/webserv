@@ -12,7 +12,7 @@ public:
 		  _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
-		std::fill_n(_allowedMethods, NO_METHOD, true);
+		initAllowedMethods(_allowedMethods);
 	}
 
 	~Location(){};

@@ -14,7 +14,7 @@ public:
 			 std::vector<std::string> const& indexPages)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
 		  _indexPages(indexPages), _return(-1, "") {
-		std::fill_n(_allowedMethods, NO_METHOD, true);
+		initAllowedMethods(_allowedMethods);
 		initKeywordMap();
 	}
 
