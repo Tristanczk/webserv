@@ -37,7 +37,7 @@ public:
 			buildStatusLine();
 			buildHeader();
 		} else if (!_allowedMethods[request.success.method]) {
-			_statusCode = CLIENT_METHOD_NOT_ALLOWED;
+			_statusCode = STATUS_METHOD_NOT_ALLOWED;
 			buildErrorPage();
 			buildStatusLine();
 			buildHeader();
@@ -97,7 +97,7 @@ private:
 
 	// function templates
 	void buildGet(RequestParsingResult& request) {
-		_statusCode = SUCCESS_OK;
+		_statusCode = STATUS_OK;
 		// TODO: how to handle the fact that a get /error/ and a get /error won't necessarily have
 		// the same location ? and we need to know the location in order to know if the directory
 		// exists where we want to seach it I suggest we go back to handling only links that end by
@@ -123,11 +123,11 @@ private:
 			request.success.headers.find("content-type");
 		bool error = false;
 		if (it == request.success.headers.end()) {
-			_statusCode = CLIENT_BAD_REQUEST;
+			_statusCode = STATUS_BAD_REQUEST;
 			error = true;
 		} else if (it->second == "application/x-www-form-urlencoded" ||
 				   it->second == "multipart/form-data") {
-			_statusCode = CLIENT_UNSUPPORTED_MEDIA_TYPE;
+			_statusCode = STATUS_UNSUPPORTED_MEDIA_TYPE;
 			error = true;
 		}
 		if (error) {
@@ -138,7 +138,7 @@ private:
 		}
 		std::ofstream ofs(findFinalUri(request).c_str());
 		if (ofs.fail()) {
-			_statusCode = CLIENT_BAD_REQUEST;
+			_statusCode = STATUS_BAD_REQUEST;
 			buildErrorPage();
 			buildStatusLine();
 			buildHeader();
@@ -147,7 +147,7 @@ private:
 		std::string bodyStr(request.success.body.begin(), request.success.body.end());
 		ofs << bodyStr;
 		ofs.close();
-		_statusCode = SUCCESS_CREATED;
+		_statusCode = STATUS_CREATED;
 		buildStatusLine();
 		buildHeader();
 	}
@@ -156,17 +156,17 @@ private:
 		std::string uri = findFinalUri(request);
 		bool error = false;
 		if (isDirectory(uri)) {
-			_statusCode = CLIENT_FORBIDDEN;
+			_statusCode = STATUS_FORBIDDEN;
 			error = true;
 		} else if (!isValidFile(uri)) {
-			_statusCode = CLIENT_NOT_FOUND;
+			_statusCode = STATUS_NOT_FOUND;
 			error = true;
 		} else {
 			if (std::remove(uri.c_str()) == -1) {
-				_statusCode = CLIENT_FORBIDDEN;
+				_statusCode = STATUS_FORBIDDEN;
 				error = true;
 			} else {
-				_statusCode = SUCCESS_NO_CONTENT;
+				_statusCode = STATUS_NO_CONTENT;
 			}
 		}
 		if (error)
@@ -224,7 +224,7 @@ private:
 		std::string uri = findFinalUri(request);
 		std::cout << "final uri: " << uri << std::endl;
 		if (!readContent(uri, _body)) {
-			_statusCode = CLIENT_NOT_FOUND;
+			_statusCode = STATUS_NOT_FOUND;
 			return false;
 		}
 		std::string extension = getExtension(uri);
@@ -236,7 +236,7 @@ private:
 	void buildCgi(RequestParsingResult& request) {
 		(void)request;
 		std::cout << RED << "CGI: " << _cgiExec << " " << request.success.uri << RESET << std::endl;
-		_statusCode = CLIENT_NOT_FOUND;
+		_statusCode = STATUS_NOT_FOUND;
 		buildErrorPage();
 		buildStatusLine();
 		buildHeader();
@@ -299,13 +299,13 @@ private:
 			}
 		}
 		if (!validIndexFile && _autoIndex) {
-			_statusCode = SUCCESS_OK;
+			_statusCode = STATUS_OK;
 			buildAutoIndexPage(request);
 			buildStatusLine();
 			buildHeader();
 			return;
 		}
-		_statusCode = CLIENT_FORBIDDEN;
+		_statusCode = STATUS_FORBIDDEN;
 		buildErrorPage();
 		buildStatusLine();
 		buildHeader();
@@ -324,7 +324,7 @@ private:
 	void buildAutoIndexPage(RequestParsingResult& request) {
 		DIR* dir = opendir(findFinalUri(request).c_str());
 		if (dir == NULL) {
-			_statusCode = SERVER_INTERNAL_SERVER_ERROR;
+			_statusCode = STATUS_INTERNAL_SERVER_ERROR;
 			buildErrorPage();
 			buildStatusLine();
 			buildHeader();

@@ -26,17 +26,17 @@ public:
 			} else {
 				++_headerSize;
 				if (_headerSize > MAX_HEADER_SIZE)
-					return parsingFailure(CLIENT_REQUEST_HEADER_FIELDS_TOO_LARGE);
+					return parsingFailure(STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE);
 				const bool expectsNewline = !_line.empty() && _line[_line.size() - 1] == '\r';
 				if (expectsNewline ? c != '\n' : c != '\r' && !std::isprint(c))
-					return parsingFailure(CLIENT_BAD_REQUEST);
+					return parsingFailure(STATUS_BAD_REQUEST);
 				_line += c;
 				if (endswith(_line, "\r\n")) {
 					_line.resize(_line.size() - 2);
 					const StatusCode statusCode = _line.empty()	   ? checkHeaders()
 												  : _isRequestLine ? parseRequestLine()
 																   : parseHeaderLine();
-					if (statusCode != NO_STATUS_CODE)
+					if (statusCode != STATUS_NONE)
 						return parsingFailure(statusCode);
 					if (_line.empty() && _contentLength == 0)
 						return parsingSuccess();
@@ -92,7 +92,7 @@ private:
 		std::istringstream iss(_line);
 		_isRequestLine = false;
 		if (!(iss >> methodString >> _uri >> version) || (iss >> check) || _uri[0] != '/')
-			return CLIENT_BAD_REQUEST;
+			return STATUS_BAD_REQUEST;
 		if (methodString == "DELETE")
 			_method = DELETE;
 		else if (methodString == "GET")
@@ -100,15 +100,15 @@ private:
 		else if (methodString == "POST")
 			_method = POST;
 		else
-			return CLIENT_METHOD_NOT_ALLOWED;
+			return STATUS_METHOD_NOT_ALLOWED;
 		if (_uri.size() > MAX_URI_SIZE)
-			return CLIENT_URI_TOO_LONG;
+			return STATUS_URI_TOO_LONG;
 		if (version != HTTP_VERSION)
-			return SERVER_HTTP_VERSION_NOT_SUPPORTED;
+			return STATUS_HTTP_VERSION_NOT_SUPPORTED;
 		// at this point we have a valid request line so we can parse the location in the default
 		// server
 		findMatchingLocation(_uri);
-		return NO_STATUS_CODE;
+		return STATUS_NONE;
 	}
 
 	StatusCode parseHeaderLine() {
@@ -135,32 +135,32 @@ private:
 			}
 		}
 		if (key.empty() || value.empty())
-			return CLIENT_BAD_REQUEST;
+			return STATUS_BAD_REQUEST;
 		// TODO handle duplicates
 		_headers[key] = value;
-		return NO_STATUS_CODE;
+		return STATUS_NONE;
 	}
 
 	StatusCode checkHeaders() {
 		_isInBody = true;
 		if (_isRequestLine)
-			return CLIENT_BAD_REQUEST;
+			return STATUS_BAD_REQUEST;
 		std::map<std::string, std::string>::const_iterator host = _headers.find("host");
 		if (host == _headers.end())
-			return CLIENT_BAD_REQUEST;
+			return STATUS_BAD_REQUEST;
 		findMatchingServerAndLocation(host->second);
 		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
 		if (_method == POST) {
 			if (it == _headers.end())
-				return CLIENT_LENGTH_REQUIRED;
+				return STATUS_LENGTH_REQUIRED;
 			const std::string contentLengthString = it->second;
 			if (contentLengthString.find_first_not_of("0123456789") != std::string::npos)
-				return CLIENT_BAD_REQUEST;
+				return STATUS_BAD_REQUEST;
 			_contentLength = std::strtol(contentLengthString.c_str(), NULL, 10);
 			if (_contentLength > _maxBodySize)
-				return CLIENT_PAYLOAD_TOO_LARGE;
+				return STATUS_PAYLOAD_TOO_LARGE;
 		}
-		return NO_STATUS_CODE;
+		return STATUS_NONE;
 	}
 
 	void findMatchingServerAndLocation(const std::string& host) {
