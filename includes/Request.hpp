@@ -70,6 +70,7 @@ private:
 
 	RequestMethod _method;
 	std::string _uri;
+	std::string _query;
 	std::map<std::string, std::string> _headers;
 	std::vector<unsigned char> _body;
 
@@ -103,10 +104,13 @@ private:
 			return STATUS_METHOD_NOT_ALLOWED;
 		if (_uri.size() > MAX_URI_SIZE)
 			return STATUS_URI_TOO_LONG;
+		size_t queryIdx = _uri.find('?');
+		if (queryIdx != std::string::npos) {
+			_query = _uri.substr(queryIdx + 1);
+			_uri = _uri.substr(0, queryIdx);
+		}
 		if (version != HTTP_VERSION)
 			return STATUS_HTTP_VERSION_NOT_SUPPORTED;
-		// at this point we have a valid request line so we can parse the location in the default
-		// server
 		findMatchingLocation(_uri);
 		return STATUS_NONE;
 	}
@@ -215,6 +219,7 @@ private:
 		rpr.location = _matchingLocation;
 		rpr.success.method = _method;
 		rpr.success.uri = _uri;
+		rpr.success.query = _query;
 		rpr.success.headers = _headers;
 		rpr.success.body = _body;
 		clear();

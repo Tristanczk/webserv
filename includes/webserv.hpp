@@ -156,6 +156,7 @@ typedef enum RequestParsingEnum {
 typedef struct RequestParsingSuccess {
 	RequestMethod method;
 	std::string uri;
+	std::string query;
 	std::map<std::string, std::string> headers;
 	std::vector<unsigned char> body;
 } RequestParsingSuccess;
