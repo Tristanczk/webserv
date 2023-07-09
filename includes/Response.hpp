@@ -9,7 +9,6 @@ class Response {
 public:
 	// constructor in case of non matching location block, there won't be a locationUri, a redirect,
 	// allowedMethods or link to cgiExec as they are exclusively defined in the location block
-	// TODO: no delete as allowed method
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
@@ -43,11 +42,7 @@ public:
 			buildStatusLine();
 			buildHeader();
 		} else if (!_cgiExec.empty()) {
-			std::cout << RED << "CGI " << _cgiExec << " " << _locationUri << std::endl << RESET;
-			_statusCode = SUCCESS_OK;
-			buildErrorPage();
-			buildStatusLine();
-			buildHeader();
+			buildCgi(request);
 		} else {
 			KeywordHandler handler = _methodHandlers[request.success.method];
 			(this->*handler)(request);
@@ -238,43 +233,13 @@ private:
 		return true;
 	}
 
-	bool buildCgiPage(RequestParsingResult& request) {
+	void buildCgi(RequestParsingResult& request) {
 		(void)request;
-		char* strExec = const_cast<char*>(_cgiExec.c_str());
-		const std::string dotSlash = "." + _locationUri;
-		char* strScript = const_cast<char*>(dotSlash.c_str());
-		std::cout << strExec << " " << strScript << std::endl;
-		int pipefd[2];
-		syscall(pipe(pipefd), "pipe");
-		pid_t pid = fork();
-		syscall(pid, "fork");
-		if (pid == 0) {
-			close(pipefd[0]);
-			dup2(pipefd[1], STDOUT_FILENO);
-			close(pipefd[1]);
-			char* argv[] = {strExec, strScript, NULL};
-			execve(strExec, argv, (char* const[]){NULL});
-			std::perror("execve");
-			exit(EXIT_FAILURE);
-		}
-		close(pipefd[1]);
-		std::string response = fullRead(pipefd[0]);
-		close(pipefd[0]);
-		std::cout << "=== CGI RESPONSE BEGIN (" << response.size() << ") ===" << std::endl;
-		std::cout << strtrim(response, "\r\n") << std::endl;
-		std::cout << "=== CGI RESPONSE END ===" << std::endl;
-		int wstatus;
-		wait(&wstatus);
-		const int exitCode = WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
-		if (exitCode == 0) {
-			_statusCode = SUCCESS_OK;
-			return true;
-		} else {
-			std::cerr << RED << _cgiExec << " " << dotSlash << " failed with exit code " << exitCode
-					  << RESET << std::endl;
-			_statusCode = SERVER_INTERNAL_SERVER_ERROR;
-			return false;
-		}
+		std::cout << RED << "CGI: " << _cgiExec << " " << request.success.uri << RESET << std::endl;
+		_statusCode = CLIENT_NOT_FOUND;
+		buildErrorPage();
+		buildStatusLine();
+		buildHeader();
 	}
 
 	std::string findFinalUri(RequestParsingResult& request) {
@@ -301,8 +266,7 @@ private:
 			return "." + _rootDir + "/" + getBasename(uri);
 		}
 	}
-	// TODO : should we handle it as a redirection and let the client do another request rather than
-	// displaying the index page directly ourselves ?
+
 	void handleIndex(RequestParsingResult& request) {
 		bool validIndexFile = false;
 		std::string indexFile;
