@@ -183,8 +183,8 @@ std::string strtrim(const std::string& s, const std::string& remove) {
 	return result;
 }
 
-bool validateUrl(const std::string& url, const std::string& keyword) {
-	return url.empty() || url[0] != '/' || url.find("..") != std::string::npos
-			   ? configFileError("invalid path for " + keyword + ": " + url)
-			   : true;
+bool validateUri(const std::string& uri, const std::string& keyword) {
+	return !uri.empty() && uri[0] == '/' && uri.find("..") == std::string::npos ? true
+		   : keyword.empty()													? false
+							 : configFileError("invalid path for " + keyword + ": " + uri);
 }

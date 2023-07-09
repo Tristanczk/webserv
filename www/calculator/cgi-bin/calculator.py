@@ -2,7 +2,7 @@ import os
 
 url = os.environ.get("REQUEST_URI", "not found, server operator probably goofed")
 print(
-    f"""Content-type: text/html
+    f"""Content-Type: text/html
 
 <!DOCTYPE html>
 <html>

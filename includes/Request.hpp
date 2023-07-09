@@ -109,6 +109,8 @@ private:
 			_query = _uri.substr(queryIdx + 1);
 			_uri = _uri.substr(0, queryIdx);
 		}
+		if (!validateUri(_uri))
+			return STATUS_BAD_REQUEST;
 		if (version != HTTP_VERSION)
 			return STATUS_HTTP_VERSION_NOT_SUPPORTED;
 		findMatchingLocation(_uri);

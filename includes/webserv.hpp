@@ -42,6 +42,7 @@
 #define CGI_VERSION "CGI/1.1"
 #define HTTP_VERSION "HTTP/1.1"
 #define SERVER_VERSION "webserv/4.2"
+#define DEFAULT_CONTENT_TYPE "application/octet-stream"
 
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
 #define ERROR_LISTEN_FORMAT "invalid format for host:port in listen instruction"
@@ -52,6 +53,8 @@
 #define RED "\033[31m"
 #define GREEN "\033[32m"
 #define BLUE "\033[34m"
+
+#define SPACES " \f\n\r\t\v"
 
 #define LOCATION_MATCH_EXACT -2
 #define LOCATION_MATCH_REGEX -1
@@ -214,7 +217,7 @@ bool readContent(std::string&, std::string&);
 bool startswith(const std::string&, const std::string&);
 std::string strlower(const std::string&);
 std::string strtrim(const std::string&, const std::string&);
-bool validateUrl(const std::string&, const std::string&);
+bool validateUri(const std::string&, const std::string& = "");
 
 void signalHandler(int);
 void syscall(int, const char*);

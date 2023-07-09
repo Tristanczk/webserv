@@ -1,6 +1,7 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <string>
 
 extern const std::map<StatusCode, std::string> STATUS_MESSAGES;
 extern const std::map<std::string, std::string> MIME_TYPES;
@@ -34,19 +35,17 @@ public:
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			_statusCode = request.statusCode;
 			buildErrorPage();
-			buildStatusLine();
-			buildHeader();
 		} else if (!_allowedMethods[request.success.method]) {
 			_statusCode = STATUS_METHOD_NOT_ALLOWED;
 			buildErrorPage();
-			buildStatusLine();
-			buildHeader();
 		} else if (!_cgiExec.empty()) {
 			buildCgi(request);
 		} else {
 			KeywordHandler handler = _methodHandlers[request.success.method];
 			(this->*handler)(request);
 		}
+		buildStatusLine();
+		buildHeader();
 	}
 
 	bool pushResponseToClient(int fd) {
@@ -75,7 +74,6 @@ private:
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
-	std::string _bodyType;
 	StatusCode _statusCode;
 
 	// these variables will be extracted from the correct location or from the correct virtual
@@ -113,8 +111,6 @@ private:
 		}
 		if (!buildPage(request))
 			buildErrorPage();
-		buildStatusLine();
-		buildHeader();
 	}
 
 	void buildPost(RequestParsingResult& request) {
@@ -132,24 +128,18 @@ private:
 		}
 		if (error) {
 			buildErrorPage();
-			buildStatusLine();
-			buildHeader();
 			return;
 		}
 		std::ofstream ofs(findFinalUri(request).c_str());
 		if (ofs.fail()) {
 			_statusCode = STATUS_BAD_REQUEST;
 			buildErrorPage();
-			buildStatusLine();
-			buildHeader();
 			return;
 		}
 		std::string bodyStr(request.success.body.begin(), request.success.body.end());
 		ofs << bodyStr;
 		ofs.close();
 		_statusCode = STATUS_CREATED;
-		buildStatusLine();
-		buildHeader();
 	}
 
 	void buildDelete(RequestParsingResult& request) {
@@ -171,10 +161,9 @@ private:
 		}
 		if (error)
 			buildErrorPage();
-		buildStatusLine();
-		buildHeader();
 	}
 
+	// TODO remove this function and use EPOLLOUT instead
 	bool pushStringToClient(int fd, std::string& line) {
 		// TODO tout ca me parait tres louche et potentiellement bloquant
 		std::cout << strtrim(line, "\r\n") << std::endl;
@@ -195,17 +184,17 @@ private:
 					  STATUS_MESSAGES.find(_statusCode)->second + "\r\n";
 	}
 
+	// TODO Kebab-Case maybe?
 	void buildHeader() {
-		_headers["Date"] = getDate();
-		_headers["Server"] = SERVER_VERSION;
-		_headers["Content-Length"] = toString(_body.length());
-		if (!_bodyType.empty())
-			_headers["Content-Type"] = _bodyType;
-		//_headers["Connection"] = "close";
+		_headers["date"] = getDate();
+		_headers["server"] = SERVER_VERSION;
+		_headers["content-length"] = toString(_body.length());
+		if (_headers.find("content-type") == _headers.end())
+			_headers["content-type"] = DEFAULT_CONTENT_TYPE;
+		//_headers["connection"] = "close";
 	}
 
 	void buildErrorPage() {
-		std::cout << _statusCode << std::endl;
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
 		std::string errorPageUri = it != _errorPages.end() ? "." + _rootDir + it->second
 														   : "./www/error/default_error.html";
@@ -215,9 +204,9 @@ private:
 			_body = "There was an error while trying to access the specified error page for error "
 					"code " +
 					toString(_statusCode);
-			_bodyType = "text/plain";
+			_headers["content-type"] = "text/plain";
 		} else
-			_bodyType = "text/html";
+			_headers["content-type"] = "text/html";
 	}
 
 	bool buildPage(RequestParsingResult& request) {
@@ -229,26 +218,69 @@ private:
 		}
 		std::string extension = getExtension(uri);
 		std::map<std::string, std::string>::const_iterator it = MIME_TYPES.find(extension);
-		_bodyType = it != MIME_TYPES.end() ? it->second : "application/octet-stream";
+		_headers["content-type"] = it != MIME_TYPES.end() ? it->second : DEFAULT_CONTENT_TYPE;
 		return true;
 	}
 
+	// TODO use EPOLLOUT to send the response
 	void buildCgi(RequestParsingResult& request) {
 		(void)request;
-		std::cout << RED << "CGI: " << _cgiExec << " " << request.success.uri << RESET << std::endl;
-		_statusCode = STATUS_NOT_FOUND;
-		buildErrorPage();
-		buildStatusLine();
-		buildHeader();
+		char* strExec = const_cast<char*>(_cgiExec.c_str());
+		char* strScript = const_cast<char*>("./www/calculator/cgi-bin/calculator.py"); // TODO
+		std::cout << RED << "CGI: " << strExec << ' ' << strScript << ' ' << request.success.query
+				  << RESET << std::endl;
+
+		int pipefd[2];
+		syscall(pipe(pipefd), "pipe");
+		pid_t pid = fork();
+		syscall(pid, "fork");
+		if (pid == 0) {
+			close(pipefd[0]);
+			dup2(pipefd[1], STDOUT_FILENO);
+			close(pipefd[1]);
+			char* argv[] = {strExec, strScript, NULL};
+			execve(strExec, argv, (char* const[]){NULL});
+			std::perror("execve");
+			exit(EXIT_FAILURE);
+		}
+		close(pipefd[1]);
+		std::string response = fullRead(pipefd[0]);
+		std::istringstream iss(response);
+		std::string line;
+		while (std::getline(iss, line) && !line.empty()) {
+			size_t colon = line.find(':');
+			if (colon != std::string::npos) {
+				std::string key = strlower(strtrim(line.substr(0, colon), SPACES));
+				std::string value = strtrim(line.substr(colon + 1), SPACES);
+				_headers[key] = value;
+			}
+		}
+		std::stringstream buffer;
+		buffer << iss.rdbuf();
+		_body = buffer.str();
+		close(pipefd[0]);
+		std::cout << "=== CGI RESPONSE BEGIN (" << response.size() << ") ===" << std::endl;
+		std::cout << strtrim(response, "\r\n") << std::endl;
+		std::cout << "=== CGI RESPONSE END ===" << std::endl;
+		int wstatus;
+		wait(&wstatus);
+		const int exitCode = WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
+		if (exitCode == 0) {
+			_statusCode = STATUS_OK;
+		} else {
+			std::cerr << RED << strExec << " " << strScript << " failed with exit code " << exitCode
+					  << RESET << std::endl;
+			_statusCode = STATUS_INTERNAL_SERVER_ERROR;
+		}
 	}
 
 	std::string findFinalUri(RequestParsingResult& request) {
-		// note : this function will be called after checking if the requested uri is a file or a
-		// directory
+		// note : this function will be called after checking if the requested uri is a file or
+		// a directory
 		Location* location = request.location;
 		std::string uri = request.success.uri;
-		// to ensure that the final link will be well formated whether the user put a trailing slash
-		// at the end of the location and at the beginning of the uri or not
+		// to ensure that the final link will be well formated whether the user put a trailing
+		// slash at the end of the location and at the beginning of the uri or not
 		if (_rootDir[_rootDir.size() - 1] == '/')
 			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 		if (uri[0] == '/')
@@ -293,32 +325,23 @@ private:
 				reinitResponseVariables(request);
 				if (!buildPage(request))
 					buildErrorPage();
-				buildStatusLine();
-				buildHeader();
 				return;
 			}
 		}
 		if (!validIndexFile && _autoIndex) {
 			_statusCode = STATUS_OK;
 			buildAutoIndexPage(request);
-			buildStatusLine();
-			buildHeader();
 			return;
 		}
 		_statusCode = STATUS_FORBIDDEN;
 		buildErrorPage();
-		buildStatusLine();
-		buildHeader();
 		return;
 	}
 
 	void handleRedirect() {
 		_statusCode = static_cast<StatusCode>(_return.first);
 		buildErrorPage();
-		buildStatusLine();
-		buildHeader();
-		_headers["Location"] = _return.second;
-		return;
+		_headers["location"] = _return.second;
 	}
 
 	void buildAutoIndexPage(RequestParsingResult& request) {
@@ -326,8 +349,6 @@ private:
 		if (dir == NULL) {
 			_statusCode = STATUS_INTERNAL_SERVER_ERROR;
 			buildErrorPage();
-			buildStatusLine();
-			buildHeader();
 			return;
 		}
 		_body = "<head>\n"
@@ -375,7 +396,7 @@ private:
 				</table>\n\
 				</body>\n\
 				</html>\n";
-		_bodyType = "text/html";
+		_headers["content-type"] = "text/html";
 	}
 
 	void reinitResponseVariables(RequestParsingResult& request) {
@@ -422,22 +443,23 @@ private:
 	// what are the type of things we need to handle to build a response?
 	//  1. status line:
 	//  	- HTTP version (will always be 1.1)
-	//  	- status code (if error when parsing request, use that error code, otherwise check if
-	//  the request can be answered, if ok code will be 200)
+	//  	- status code (if error when parsing request, use that error code, otherwise check
+	//  if the request can be answered, if ok code will be 200)
 	//  	- status message (what do we put here?)
 	//  2. headers: what are the field we need ?
 	//  	- Content-Length (if body is empty, set to 0)
 	//  	- Content-Type (if body is empty, set to text/html ?)
 	//  	- Date (use current date)
 	//  	- Server (use server name)
-	//  	- Connection : at first we manade only connection: close, we will see if we handle the
-	//  keep-alive mode later
+	//  	- Connection : at first we manade only connection: close, we will see if we handle
+	//  the keep-alive mode later
 	//  3. body:
-	//		- if there is an error code, we need to build a body with the error message based on the
+	//		- if there is an error code, we need to build a body with the error message based on
+	// the
 	// correct error page, specific error page or default error page
 	//  	- content of the html pages
-	//  	- if it is a php page, do we need to convert it to html before sending it ? I think yes
-	//  but not sure
+	//  	- if it is a php page, do we need to convert it to html before sending it ? I think
+	//  yes but not sure
 	//		- handle differently whether the uri is a directory or a file
 	//		- if it is a directory, we need to handle it according to the index and autoindex
 	// options

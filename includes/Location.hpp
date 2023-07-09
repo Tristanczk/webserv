@@ -128,7 +128,7 @@ private:
 			return configFileError("missing information after cgi keyword");
 		if (!iss.eof())
 			return configFileError("too many arguments after cgi keyword");
-		if (!validateUrl(_cgiExec, "cgi"))
+		if (!validateUri(_cgiExec, "cgi"))
 			return false;
 		struct stat sb;
 		if (stat(_cgiExec.c_str(), &sb) != 0)
@@ -139,7 +139,7 @@ private:
 	}
 
 	bool parseRoot(std::istringstream& iss) {
-		return ::parseRoot(iss, _rootDir, "location") && validateUrl(_rootDir, "location root");
+		return ::parseRoot(iss, _rootDir, "location") && validateUri(_rootDir, "location root");
 	}
 
 	bool parseLimitExcept(std::istringstream& iss) {
