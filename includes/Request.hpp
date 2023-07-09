@@ -14,7 +14,6 @@ public:
 	}
 
 	RequestParsingResult parse(const char* s = NULL, size_t size = 0) {
-		std::cout << "s len: " << (s ? strlen(s) : 0) << std::endl;
 		for (size_t i = 0; i < size; ++i)
 			_queue.push(s[i]);
 		while (!_queue.empty()) {
@@ -144,7 +143,6 @@ private:
 
 	StatusCode checkHeaders() {
 		_isInBody = true;
-		std::cout << "remaining characters in queue: " << _queue.size() << std::endl;
 		if (_isRequestLine)
 			return CLIENT_BAD_REQUEST;
 		std::map<std::string, std::string>::iterator host = _headers.find("host");

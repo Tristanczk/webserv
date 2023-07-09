@@ -9,11 +9,11 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Usage: " << argv[0] << " [filename.conf]" << std::endl;
 		return EXIT_FAILURE;
 	}
-	initStatusMessageMap();
-	initMimeTypes();
 	Server server;
 	if (!server.init(conf))
 		return EXIT_FAILURE;
+	initStatusMessageMap();
+	initMimeTypes();
 	try {
 		std::cout << BLUE << getBasename(argv[0]) << " is running." << RESET << std::endl;
 		std::cout << BLUE << "Press Ctrl+C to exit." << RESET << std::endl;

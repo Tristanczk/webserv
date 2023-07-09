@@ -1,9 +1,6 @@
 #pragma once
 
-#include "Location.hpp"
 #include "webserv.hpp"
-#include <iostream>
-#include <string>
 
 extern std::map<StatusCode, std::string> STATUS_MESSAGES;
 extern std::map<std::string, std::string> MIME_TYPES;
