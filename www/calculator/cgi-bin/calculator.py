@@ -1,5 +1,4 @@
 import os
-import sys
 
 url = os.environ.get("REQUEST_URI", "not found, server operator probably goofed")
 print(

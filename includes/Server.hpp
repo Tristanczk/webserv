@@ -83,6 +83,7 @@ public:
 					// especially is there a need to handle EPOLLRDHUP in a specific way ?
 					// because it might indicate that the connection is only half closed and can
 					// still receive data information from the server
+					// TODO if EPOLLIN {} else if EPOLLOUT {} else {} so we don't forget a flag
 					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
 						close(clientFd);
 						_clients.erase(clientFd);

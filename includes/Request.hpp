@@ -145,7 +145,7 @@ private:
 		_isInBody = true;
 		if (_isRequestLine)
 			return CLIENT_BAD_REQUEST;
-		std::map<std::string, std::string>::iterator host = _headers.find("host");
+		std::map<std::string, std::string>::const_iterator host = _headers.find("host");
 		if (host == _headers.end())
 			return CLIENT_BAD_REQUEST;
 		findMatchingServerAndLocation(host->second);

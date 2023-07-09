@@ -2,8 +2,8 @@
 
 #include "webserv.hpp"
 
-extern std::map<StatusCode, std::string> STATUS_MESSAGES;
-extern std::map<std::string, std::string> MIME_TYPES;
+extern const std::map<StatusCode, std::string> STATUS_MESSAGES;
+extern const std::map<std::string, std::string> MIME_TYPES;
 
 class Response {
 public:
@@ -44,7 +44,7 @@ public:
 			buildStatusLine();
 			buildHeader();
 		} else {
-			KeywordHandler handler = _keywordHandlers[request.success.method];
+			KeywordHandler handler = _methodHandlers[request.success.method];
 			(this->*handler)(request);
 		}
 	}
@@ -54,7 +54,7 @@ public:
 		std::cout << "=== RESPONSE START ===" << std::endl;
 		if (!pushStringToClient(fd, _statusLine))
 			return false;
-		for (std::map<std::string, std::string>::iterator it = _headers.begin();
+		for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
 			 it != _headers.end(); it++) {
 			line = it->first + ": " + it->second + "\r\n";
 			if (!pushStringToClient(fd, line))
@@ -71,7 +71,7 @@ public:
 
 private:
 	typedef void (Response::*KeywordHandler)(RequestParsingResult&);
-	std::map<RequestMethod, KeywordHandler> _keywordHandlers;
+	std::map<RequestMethod, KeywordHandler> _methodHandlers;
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
@@ -91,9 +91,9 @@ private:
 	std::string _cgiScript;
 
 	void initKeywordMap() {
-		_keywordHandlers[GET] = &Response::buildGet;
-		_keywordHandlers[POST] = &Response::buildPost;
-		_keywordHandlers[DELETE] = &Response::buildDelete;
+		_methodHandlers[GET] = &Response::buildGet;
+		_methodHandlers[POST] = &Response::buildPost;
+		_methodHandlers[DELETE] = &Response::buildDelete;
 	}
 
 	// function templates
@@ -120,7 +120,7 @@ private:
 
 	void buildPost(RequestParsingResult& request) {
 		std::cout << RED << "POST" << RESET << std::endl;
-		std::map<std::string, std::string>::iterator it =
+		std::map<std::string, std::string>::const_iterator it =
 			request.success.headers.find("content-type");
 		bool error = false;
 		if (it == request.success.headers.end()) {
@@ -193,7 +193,7 @@ private:
 
 	void buildStatusLine() {
 		_statusLine = std::string(HTTP_VERSION) + " " + toString(_statusCode) + " " +
-					  STATUS_MESSAGES[_statusCode] + "\r\n";
+					  STATUS_MESSAGES.find(_statusCode)->second + "\r\n";
 	}
 
 	void buildHeader() {
@@ -229,7 +229,7 @@ private:
 			return false;
 		}
 		std::string extension = getExtension(uri);
-		std::map<std::string, std::string>::iterator it = MIME_TYPES.find(extension);
+		std::map<std::string, std::string>::const_iterator it = MIME_TYPES.find(extension);
 		_bodyType = it != MIME_TYPES.end() ? it->second : "application/octet-stream";
 		return true;
 	}
