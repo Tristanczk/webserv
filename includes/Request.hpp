@@ -29,7 +29,7 @@ public:
 				if (_headerSize > MAX_HEADER_SIZE)
 					return parsingFailure(CLIENT_REQUEST_HEADER_FIELDS_TOO_LARGE);
 				const bool expectsNewline = !_line.empty() && _line[_line.size() - 1] == '\r';
-				if (expectsNewline ? c != '\n' : c != '\r' && !isprint(c))
+				if (expectsNewline ? c != '\n' : c != '\r' && !std::isprint(c))
 					return parsingFailure(CLIENT_BAD_REQUEST);
 				_line += c;
 				if (endswith(_line, "\r\n")) {

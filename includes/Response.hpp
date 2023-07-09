@@ -166,7 +166,7 @@ private:
 			_statusCode = CLIENT_NOT_FOUND;
 			error = true;
 		} else {
-			if (remove(uri.c_str()) == -1) {
+			if (std::remove(uri.c_str()) == -1) {
 				_statusCode = CLIENT_FORBIDDEN;
 				error = true;
 			} else {
