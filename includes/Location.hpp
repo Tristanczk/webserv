@@ -198,8 +198,11 @@ private:
 	bool checkUpload() {
 		if (_allowedMethods[POST] && _uploadDir.empty())
 			return configFileError("upload_directory not specified for POST method");
-		if (!_uploadDir.empty() && !_allowedMethods[POST])
-			return configFileError("upload_directory specified but POST method not allowed");
+		if (_allowedMethods[DELETE] && _uploadDir.empty())
+			return configFileError("upload_directory not specified for DELETE method");
+		if (!_uploadDir.empty() && !_allowedMethods[POST] && !_allowedMethods[DELETE])
+			return configFileError(
+				"upload_directory specified but POST or DELETE methods not allowed");
 		return true;
 	}
 
