@@ -15,7 +15,7 @@ public:
 		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
 		  _indexPages(indexPages), _return(-1, "") {
 		initAllowedMethods(_allowedMethods);
-		initKeywordMap();
+		initMethodMap();
 	}
 
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
@@ -26,7 +26,7 @@ public:
 		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
-		initKeywordMap();
+		initMethodMap();
 	}
 
 	~Response(){};
@@ -41,7 +41,7 @@ public:
 		} else if (!_cgiExec.empty()) {
 			buildCgi(request);
 		} else {
-			KeywordHandler handler = _methodHandlers[request.success.method];
+			MethodHandler handler = _methodHandlers[request.success.method];
 			(this->*handler)(request);
 		}
 		buildStatusLine();
@@ -69,8 +69,8 @@ public:
 	}
 
 private:
-	typedef void (Response::*KeywordHandler)(RequestParsingResult&);
-	std::map<RequestMethod, KeywordHandler> _methodHandlers;
+	typedef void (Response::*MethodHandler)(RequestParsingResult&);
+	std::map<RequestMethod, MethodHandler> _methodHandlers;
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
@@ -87,7 +87,7 @@ private:
 	bool _allowedMethods[NO_METHOD];
 	std::string _cgiExec;
 
-	void initKeywordMap() {
+	void initMethodMap() {
 		_methodHandlers[GET] = &Response::buildGet;
 		_methodHandlers[POST] = &Response::buildPost;
 		_methodHandlers[DELETE] = &Response::buildDelete;
@@ -222,13 +222,33 @@ private:
 		return true;
 	}
 
+	static void exportEnv(char** env, size_t i, const std::string& key, const std::string& value) {
+		env[i] = new char[key.size() + value.size() + 2];
+		std::strcpy(env[i], key.c_str());
+		env[i][key.size()] = '=';
+		std::strcpy(env[i] + key.size() + 1, value.c_str());
+	}
+
+	static char** createEnv(char** env, RequestParsingResult& request) {
+		std::vector<std::string> envec;
+		exportEnv(env, 0, "QUERY_STRING", request.success.query);
+		return env;
+	}
+
 	// TODO use EPOLLOUT to send the response
 	void buildCgi(RequestParsingResult& request) {
 		(void)request;
+		_statusCode = STATUS_OK;
+		std::cout << RED;
+		std::cout << "locationUri " << _locationUri << std::endl;
+		std::cout << "rootDir " << _rootDir << std::endl;
+		std::cout << "finalUri " << findFinalUri(request) << std::endl;
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
-		char* strScript = const_cast<char*>("./www/calculator/cgi-bin/calculator.py"); // TODO
+		char* strScript =
+			const_cast<char*>("./www/calculator/cgi-bin/calculator.py"); // TODO findFinalUri
 		std::cout << RED << "CGI: " << strExec << ' ' << strScript << ' ' << request.success.query
-				  << RESET << std::endl;
+				  << std::endl;
+		std::cout << RESET;
 
 		int pipefd[2];
 		syscall(pipe(pipefd), "pipe");
@@ -239,7 +259,10 @@ private:
 			dup2(pipefd[1], STDOUT_FILENO);
 			close(pipefd[1]);
 			char* argv[] = {strExec, strScript, NULL};
-			execve(strExec, argv, (char* const[]){NULL});
+			char* env[CGI_ENV_SIZE];
+			std::memset(env, 0, sizeof(env));
+			createEnv(env, request);
+			execve(strExec, argv, env);
 			std::perror("execve");
 			exit(EXIT_FAILURE);
 		}
@@ -253,15 +276,24 @@ private:
 				std::string key = strlower(strtrim(line.substr(0, colon), SPACES));
 				std::string value = strtrim(line.substr(colon + 1), SPACES);
 				_headers[key] = value;
+				if (key == "status") {
+					std::istringstream iss(value);
+					iss >> value;
+					if (value.size() == 3 && isdigit(value[0]) && isdigit(value[1]) &&
+						isdigit(value[2]))
+						_statusCode = static_cast<StatusCode>(std::atoi(value.c_str()));
+					else {
+						_statusCode = STATUS_INTERNAL_SERVER_ERROR;
+						buildErrorPage();
+						return;
+					}
+				}
 			}
 		}
 		std::stringstream buffer;
 		buffer << iss.rdbuf();
 		_body = buffer.str();
 		close(pipefd[0]);
-		std::cout << "=== CGI RESPONSE BEGIN (" << response.size() << ") ===" << std::endl;
-		std::cout << strtrim(response, "\r\n") << std::endl;
-		std::cout << "=== CGI RESPONSE END ===" << std::endl;
 		int wstatus;
 		wait(&wstatus);
 		const int exitCode = WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
@@ -288,8 +320,8 @@ private:
 		if (location == NULL)
 			return "." + _rootDir + "/" + uri;
 		LocationModifierEnum modifier = location->getModifier();
-		if (modifier == NONE)
-			return "." + _rootDir + "/" + uri.substr(_locationUri.size() - 1);
+		if (modifier == DIRECTORY)
+			return "." + _rootDir + "/" + uri.substr(_locationUri.size());
 		else if (modifier == REGEX) {
 			// in case of a matching regex, we append the whole path to the root directory
 			return "." + _rootDir + "/" + uri;
@@ -300,42 +332,34 @@ private:
 	}
 
 	void handleIndex(RequestParsingResult& request) {
-		bool validIndexFile = false;
-		std::string indexFile;
 		if (!_indexPages.empty()) {
 			std::string filepath;
 			for (std::vector<std::string>::iterator it = _indexPages.begin();
 				 it != _indexPages.end(); it++) {
-				if (_rootDir[_rootDir.size() - 1] == '/')
-					_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 				filepath = (*it)[0] == '/' ? findFinalUri(request) + (*it).substr(1)
 										   : findFinalUri(request) + *it;
 				std::cout << "filepath: " << filepath << std::endl;
 				if (isValidFile(filepath)) {
 					std::cout << "valid index file: " << *it << std::endl;
-					validIndexFile = true;
-					indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
-					break;
+					std::string indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
+					request.success.uri += indexFile;
+					request.location =
+						request.virtualServer->findMatchingLocation(request.success.uri);
+					reinitResponseVariables(request);
+					if (!buildPage(request))
+						buildErrorPage();
+					return;
 				}
 				std::cout << "invalid index file: " << *it << std::endl;
 			}
-			if (validIndexFile) {
-				request.success.uri = request.success.uri + indexFile;
-				request.location = request.virtualServer->findMatchingLocation(request.success.uri);
-				reinitResponseVariables(request);
-				if (!buildPage(request))
-					buildErrorPage();
-				return;
-			}
 		}
-		if (!validIndexFile && _autoIndex) {
+		if (_autoIndex) {
 			_statusCode = STATUS_OK;
 			buildAutoIndexPage(request);
-			return;
+		} else {
+			_statusCode = STATUS_FORBIDDEN;
+			buildErrorPage();
 		}
-		_statusCode = STATUS_FORBIDDEN;
-		buildErrorPage();
-		return;
 	}
 
 	void handleRedirect() {

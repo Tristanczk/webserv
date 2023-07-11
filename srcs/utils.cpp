@@ -104,33 +104,6 @@ bool getIpValue(std::string ip, uint32_t& res) {
 	return true;
 }
 
-bool getValidPath(std::string path, char* const envp[], std::string& finalPath) {
-	if (path.find('/') != std::string::npos) {
-		finalPath = path;
-		return true;
-	}
-	int i = 0;
-	std::string cmp = "PATH=";
-	std::string pathEnv;
-	while (envp[i]) {
-		std::string env(envp[i]);
-		if (env.substr(0, cmp.size()) == cmp) {
-			pathEnv = env.substr(cmp.size());
-			break;
-		}
-	}
-	while (!pathEnv.empty()) {
-		std::string pathToCheck = pathEnv.substr(0, pathEnv.find(':'));
-		pathEnv = pathEnv.substr(pathToCheck.size() + 1);
-		std::string fullPath = pathToCheck + '/' + path;
-		if (access(fullPath.c_str(), X_OK) == 0) {
-			finalPath = fullPath;
-			return true;
-		}
-	}
-	return false;
-}
-
 void initAllowedMethods(bool allowedMethods[NO_METHOD]) {
 	std::fill_n(allowedMethods, NO_METHOD, false);
 	allowedMethods[GET] = true;
@@ -187,4 +160,11 @@ bool validateUri(const std::string& uri, const std::string& keyword) {
 	return !uri.empty() && uri[0] == '/' && uri.find("..") == std::string::npos ? true
 		   : keyword.empty()													? false
 							 : configFileError("invalid path for " + keyword + ": " + uri);
+}
+
+std::string vecToString(const std::vector<unsigned char>& vec) {
+	std::string result;
+	for (size_t i = 0; i < vec.size(); ++i)
+		result += vec[i];
+	return result;
 }

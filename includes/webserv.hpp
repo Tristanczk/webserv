@@ -38,6 +38,7 @@
 #define BUFFER_SIZE 16384
 #define DEFAULT_BODY_SIZE 1048576
 #define MAX_HEADER_SIZE 1048576
+#define CGI_ENV_SIZE 256
 
 #define CGI_VERSION "CGI/1.1"
 #define HTTP_VERSION "HTTP/1.1"
@@ -46,7 +47,8 @@
 
 #define ERROR_ADDRESS "invalid IPv4 address format in listen instruction"
 #define ERROR_LISTEN_FORMAT "invalid format for host:port in listen instruction"
-#define ERROR_LOCATION "wrong syntax for location, syntax must be 'location [modifier] uri {'"
+#define ERROR_LOCATION_FORMAT                                                                      \
+	"wrong syntax for location, syntax must be 'location [modifier] uri {'"
 #define ERROR_PORT "invalid port number in listen instruction"
 
 #define RESET "\033[0m"
@@ -179,7 +181,7 @@ typedef enum ResponseStatusEnum {
 } ResponseStatusEnum;
 
 typedef enum LocationModifierEnum {
-	NONE,
+	DIRECTORY,
 	REGEX,
 	EXACT,
 } LocationModifierEnum;
@@ -208,16 +210,17 @@ std::string getExtension(const std::string& path);
 std::string getDate();
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
-bool getValidPath(std::string, char* const[], std::string&);
 void initAllowedMethods(bool[NO_METHOD]);
 bool isDirectory(const std::string&);
 bool isValidFile(const std::string& path);
 bool isValidErrorCode(int);
 bool readContent(std::string&, std::string&);
+std::string removeDuplicateSlashes(const std::string&);
 bool startswith(const std::string&, const std::string&);
 std::string strlower(const std::string&);
 std::string strtrim(const std::string&, const std::string&);
 bool validateUri(const std::string&, const std::string& = "");
+std::string vecToString(const std::vector<unsigned char>&);
 
 void signalHandler(int);
 void syscall(int, const char*);

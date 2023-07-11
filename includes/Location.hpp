@@ -8,7 +8,7 @@ public:
 			 const std::map<int, std::string>& serverErrorPages,
 			 const std::vector<std::string>& serverIndexPages,
 			 const std::pair<long, std::string>& serverReturn)
-		: _modifier(NONE), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
+		: _modifier(DIRECTORY), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
 		  _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
@@ -20,10 +20,10 @@ public:
 	bool initUri(std::istringstream& iss) {
 		std::string modifier, uri, check;
 		if (!(iss >> modifier >> uri))
-			return configFileError(ERROR_LOCATION);
+			return configFileError(ERROR_LOCATION_FORMAT);
 		if (uri == "{") {
-			_uri = modifier;
-			_modifier = NONE;
+			_uri = modifier + (modifier[modifier.size() - 1] == '/' ? "" : "/");
+			_modifier = DIRECTORY;
 		} else {
 			_uri = uri;
 			if (modifier == "~")
@@ -33,10 +33,15 @@ public:
 			else
 				return configFileError("invalid modifier for location: " + modifier);
 			if (!(iss >> check))
-				return configFileError(ERROR_LOCATION);
+				return configFileError(ERROR_LOCATION_FORMAT);
+		}
+		if (_modifier != REGEX && _uri[0] != '/') {
+			return configFileError(
+				"location uri must start with a slash when not using a regex modifier: " + _uri);
+			_rootDir += _uri; // TODO Tristan please check
 		}
 		if (iss >> check)
-			return configFileError("too many arguments for location");
+			return configFileError(ERROR_LOCATION_FORMAT);
 		return true;
 	}
 
@@ -70,7 +75,7 @@ public:
 
 	int isMatching(const std::string& requestPath) const {
 		switch (_modifier) {
-		case NONE:
+		case DIRECTORY:
 			return comparePrefix(_uri, requestPath);
 		case REGEX:
 			return doesRegexMatch(_uri.c_str(), requestPath.c_str()) ? LOCATION_MATCH_REGEX
@@ -78,7 +83,6 @@ public:
 		case EXACT:
 			return requestPath == _uri ? LOCATION_MATCH_EXACT : LOCATION_MATCH_NONE;
 		}
-		return LOCATION_MATCH_NONE;
 	}
 
 	LocationModifierEnum getModifier() const { return _modifier; }
@@ -197,7 +201,8 @@ public:
 	void print() const {
 		std::cout << "Location information:" << std::endl;
 		std::cout << "Modifier: "
-				  << (_modifier == NONE ? "none" : (_modifier == REGEX ? "regex" : "exact"))
+				  << (_modifier == DIRECTORY ? "directory"
+											 : (_modifier == REGEX ? "regex" : "exact"))
 				  << std::endl;
 		std::cout << "URI: " << _uri << std::endl;
 		std::cout << "Root directory: " << _rootDir << std::endl;

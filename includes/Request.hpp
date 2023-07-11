@@ -70,7 +70,6 @@ private:
 
 	RequestMethod _method;
 	std::string _uri;
-	std::string _query;
 	std::map<std::string, std::string> _headers;
 	std::vector<unsigned char> _body;
 
@@ -104,11 +103,6 @@ private:
 			return STATUS_METHOD_NOT_ALLOWED;
 		if (_uri.size() > MAX_URI_SIZE)
 			return STATUS_URI_TOO_LONG;
-		size_t queryIdx = _uri.find('?');
-		if (queryIdx != std::string::npos) {
-			_query = _uri.substr(queryIdx + 1);
-			_uri = _uri.substr(0, queryIdx);
-		}
 		if (!validateUri(_uri))
 			return STATUS_BAD_REQUEST;
 		if (version != HTTP_VERSION)
@@ -220,10 +214,20 @@ private:
 		rpr.virtualServer = _matchingServer;
 		rpr.location = _matchingLocation;
 		rpr.success.method = _method;
-		rpr.success.uri = _uri;
-		rpr.success.query = _query;
 		rpr.success.headers = _headers;
 		rpr.success.body = _body;
+		rpr.success.uri = _uri;
+		rpr.success.query = "";
+		size_t queryIdx = rpr.success.uri.find('?');
+		if (queryIdx != std::string::npos) {
+			rpr.success.query = rpr.success.uri.substr(queryIdx + 1);
+			rpr.success.uri = rpr.success.uri.substr(0, queryIdx);
+		}
+		if (rpr.success.method == POST && rpr.success.query.empty()) {
+			std::map<std::string, std::string>::const_iterator it = _headers.find("content-type");
+			if (it != _headers.end() && it->second == "application/x-www-form-urlencoded")
+				rpr.success.query = vecToString(_body);
+		}
 		clear();
 		return rpr;
 	}

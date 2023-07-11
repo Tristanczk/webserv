@@ -4,7 +4,7 @@ bool parseRoot(std::istringstream& iss, std::string& root, const std::string& bl
 	std::string value;
 	if (!(iss >> value))
 		return configFileError("missing information after " + block + " root keyword");
-	root = value;
+	root = value + (value[value.size() - 1] == '/' ? "" : "/");
 	if (iss >> value)
 		return configFileError("too many arguments after " + block + " root keyword");
 	return true;
