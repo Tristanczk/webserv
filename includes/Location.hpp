@@ -52,10 +52,9 @@ public:
 			else if (keyword == "}") {
 				if (empty)
 					return configFileError("empty location block");
-				checkReturn();
-				if (!checkUpload())
-					return false;
-				return true;
+				if (_return.first == -1 && _serverReturn.first != -1)
+					_return = _serverReturn;
+				return checkUpload();
 			} else {
 				try {
 					KeywordHandler handler = _keywordHandlers.at(keyword);
@@ -177,11 +176,6 @@ private:
 		} else
 			return configFileError("invalid method in limit_except directive: " + method);
 		return true;
-	}
-
-	void checkReturn() {
-		if (_return.first == -1 && _serverReturn.first != -1)
-			_return = _serverReturn;
 	}
 
 	bool checkUpload() {
