@@ -39,10 +39,10 @@ public:
 	void buildResponse(RequestParsingResult& request) {
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			_statusCode = request.statusCode;
-			buildErrorPage();
+			buildErrorPage(request);
 		} else if (!_allowedMethods[request.success.method]) {
 			_statusCode = STATUS_METHOD_NOT_ALLOWED;
-			buildErrorPage();
+			buildErrorPage(request);
 		} else if (!_cgiExec.empty()) {
 			buildCgi(request);
 		} else {
@@ -113,11 +113,11 @@ private:
 			return;
 		}
 		if (_return.first != -1) {
-			handleRedirect();
+			handleRedirect(request);
 			return;
 		}
 		if (!buildPage(request))
-			buildErrorPage();
+			buildErrorPage(request);
 	}
 
 	void buildPost(RequestParsingResult& request) {
@@ -134,13 +134,13 @@ private:
 			error = true;
 		}
 		if (error) {
-			buildErrorPage();
+			buildErrorPage(request);
 			return;
 		}
 		std::ofstream ofs(findFinalUri(request).c_str());
 		if (ofs.fail()) {
 			_statusCode = STATUS_BAD_REQUEST;
-			buildErrorPage();
+			buildErrorPage(request);
 			return;
 		}
 		std::string bodyStr(request.success.body.begin(), request.success.body.end());
@@ -167,7 +167,7 @@ private:
 			}
 		}
 		if (error)
-			buildErrorPage();
+			buildErrorPage(request);
 	}
 
 	// TODO remove this function and use EPOLLOUT instead
@@ -201,10 +201,17 @@ private:
 		//_headers["connection"] = "close";
 	}
 
-	void buildErrorPage() {
+	void buildErrorPage(RequestParsingResult& request) {
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
-		std::string errorPageUri = it != _errorPages.end() ? "." + _rootDir + it->second
-														   : "./www/error/default_error.html";
+		std::string errorPageUri;
+		if (it != _errorPages.end())
+			errorPageUri = "." + _rootDir + it->second;
+		else {
+			it = _serverErrorPages.find(_statusCode);
+			errorPageUri = it != _errorPages.end()
+							   ? "." + request.virtualServer->getRootDir() + it->second
+							   : "./www/error/default_error.html";
+		}
 		std::cout << errorPageUri << std::endl;
 		if (!readContent(errorPageUri, _body)) {
 			// TODO return 500 Internal Server Error instead maybe
@@ -291,7 +298,7 @@ private:
 						_statusCode = static_cast<StatusCode>(std::atoi(value.c_str()));
 					else {
 						_statusCode = STATUS_INTERNAL_SERVER_ERROR;
-						buildErrorPage();
+						buildErrorPage(request);
 						return;
 					}
 				}
@@ -313,48 +320,55 @@ private:
 		}
 	}
 
-	std::string findFinalUri(RequestParsingResult& request) {
+	std::string findFinalUri(RequestParsingResult& request, bool isInServer = false) {
 		// note : this function will be called after checking if the requested uri is a file or
 		// a directory
 		Location* location = request.location;
 		std::string uri = request.success.uri;
+		std::string rootDirectory = isInServer ? request.virtualServer->getRootDir() : _rootDir;
 		// to ensure that the final link will be well formated whether the user put a trailing
 		// slash at the end of the location and at the beginning of the uri or not
-		if (_rootDir[_rootDir.size() - 1] == '/')
-			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
+		if (rootDirectory[rootDirectory.size() - 1] == '/')
+			rootDirectory = rootDirectory.substr(0, rootDirectory.size() - 1);
 		if (uri[0] == '/')
 			uri = uri.substr(1);
 		if (location == NULL)
-			return "." + _rootDir + "/" + uri;
+			return "." + rootDirectory + "/" + uri;
 		LocationModifierEnum modifier = location->getModifier();
 		if (modifier == DIRECTORY)
-			return "." + _rootDir + "/" + uri.substr(_locationUri.size() - 1);
+			return "." + rootDirectory + "/" + uri.substr(_locationUri.size() - 1);
 		else if (modifier == REGEX) {
 			// in case of a matching regex, we append the whole path to the root directory
-			return "." + _rootDir + "/" + uri;
+			return "." + rootDirectory + "/" + uri;
 		} else {
 			// in case of an exact match, we append only the file name to the root directory
-			return "." + _rootDir + "/" + getBasename(uri);
+			return "." + rootDirectory + "/" + getBasename(uri);
 		}
 	}
 
 	void handleIndex(RequestParsingResult& request) {
-		if (!_indexPages.empty()) {
+		if (!_indexPages.empty() || !_serverIndexPages.empty()) {
 			std::string filepath;
-			for (std::vector<std::string>::iterator it = _indexPages.begin();
-				 it != _indexPages.end(); it++) {
-				filepath = (*it)[0] == '/' ? findFinalUri(request) + (*it).substr(1)
-										   : findFinalUri(request) + *it;
+			std::vector<std::string> indexPages =
+				!_indexPages.empty() ? _indexPages : _serverIndexPages;
+			bool isServer = _indexPages.empty();
+			for (std::vector<std::string>::iterator it = indexPages.begin(); it != indexPages.end();
+				 it++) {
+				filepath = (*it)[0] == '/' ? findFinalUri(request, isServer) + (*it).substr(1)
+										   : findFinalUri(request, isServer) + *it;
 				std::cout << "filepath: " << filepath << std::endl;
 				if (isValidFile(filepath)) {
 					std::cout << "valid index file: " << *it << std::endl;
 					std::string indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
-					request.success.uri += indexFile;
+					if (isServer)
+						request.success.uri = "/" + indexFile;
+					else
+						request.success.uri += indexFile;
 					request.location =
 						request.virtualServer->findMatchingLocation(request.success.uri);
 					reinitResponseVariables(request);
 					if (!buildPage(request))
-						buildErrorPage();
+						buildErrorPage(request);
 					return;
 				}
 				std::cout << "invalid index file: " << *it << std::endl;
@@ -365,13 +379,13 @@ private:
 			buildAutoIndexPage(request);
 		} else {
 			_statusCode = STATUS_FORBIDDEN;
-			buildErrorPage();
+			buildErrorPage(request);
 		}
 	}
 
-	void handleRedirect() {
+	void handleRedirect(RequestParsingResult& request) {
 		_statusCode = static_cast<StatusCode>(_return.first);
-		buildErrorPage();
+		buildErrorPage(request);
 		_headers["location"] = _return.second;
 	}
 
@@ -379,7 +393,7 @@ private:
 		DIR* dir = opendir(findFinalUri(request).c_str());
 		if (dir == NULL) {
 			_statusCode = STATUS_INTERNAL_SERVER_ERROR;
-			buildErrorPage();
+			buildErrorPage(request);
 			return;
 		}
 		_body = "<head>\n"
@@ -431,12 +445,12 @@ private:
 	}
 
 	void reinitResponseVariables(RequestParsingResult& request) {
+		VirtualServer* vs = request.virtualServer;
 		if (request.location == NULL) {
-			VirtualServer* vs = request.virtualServer;
 			_rootDir = vs->getRootDir();
 			_autoIndex = vs->getAutoIndex();
-			_errorPages = vs->getErrorPages();
-			_indexPages = vs->getIndexPages();
+			_serverErrorPages = vs->getErrorPages();
+			_serverIndexPages = vs->getIndexPages();
 			_locationUri = "";
 			_return.first = -1;
 			_return.second = "";
@@ -447,7 +461,9 @@ private:
 			Location* location = request.location;
 			_rootDir = location->getRootDir();
 			_autoIndex = location->getAutoIndex();
+			_serverErrorPages = vs->getErrorPages();
 			_errorPages = location->getErrorPages();
+			_serverIndexPages = vs->getIndexPages();
 			_indexPages = location->getIndexPages();
 			_locationUri = location->getUri();
 			_return = location->getReturn();
