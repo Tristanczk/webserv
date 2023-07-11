@@ -2,6 +2,7 @@
 
 #include "webserv.hpp"
 #include <string>
+#include <vector>
 
 extern const std::map<StatusCode, std::string> STATUS_MESSAGES;
 extern const std::map<std::string, std::string> MIME_TYPES;
@@ -12,18 +13,22 @@ public:
 	// allowedMethods or link to cgiExec as they are exclusively defined in the location block
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
-		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
-		  _indexPages(indexPages), _return(-1, "") {
+		: _rootDir(rootDir), _autoIndex(autoIndex), _serverErrorPages(errorPages),
+		  _serverIndexPages(indexPages), _return(-1, "") {
 		initAllowedMethods(_allowedMethods);
 		initMethodMap();
 	}
 
-	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
+	Response(std::string rootDir, bool autoIndex,
+			 std::map<int, std::string> const& serverErrorPages,
+			 std::map<int, std::string> const& errorPages,
+			 std::vector<std::string> const& serverIndexPages,
 			 std::vector<std::string> const& indexPages, std::string locationUri,
 			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
 			 std::string cgiExec)
-		: _rootDir(rootDir), _autoIndex(autoIndex), _errorPages(errorPages),
-		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
+		: _rootDir(rootDir), _autoIndex(autoIndex), _serverErrorPages(serverErrorPages),
+		  _errorPages(errorPages), _serverIndexPages(serverIndexPages), _indexPages(indexPages),
+		  _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
 		initMethodMap();
@@ -80,7 +85,9 @@ private:
 	// server if needed
 	std::string _rootDir;
 	bool _autoIndex;
+	std::map<int, std::string> _serverErrorPages;
 	std::map<int, std::string> _errorPages;
+	std::vector<std::string> _serverIndexPages;
 	std::vector<std::string> _indexPages;
 	std::string _locationUri;
 	std::pair<long, std::string> _return;

@@ -29,7 +29,8 @@ public:
 		Response res =
 			result.location
 				? Response(result.location->getRootDir(), result.location->getAutoIndex(),
-						   result.location->getErrorPages(), result.location->getIndexPages(),
+						   result.virtualServer->getErrorPages(), result.location->getErrorPages(),
+						   result.virtualServer->getIndexPages(), result.location->getIndexPages(),
 						   result.location->getUri(), result.location->getReturn(),
 						   result.location->getAllowedMethod(), result.location->getCgiExec())
 				: Response(result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
