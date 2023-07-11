@@ -5,11 +5,8 @@
 class Location {
 public:
 	Location(const std::string& rootDir, bool autoIndex,
-			 const std::map<int, std::string>& serverErrorPages,
-			 const std::vector<std::string>& serverIndexPages,
 			 const std::pair<long, std::string>& serverReturn)
 		: _modifier(DIRECTORY), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
-		  _serverErrorPages(serverErrorPages), _serverIndexPages(serverIndexPages),
 		  _serverReturn(serverReturn) {
 		initKeywordMap();
 		initAllowedMethods(_allowedMethods);
@@ -55,8 +52,6 @@ public:
 			else if (keyword == "}") {
 				if (empty)
 					return configFileError("empty location block");
-				checkIndexPages();
-				checkErrorPages();
 				checkReturn();
 				return true;
 			} else {
@@ -107,8 +102,6 @@ private:
 	bool _allowedMethods[NO_METHOD];
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
-	const std::map<int, std::string>& _serverErrorPages;
-	const std::vector<std::string>& _serverIndexPages;
 	const std::pair<long, std::string>& _serverReturn;
 	std::map<std::string, KeywordHandler> _keywordHandlers;
 
@@ -174,22 +167,6 @@ private:
 		} else
 			return configFileError("invalid method in limit_except directive: " + method);
 		return true;
-	}
-
-	void checkIndexPages() {
-		if (_indexPages.empty()) {
-			for (std::vector<std::string>::const_iterator it = _serverIndexPages.begin();
-				 it != _serverIndexPages.end(); it++)
-				_indexPages.push_back(*it);
-		}
-	}
-
-	void checkErrorPages() {
-		for (std::map<int, std::string>::const_iterator it = _serverErrorPages.begin();
-			 it != _serverErrorPages.end(); it++) {
-			if (_errorPages.find(it->first) == _errorPages.end())
-				_errorPages[it->first] = it->second;
-		}
 	}
 
 	void checkReturn() {
