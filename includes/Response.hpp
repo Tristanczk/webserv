@@ -14,7 +14,7 @@ public:
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
 		: _rootDir(rootDir), _autoIndex(autoIndex), _serverErrorPages(errorPages),
-		  _serverIndexPages(indexPages), _return(-1, "") {
+		  _indexPages(indexPages), _return(-1, "") {
 		initAllowedMethods(_allowedMethods);
 		initMethodMap();
 	}
@@ -22,14 +22,12 @@ public:
 	Response(std::string rootDir, std::string uploadDir, bool autoIndex,
 			 std::map<int, std::string> const& serverErrorPages,
 			 std::map<int, std::string> const& errorPages,
-			 std::vector<std::string> const& serverIndexPages,
 			 std::vector<std::string> const& indexPages, std::string locationUri,
 			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
 			 std::string cgiExec)
 		: _rootDir(rootDir), _uploadDir(uploadDir), _autoIndex(autoIndex),
-		  _serverErrorPages(serverErrorPages), _errorPages(errorPages),
-		  _serverIndexPages(serverIndexPages), _indexPages(indexPages), _locationUri(locationUri),
-		  _return(redirect), _cgiExec(cgiExec) {
+		  _serverErrorPages(serverErrorPages), _errorPages(errorPages), _indexPages(indexPages),
+		  _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
 		initMethodMap();
@@ -89,7 +87,6 @@ private:
 	bool _autoIndex;
 	std::map<int, std::string> _serverErrorPages;
 	std::map<int, std::string> _errorPages;
-	std::vector<std::string> _serverIndexPages;
 	std::vector<std::string> _indexPages;
 	std::string _locationUri;
 	std::pair<long, std::string> _return;
@@ -322,50 +319,41 @@ private:
 		}
 	}
 
-	std::string findFinalUri(RequestParsingResult& request, bool isInServer = false) {
+	std::string findFinalUri(RequestParsingResult& request) {
 		// note : this function will be called after checking if the requested uri is a file or
 		// a directory
 		Location* location = request.location;
 		std::string uri = request.success.uri;
-		std::string rootDirectory = isInServer ? request.virtualServer->getRootDir() : _rootDir;
 		// to ensure that the final link will be well formated whether the user put a trailing
 		// slash at the end of the location and at the beginning of the uri or not
-		if (rootDirectory[rootDirectory.size() - 1] == '/')
-			rootDirectory = rootDirectory.substr(0, rootDirectory.size() - 1);
 		if (uri[0] == '/')
 			uri = uri.substr(1);
 		if (location == NULL)
-			return "." + rootDirectory + "/" + uri;
+			return "." + _rootDir + "/" + uri;
 		LocationModifierEnum modifier = location->getModifier();
 		if (modifier == DIRECTORY)
-			return "." + rootDirectory + "/" + uri.substr(_locationUri.size() - 1);
+			return "." + _rootDir + "/" + uri.substr(_locationUri.size() - 1);
 		else if (modifier == REGEX) {
 			// in case of a matching regex, we append the whole path to the root directory
-			return "." + rootDirectory + "/" + uri;
+			return "." + _rootDir + "/" + uri;
 		} else {
 			// in case of an exact match, we append only the file name to the root directory
-			return "." + rootDirectory + "/" + getBasename(uri);
+			return "." + _rootDir + "/" + getBasename(uri);
 		}
 	}
 
 	void handleIndex(RequestParsingResult& request) {
-		if (!_indexPages.empty() || !_serverIndexPages.empty()) {
+		if (!_indexPages.empty()) {
 			std::string filepath;
-			std::vector<std::string> indexPages =
-				!_indexPages.empty() ? _indexPages : _serverIndexPages;
-			bool isServer = _indexPages.empty();
-			for (std::vector<std::string>::iterator it = indexPages.begin(); it != indexPages.end();
-				 it++) {
-				filepath = (*it)[0] == '/' ? findFinalUri(request, isServer) + (*it).substr(1)
-										   : findFinalUri(request, isServer) + *it;
+			for (std::vector<std::string>::iterator it = _indexPages.begin();
+				 it != _indexPages.end(); it++) {
+				filepath = (*it)[0] == '/' ? findFinalUri(request) + (*it).substr(1)
+										   : findFinalUri(request) + *it;
 				std::cout << "filepath: " << filepath << std::endl;
 				if (isValidFile(filepath)) {
 					std::cout << "valid index file: " << *it << std::endl;
 					std::string indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
-					if (isServer)
-						request.success.uri = "/" + indexFile;
-					else
-						request.success.uri += indexFile;
+					request.success.uri += indexFile;
 					request.location =
 						request.virtualServer->findMatchingLocation(request.success.uri);
 					reinitResponseVariables(request);
@@ -452,7 +440,6 @@ private:
 			_rootDir = vs->getRootDir();
 			_autoIndex = vs->getAutoIndex();
 			_serverErrorPages = vs->getErrorPages();
-			_serverIndexPages = vs->getIndexPages();
 			_locationUri = "";
 			_return.first = -1;
 			_return.second = "";
@@ -465,7 +452,6 @@ private:
 			_autoIndex = location->getAutoIndex();
 			_serverErrorPages = vs->getErrorPages();
 			_errorPages = location->getErrorPages();
-			_serverIndexPages = vs->getIndexPages();
 			_indexPages = location->getIndexPages();
 			_locationUri = location->getUri();
 			_return = location->getReturn();

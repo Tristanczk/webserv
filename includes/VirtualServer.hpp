@@ -28,7 +28,7 @@ public:
 			else if (keyword == "}")
 				return empty ? configFileError("empty server block") : true;
 			else if (keyword == "location") {
-				Location location(_rootDir, _autoIndex, _return);
+				Location location(_rootDir, _autoIndex, _indexPages, _return);
 				if (!location.initUri(iss))
 					return false;
 				if (!location.parseLocationContent(config))
