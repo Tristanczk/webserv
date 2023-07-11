@@ -4,20 +4,20 @@
 
 class Client {
 public:
-	Client()
-		: _currentMatchingServer(NULL), _currentMatchingLocation(NULL),
-		  _addressLen(sizeof(_address)), _currentRequest(NULL) {
+	Client() : _addressLen(sizeof(_address)), _currentRequest(NULL), _currentResponse(NULL) {
 		std::memset(&_address, 0, sizeof(_address));
-		(void)_currentMatchingServer;
-		(void)_currentMatchingLocation;
 	};
 	~Client() {
 		if (_currentRequest != NULL)
 			delete _currentRequest;
+		if (_currentResponse != NULL)
+			delete _currentResponse;
 	};
 
 	ResponseStatusEnum handleRequests() {
 		std::string request = readRequest();
+		if (request.empty())
+			return RESPONSE_FAILURE;
 		std::cout << "=== REQUEST START ===" << std::endl;
 		std::cout << strtrim(request, "\r\n") << std::endl;
 		std::cout << "=== REQUEST END ===" << std::endl;
@@ -26,20 +26,30 @@ public:
 		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
 		if (result.result == REQUEST_PARSING_PROCESSING)
 			return RESPONSE_PENDING;
-		Response res =
+		_currentResponse =
 			result.location
-				? Response(result.location->getRootDir(), result.location->getRootDir(),
-						   result.location->getAutoIndex(), result.virtualServer->getErrorPages(),
-						   result.location->getErrorPages(), result.location->getIndexPages(),
-						   result.location->getUri(), result.location->getReturn(),
-						   result.location->getAllowedMethod(), result.location->getCgiExec())
-				: Response(result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
-						   result.virtualServer->getErrorPages(),
-						   result.virtualServer->getIndexPages());
-		res.buildResponse(result);
+				? new Response(result.location->getRootDir(), result.location->getRootDir(),
+							   result.location->getAutoIndex(),
+							   result.virtualServer->getErrorPages(),
+							   result.location->getErrorPages(), result.location->getIndexPages(),
+							   result.location->getUri(), result.location->getReturn(),
+							   result.location->getAllowedMethod(), result.location->getCgiExec())
+				: new Response(
+					  result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
+					  result.virtualServer->getErrorPages(), result.virtualServer->getIndexPages());
+		_currentResponse->buildResponse(result);
 		delete _currentRequest;
 		_currentRequest = NULL;
-		return res.pushResponseToClient(_fd) ? RESPONSE_SUCCESS : RESPONSE_FAILURE;
+		return RESPONSE_SUCCESS;
+	}
+
+	ResponseStatusEnum pushResponse() {
+		ResponseStatusEnum status = _currentResponse->pushResponseToClient(_fd);
+		if (status == RESPONSE_SUCCESS) {
+			delete _currentResponse;
+			_currentResponse = NULL;
+		}
+		return status;
 	}
 
 	void setInfo(int fd) {
@@ -67,8 +77,6 @@ public:
 
 private:
 	std::vector<VirtualServer*> _associatedServers;
-	VirtualServer* _currentMatchingServer;
-	Location* _currentMatchingLocation;
 	struct sockaddr_in _address;
 	socklen_t _addressLen;
 	in_addr_t _ip;
@@ -76,6 +84,7 @@ private:
 	int _fd;
 	std::queue<Response> _responseQueue;
 	Request* _currentRequest;
+	Response* _currentResponse;
 
 	std::string readRequest() { return fullRead(_fd); }
 
