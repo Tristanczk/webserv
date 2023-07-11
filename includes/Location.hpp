@@ -6,8 +6,8 @@ class Location {
 public:
 	Location(const std::string& rootDir, bool autoIndex,
 			 const std::pair<long, std::string>& serverReturn)
-		: _modifier(DIRECTORY), _rootDir(rootDir), _autoIndex(autoIndex), _return(-1, ""),
-		  _serverReturn(serverReturn) {
+		: _modifier(DIRECTORY), _rootDir(rootDir), _uploadDir(""), _autoIndex(autoIndex),
+		  _return(-1, ""), _serverReturn(serverReturn) {
 		initKeywordMap();
 		initAllowedMethods(_allowedMethods);
 	}
@@ -53,6 +53,8 @@ public:
 				if (empty)
 					return configFileError("empty location block");
 				checkReturn();
+				if (!checkUpload())
+					return false;
 				return true;
 			} else {
 				try {
@@ -96,6 +98,7 @@ private:
 	LocationModifierEnum _modifier;
 	std::string _uri;
 	std::string _rootDir;
+	std::string _uploadDir;
 	std::string _cgiExec;
 	bool _autoIndex;
 	std::pair<long, std::string> _return;
@@ -107,6 +110,7 @@ private:
 
 	void initKeywordMap() {
 		_keywordHandlers["root"] = &Location::parseRoot;
+		_keywordHandlers["upload_directory"] = &Location::parseUploadDir;
 		_keywordHandlers["autoindex"] = &Location::parseAutoIndex;
 		_keywordHandlers["error_page"] = &Location::parseErrorPages;
 		_keywordHandlers["index"] = &Location::parseIndex;
@@ -136,7 +140,13 @@ private:
 	}
 
 	bool parseRoot(std::istringstream& iss) {
-		return ::parseRoot(iss, _rootDir, "location") && validateUri(_rootDir, "location root");
+		return ::parseDirectory(iss, _rootDir, "location", "root") &&
+			   validateUri(_rootDir, "location root");
+	}
+
+	bool parseUploadDir(std::istringstream& iss) {
+		return ::parseDirectory(iss, _uploadDir, "location", "upload_directory") &&
+			   validateUri(_uploadDir, "location upload_directory");
 	}
 
 	bool parseLimitExcept(std::istringstream& iss) {
@@ -172,6 +182,14 @@ private:
 	void checkReturn() {
 		if (_return.first == -1 && _serverReturn.first != -1)
 			_return = _serverReturn;
+	}
+
+	bool checkUpload() {
+		if (_allowedMethods[POST] && _uploadDir.empty())
+			return configFileError("upload_directory not specified for POST method");
+		if (!_uploadDir.empty() && !_allowedMethods[POST])
+			return configFileError("upload_directory specified but POST method not allowed");
+		return true;
 	}
 
 public:

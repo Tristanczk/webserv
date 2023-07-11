@@ -1,12 +1,13 @@
 #include "../includes/webserv.hpp"
 
-bool parseRoot(std::istringstream& iss, std::string& root, const std::string& block) {
+bool parseDirectory(std::istringstream& iss, std::string& root, const std::string& block,
+					const std::string& keyword) {
 	std::string value;
 	if (!(iss >> value))
-		return configFileError("missing information after " + block + " root keyword");
+		return configFileError("missing information after " + block + " " + keyword + " keyword");
 	root = value + (value[value.size() - 1] == '/' ? "" : "/");
 	if (iss >> value)
-		return configFileError("too many arguments after " + block + " root keyword");
+		return configFileError("too many arguments after " + block + " " + keyword + " keyword");
 	return true;
 }
 

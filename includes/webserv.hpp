@@ -227,11 +227,12 @@ void syscall(int, const char*);
 void syscallEpoll(int, int, int, int, const char*);
 
 bool parseAutoIndex(std::istringstream&, bool&);
+bool parseDirectory(std::istringstream& iss, std::string& root, const std::string& block,
+					const std::string& keyword);
 bool parseErrorCode(std::string&, std::vector<int>&);
 bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
 bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
-bool parseRoot(std::istringstream&, std::string&, const std::string&);
 
 void initStatusMessageMap();
 void initMimeTypes();
