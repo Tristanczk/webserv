@@ -233,7 +233,7 @@ private:
 			errorPageUri = "." + _rootDir + it->second;
 		else {
 			it = _serverErrorPages.find(_statusCode);
-			errorPageUri = it != _errorPages.end()
+			errorPageUri = it != _serverErrorPages.end()
 							   ? "." + request.virtualServer->getRootDir() + it->second
 							   : "./www/error/default_error.html";
 		}
