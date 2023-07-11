@@ -7,7 +7,7 @@ test.php 1
 /test/404.html 3
 /test/405.html 4
 /here/there/lol/test 7
-/here/there/lol 0
+/here/there/lol 7
 test.html -1
 "" -1
 /random/test.php 1

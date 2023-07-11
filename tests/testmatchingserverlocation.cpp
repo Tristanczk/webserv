@@ -97,7 +97,6 @@ void testLocation() {
 		std::cerr << "Cannot open file for testing matching location" << std::endl;
 		return;
 	}
-	int i = 0;
 	for (std::string line; std::getline(config, line);) {
 		if (line[0] == '#' || line.empty())
 			continue;
@@ -105,13 +104,13 @@ void testLocation() {
 		std::string uri;
 		int expected;
 		if (!(iss >> uri >> expected)) {
-			std::cerr << "Invalid line in testmatchinglocation.txt: " << line << std::endl;
+			std::cerr << RED << "Invalid line in testmatchinglocation.txt: " << line << RESET
+					  << std::endl;
 			continue;
 		}
-		std::string testNb = "Test " + toString(++i);
 		int match = findBestMatchLocation(uri, vServer);
 		bool result = expected == match;
-		displayResult(testNb, result);
+		displayResult(uri, result);
 		if (!result)
 			std::cerr << "Expected: " << expected << " | found: " << match << std::endl;
 	}
