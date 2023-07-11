@@ -136,7 +136,12 @@ private:
 			buildErrorPage(request);
 			return;
 		}
-		std::ofstream ofs(findFinalUri(request).c_str());
+		if (!isDirectory(_uploadDir)) {
+			_statusCode = STATUS_NOT_FOUND;
+			buildErrorPage(request);
+			return;
+		}
+		std::ofstream ofs(getFileUri(request).c_str());
 		if (ofs.fail()) {
 			_statusCode = STATUS_BAD_REQUEST;
 			buildErrorPage(request);
@@ -149,7 +154,7 @@ private:
 	}
 
 	void buildDelete(RequestParsingResult& request) {
-		std::string uri = findFinalUri(request);
+		std::string uri = getFileUri(request);
 		bool error = false;
 		if (isDirectory(uri)) {
 			_statusCode = STATUS_FORBIDDEN;
@@ -326,6 +331,8 @@ private:
 		std::string uri = request.success.uri;
 		// to ensure that the final link will be well formated whether the user put a trailing
 		// slash at the end of the location and at the beginning of the uri or not
+		if (_rootDir[_rootDir.size() - 1] == '/')
+			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 		if (uri[0] == '/')
 			uri = uri.substr(1);
 		if (location == NULL)
@@ -340,6 +347,13 @@ private:
 			// in case of an exact match, we append only the file name to the root directory
 			return "." + _rootDir + "/" + getBasename(uri);
 		}
+	}
+
+	std::string getFileUri(RequestParsingResult& request) {
+		std::string filename = getBasename(request.success.uri);
+		std::string filepath = _uploadDir[_uploadDir.size() - 1] == '/'
+								   ? _uploadDir + filename
+								   : _uploadDir + "/" + filename;
 	}
 
 	void handleIndex(RequestParsingResult& request) {
