@@ -1,6 +1,8 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <cstddef>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -13,7 +15,7 @@ public:
 	// allowedMethods or link to cgiExec as they are exclusively defined in the location block
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
-		: _rootDir(rootDir), _autoIndex(autoIndex), _serverErrorPages(errorPages),
+		: _bodyPos(0), _rootDir(rootDir), _autoIndex(autoIndex), _serverErrorPages(errorPages),
 		  _indexPages(indexPages), _return(-1, "") {
 		initAllowedMethods(_allowedMethods);
 		initMethodMap();
@@ -25,7 +27,7 @@ public:
 			 std::vector<std::string> const& indexPages, std::string locationUri,
 			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
 			 std::string cgiExec)
-		: _rootDir(rootDir), _uploadDir(uploadDir), _autoIndex(autoIndex),
+		: _bodyPos(0), _rootDir(rootDir), _uploadDir(uploadDir), _autoIndex(autoIndex),
 		  _serverErrorPages(serverErrorPages), _errorPages(errorPages), _indexPages(indexPages),
 		  _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
 		for (int i = 0; i < NO_METHOD; ++i)
@@ -52,24 +54,30 @@ public:
 		buildHeader();
 	}
 
-	bool pushResponseToClient(int fd) {
+	ResponseStatusEnum pushResponseToClient(int fd) {
 		std::string line;
-		std::cout << "=== RESPONSE START ===" << std::endl;
-		if (!pushStringToClient(fd, _statusLine))
-			return false;
-		for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
-			 it != _headers.end(); it++) {
-			line = it->first + ": " + it->second + "\r\n";
+		if (_bodyPos == 0) {
+			std::cout << "=== RESPONSE START ===" << std::endl;
+			if (!pushStringToClient(fd, _statusLine))
+				return RESPONSE_FAILURE;
+			for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
+				 it != _headers.end(); it++) {
+				line = it->first + ": " + it->second + "\r\n";
+				if (!pushStringToClient(fd, line))
+					return RESPONSE_FAILURE;
+			}
+			line = "\r\n";
 			if (!pushStringToClient(fd, line))
-				return false;
+				return RESPONSE_FAILURE;
 		}
-		line = "\r\n";
-		if (!pushStringToClient(fd, line))
-			return false;
-		if (!pushStringToClient(fd, _body))
-			return false;
-		std::cout << "=== RESPONSE END ===" << std::endl;
-		return true;
+		if (!pushBodyChunkToClient(fd))
+			return RESPONSE_FAILURE;
+		std::cout << _bodyPos << " / " << _body.size() << std::endl;
+		if (_bodyPos == _body.size()) {
+			std::cout << "=== RESPONSE END ===" << std::endl;
+			return RESPONSE_SUCCESS;
+		}
+		return RESPONSE_PENDING;
 	}
 
 private:
@@ -78,6 +86,7 @@ private:
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
+	std::size_t _bodyPos;
 	StatusCode _statusCode;
 
 	// these variables will be extracted from the correct location or from the correct virtual
@@ -184,6 +193,21 @@ private:
 			}
 			sent += cur_sent;
 		}
+		return true;
+	}
+
+	bool pushBodyChunkToClient(int fd) {
+		std::cout << std::strlen(_body.c_str()) << std::endl;
+		long cur_sent =
+			send(fd, _body.c_str() + _bodyPos,
+				 std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE)),
+				 MSG_NOSIGNAL);
+		if (cur_sent < 0) {
+			std::cerr << "Error: send failed here" << std::endl;
+			return false;
+		}
+		std::cout << "sent " << cur_sent << " bytes" << std::endl;
+		_bodyPos += cur_sent;
 		return true;
 	}
 

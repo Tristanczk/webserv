@@ -1,6 +1,7 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <sys/epoll.h>
 
 extern bool run;
 
@@ -80,17 +81,31 @@ public:
 					_clients[clientFd] = client;
 				} else {
 					clientFd = _eventList[i].data.fd;
-					// TODO EPOLLOUT
-					if (_eventList[i].events & EPOLLIN) {
-						Client& client = _clients[clientFd];
-						ResponseStatusEnum status = client.handleRequests();
+					Client& client = _clients[clientFd];
+					ResponseStatusEnum status;
+					// checking for error first (in the event that EPOLLIN is set at the same time
+					// as an error flag, which is unlikely but I did not read anything indicating
+					// that it is impossible that is is completely impossible)
+					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+						close(clientFd);
+						_clients.erase(clientFd);
+						continue;
+					} else if (_eventList[i].events & EPOLLIN) {
+						status = client.handleRequests();
 						if (status == RESPONSE_FAILURE) {
 							close(clientFd);
 							_clients.erase(clientFd);
-						}
-					} else {
-						close(clientFd);
-						_clients.erase(clientFd);
+						} else if (status == RESPONSE_SUCCESS)
+							syscallEpoll(_epollFd, EPOLL_CTL_MOD, clientFd, EPOLLOUT | EPOLLRDHUP,
+										 "EPOLL_CTL_MOD");
+					} else if (_eventList[i].events & EPOLLOUT) {
+						status = client.pushResponse();
+						if (status == RESPONSE_FAILURE) {
+							close(clientFd);
+							_clients.erase(clientFd);
+						} else if (status == RESPONSE_SUCCESS)
+							syscallEpoll(_epollFd, EPOLL_CTL_MOD, clientFd, EPOLLIN | EPOLLRDHUP,
+										 "EPOLL_CTL_MOD");
 					}
 				}
 			}
