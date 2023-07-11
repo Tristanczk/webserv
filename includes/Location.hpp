@@ -5,9 +5,10 @@
 class Location {
 public:
 	Location(const std::string& rootDir, bool autoIndex,
+			 const std::vector<std::string>& serverIndexPages,
 			 const std::pair<long, std::string>& serverReturn)
 		: _modifier(DIRECTORY), _rootDir(rootDir), _uploadDir(""), _autoIndex(autoIndex),
-		  _return(-1, ""), _serverReturn(serverReturn) {
+		  _return(-1, ""), _serverIndexPages(serverIndexPages), _serverReturn(serverReturn) {
 		initKeywordMap();
 		initAllowedMethods(_allowedMethods);
 	}
@@ -52,9 +53,11 @@ public:
 			else if (keyword == "}") {
 				if (empty)
 					return configFileError("empty location block");
-				if (_return.first == -1 && _serverReturn.first != -1)
-					_return = _serverReturn;
-				return checkUpload();
+				checkIndexPages();
+				checkReturn();
+				if (!checkUpload())
+					return false;
+				return true;
 			} else {
 				try {
 					KeywordHandler handler = _keywordHandlers.at(keyword);
@@ -104,6 +107,7 @@ private:
 	bool _allowedMethods[NO_METHOD];
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
+	const std::vector<std::string>& _serverIndexPages;
 	const std::pair<long, std::string>& _serverReturn;
 	std::map<std::string, KeywordHandler> _keywordHandlers;
 
@@ -178,11 +182,24 @@ private:
 		return true;
 	}
 
+	void checkIndexPages() {
+		if (_indexPages.empty())
+			_indexPages = _serverIndexPages;
+	}
+
+	void checkReturn() {
+		if (_return.first == -1 && _serverReturn.first != -1)
+			_return = _serverReturn;
+	}
+
 	bool checkUpload() {
 		if (_allowedMethods[POST] && _uploadDir.empty())
 			return configFileError("upload_directory not specified for POST method");
-		if (!_uploadDir.empty() && !_allowedMethods[POST])
-			return configFileError("upload_directory specified but POST method not allowed");
+		if (_allowedMethods[DELETE] && _uploadDir.empty())
+			return configFileError("upload_directory not specified for DELETE method");
+		if (!_uploadDir.empty() && !_allowedMethods[POST] && !_allowedMethods[DELETE])
+			return configFileError(
+				"upload_directory specified but POST or DELETE methods not allowed");
 		return true;
 	}
 
