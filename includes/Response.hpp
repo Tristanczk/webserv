@@ -123,16 +123,13 @@ private:
 		std::cout << RED << "POST" << RESET << std::endl;
 		std::map<std::string, std::string>::const_iterator it =
 			request.success.headers.find("content-type");
-		bool error = false;
 		if (it == request.success.headers.end()) {
 			_statusCode = STATUS_BAD_REQUEST;
-			error = true;
+			buildErrorPage(request);
+			return;
 		} else if (it->second == "application/x-www-form-urlencoded" ||
 				   it->second == "multipart/form-data") {
 			_statusCode = STATUS_UNSUPPORTED_MEDIA_TYPE;
-			error = true;
-		}
-		if (error) {
 			buildErrorPage(request);
 			return;
 		}
