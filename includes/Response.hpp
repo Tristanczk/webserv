@@ -321,7 +321,7 @@ private:
 			return "." + _rootDir + "/" + uri;
 		LocationModifierEnum modifier = location->getModifier();
 		if (modifier == DIRECTORY)
-			return "." + _rootDir + "/" + uri.substr(_locationUri.size());
+			return "." + _rootDir + "/" + uri.substr(_locationUri.size() - 1);
 		else if (modifier == REGEX) {
 			// in case of a matching regex, we append the whole path to the root directory
 			return "." + _rootDir + "/" + uri;
