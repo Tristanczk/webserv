@@ -1,6 +1,8 @@
 #include "../includes/webserv.hpp"
 
 int comparePrefix(const std::string& locationUri, const std::string& requestPath) {
+	if (requestPath + "/" == locationUri)
+		return locationUri.size();
 	return startswith(requestPath, locationUri) ? locationUri.size() : 0;
 }
 
