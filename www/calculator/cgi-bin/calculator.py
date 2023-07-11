@@ -30,8 +30,6 @@ def fill(index, name, value):
     )
 
 
-print(os.environ, file=sys.stderr)
-
 OPERATIONS = {"add": "+", "sub": "-", "mul": "*", "div": "/"}
 
 form = cgi.FieldStorage()

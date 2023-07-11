@@ -93,7 +93,7 @@ public:
 	in_addr_t getAddr() const { return _address.sin_addr.s_addr; }
 	std::string getRootDir() const { return _rootDir; }
 	bool getAutoIndex() const { return _autoIndex; }
-	std::size_t getBodySize() const { return _bodySize; }
+	size_t getBodySize() const { return _bodySize; }
 	struct sockaddr_in getAddress() const { return _address; }
 	std::vector<std::string> const& getServerNames() const { return _serverNames; }
 	std::vector<Location> const& getLocations() const { return _locations; }
@@ -106,7 +106,7 @@ private:
 	std::vector<std::string> _serverNames;
 	std::string _rootDir;
 	bool _autoIndex;
-	std::size_t _bodySize;
+	size_t _bodySize;
 	std::map<int, std::string> _errorPages;
 	std::vector<std::string> _indexPages;
 	std::pair<long, std::string> _return;
@@ -182,8 +182,8 @@ private:
 		return parseSize(iss, _bodySize, "client_max_body_size", 0, SIZE_LIMIT);
 	}
 
-	bool parseSize(std::istringstream& iss, std::size_t& size, const std::string& keyword,
-				   std::size_t minLimit, std::size_t maxLimit) {
+	bool parseSize(std::istringstream& iss, size_t& size, const std::string& keyword,
+				   size_t minLimit, size_t maxLimit) {
 		std::string value;
 		if (!(iss >> value))
 			return configFileError("missing information after " + keyword);

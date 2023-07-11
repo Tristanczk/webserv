@@ -15,8 +15,8 @@ public:
 	// allowedMethods or link to cgiExec as they are exclusively defined in the location block
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
-		: _bodyPos(0), _rootDir(rootDir), _autoIndex(autoIndex), _serverErrorPages(errorPages),
-		  _indexPages(indexPages), _return(-1, "") {
+		: _bodyPos(0), _statusCode(STATUS_NONE), _rootDir(rootDir), _autoIndex(autoIndex),
+		  _serverErrorPages(errorPages), _indexPages(indexPages), _return(-1, "") {
 		initAllowedMethods(_allowedMethods);
 		initMethodMap();
 	}
@@ -27,9 +27,9 @@ public:
 			 std::vector<std::string> const& indexPages, std::string locationUri,
 			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
 			 std::string cgiExec)
-		: _bodyPos(0), _rootDir(rootDir), _uploadDir(uploadDir), _autoIndex(autoIndex),
-		  _serverErrorPages(serverErrorPages), _errorPages(errorPages), _indexPages(indexPages),
-		  _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
+		: _bodyPos(0), _statusCode(STATUS_NONE), _rootDir(rootDir), _uploadDir(uploadDir),
+		  _autoIndex(autoIndex), _serverErrorPages(serverErrorPages), _errorPages(errorPages),
+		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
 		initMethodMap();
@@ -39,11 +39,9 @@ public:
 
 	void buildResponse(RequestParsingResult& request) {
 		if (request.result == REQUEST_PARSING_FAILURE) {
-			_statusCode = request.statusCode;
-			buildErrorPage(request);
+			buildErrorPage(request, request.statusCode);
 		} else if (!_allowedMethods[request.success.method]) {
-			_statusCode = STATUS_METHOD_NOT_ALLOWED;
-			buildErrorPage(request);
+			buildErrorPage(request, STATUS_METHOD_NOT_ALLOWED);
 		} else if (!_cgiExec.empty()) {
 			buildCgi(request);
 		} else if (_return.first != -1) {
@@ -88,7 +86,7 @@ private:
 	std::string _statusLine;
 	std::map<std::string, std::string> _headers;
 	std::string _body;
-	std::size_t _bodyPos;
+	size_t _bodyPos;
 	StatusCode _statusCode;
 
 	// these variables will be extracted from the correct location or from the correct virtual
@@ -110,46 +108,28 @@ private:
 		_methodHandlers[DELETE] = &Response::buildDelete;
 	}
 
-	// function templates
 	void buildGet(RequestParsingResult& request) {
 		_statusCode = STATUS_OK;
-		// TODO: how to handle the fact that a get /error/ and a get /error won't necessarily have
-		// the same location ? and we need to know the location in order to know if the directory
-		// exists where we want to seach it I suggest we go back to handling only links that end by
-		// / as directory as it is more in line with the project prerequisites
-		if (isDirectory(findFinalUri(request))) {
-			std::cout << RED << "Index handling" << RESET << std::endl;
+		if (isDirectory(findFinalUri(request)))
 			handleIndex(request);
-			return;
-		}
-		buildPage(request);
+		else
+			buildPage(request);
 	}
 
 	void buildPost(RequestParsingResult& request) {
-		std::cout << RED << "POST" << RESET << std::endl;
 		std::map<std::string, std::string>::const_iterator it =
 			request.success.headers.find("content-type");
 		if (it == request.success.headers.end()) {
-			_statusCode = STATUS_BAD_REQUEST;
-			buildErrorPage(request);
-			return;
+			return buildErrorPage(request, STATUS_BAD_REQUEST);
 		} else if (it->second == "application/x-www-form-urlencoded" ||
 				   it->second == "multipart/form-data") {
-			_statusCode = STATUS_UNSUPPORTED_MEDIA_TYPE;
-			buildErrorPage(request);
-			return;
-		}
-		if (!isDirectory(_uploadDir)) {
-			_statusCode = STATUS_NOT_FOUND;
-			buildErrorPage(request);
-			return;
+			return buildErrorPage(request, STATUS_UNSUPPORTED_MEDIA_TYPE);
+		} else if (!isDirectory(_uploadDir)) {
+			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
 		std::ofstream ofs(getFileUri(request).c_str());
-		if (ofs.fail()) {
-			_statusCode = STATUS_BAD_REQUEST;
-			buildErrorPage(request);
-			return;
-		}
+		if (ofs.fail())
+			return buildErrorPage(request, STATUS_BAD_REQUEST);
 		std::string bodyStr(request.success.body.begin(), request.success.body.end());
 		ofs << bodyStr;
 		ofs.close();
@@ -158,23 +138,13 @@ private:
 
 	void buildDelete(RequestParsingResult& request) {
 		std::string uri = getFileUri(request);
-		bool error = false;
-		if (isDirectory(uri)) {
-			_statusCode = STATUS_FORBIDDEN;
-			error = true;
-		} else if (!isValidFile(uri)) {
-			_statusCode = STATUS_NOT_FOUND;
-			error = true;
-		} else {
-			if (std::remove(uri.c_str()) == -1) {
-				_statusCode = STATUS_FORBIDDEN;
-				error = true;
-			} else {
-				_statusCode = STATUS_NO_CONTENT;
-			}
-		}
-		if (error)
-			buildErrorPage(request);
+		if (isDirectory(uri))
+			return buildErrorPage(request, STATUS_FORBIDDEN);
+		else if (!isValidFile(uri))
+			return buildErrorPage(request, STATUS_NOT_FOUND);
+		else if (std::remove(uri.c_str()) == -1)
+			return buildErrorPage(request, STATUS_FORBIDDEN);
+		_statusCode = STATUS_NO_CONTENT;
 	}
 
 	// TODO remove this function and use EPOLLOUT instead
@@ -185,7 +155,7 @@ private:
 		while (sent < line.size()) {
 			int cur_sent = send(fd, line.c_str() + sent, line.size() - sent, MSG_NOSIGNAL);
 			if (cur_sent <= 0) {
-				std::cerr << "Error: send failed" << std::endl;
+				std::perror("send");
 				return false;
 			}
 			sent += cur_sent;
@@ -194,13 +164,14 @@ private:
 	}
 
 	bool pushBodyChunkToClient(int fd) {
-		std::cout << std::strlen(_body.c_str()) << std::endl;
-		long cur_sent =
+		size_t cur_sent =
 			send(fd, _body.c_str() + _bodyPos,
 				 std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE)),
 				 MSG_NOSIGNAL);
-		if (cur_sent < 0) {
-			std::cerr << "Error: send failed here" << std::endl;
+		if (send(fd, _body.c_str() + _bodyPos,
+				 std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE)),
+				 MSG_NOSIGNAL) < 0) {
+			std::perror("send");
 			return false;
 		}
 		_bodyPos += cur_sent;
@@ -222,7 +193,8 @@ private:
 		//_headers["connection"] = "close";
 	}
 
-	void buildErrorPage(RequestParsingResult& request) {
+	void buildErrorPage(RequestParsingResult& request, StatusCode statusCode) {
+		_statusCode = statusCode;
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
 		std::string errorPageUri;
 		if (it != _errorPages.end())
@@ -246,11 +218,8 @@ private:
 	void buildPage(RequestParsingResult& request) {
 		std::string uri = findFinalUri(request);
 		std::cout << "final uri: " << uri << std::endl;
-		if (!readContent(uri, _body)) {
-			_statusCode = STATUS_NOT_FOUND;
-			buildErrorPage(request);
-			return;
-		}
+		if (!readContent(uri, _body))
+			return buildErrorPage(request, STATUS_NOT_FOUND);
 		std::string extension = getExtension(uri);
 		std::map<std::string, std::string>::const_iterator it = MIME_TYPES.find(extension);
 		_headers["content-type"] = it != MIME_TYPES.end() ? it->second : DEFAULT_CONTENT_TYPE;
@@ -271,19 +240,6 @@ private:
 
 	// TODO use EPOLLOUT to send the response
 	void buildCgi(RequestParsingResult& request) {
-		(void)request;
-		_statusCode = STATUS_OK;
-		std::cout << RED;
-		std::cout << "locationUri " << _locationUri << std::endl;
-		std::cout << "rootDir " << _rootDir << std::endl;
-		std::cout << "finalUri " << findFinalUri(request) << std::endl;
-		char* strExec = const_cast<char*>(_cgiExec.c_str());
-		char* strScript =
-			const_cast<char*>("./www/calculator/cgi-bin/calculator.py"); // TODO findFinalUri
-		std::cout << RED << "CGI: " << strExec << ' ' << strScript << ' ' << request.success.query
-				  << std::endl;
-		std::cout << RESET;
-
 		int pipefd[2];
 		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
@@ -292,6 +248,9 @@ private:
 			close(pipefd[0]);
 			dup2(pipefd[1], STDOUT_FILENO);
 			close(pipefd[1]);
+			char* strExec = const_cast<char*>(_cgiExec.c_str());
+			std::string finalUri = findFinalUri(request);
+			char* strScript = const_cast<char*>(finalUri.c_str());
 			char* argv[] = {strExec, strScript, NULL};
 			char* env[CGI_ENV_SIZE];
 			std::memset(env, 0, sizeof(env));
@@ -300,8 +259,12 @@ private:
 			std::perror("execve");
 			exit(EXIT_FAILURE);
 		}
+		_statusCode = STATUS_OK;
 		close(pipefd[1]);
 		std::string response = fullRead(pipefd[0]);
+		close(pipefd[0]);
+		int wstatus;
+		wait(&wstatus);
 		std::istringstream iss(response);
 		std::string line;
 		while (std::getline(iss, line) && !line.empty()) {
@@ -316,28 +279,17 @@ private:
 					if (value.size() == 3 && isdigit(value[0]) && isdigit(value[1]) &&
 						isdigit(value[2]))
 						_statusCode = static_cast<StatusCode>(std::atoi(value.c_str()));
-					else {
-						_statusCode = STATUS_INTERNAL_SERVER_ERROR;
-						buildErrorPage(request);
-						return;
-					}
+					else
+						return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
 				}
 			}
 		}
 		std::stringstream buffer;
 		buffer << iss.rdbuf();
 		_body = buffer.str();
-		close(pipefd[0]);
-		int wstatus;
-		wait(&wstatus);
 		const int exitCode = WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
-		if (exitCode == 0) {
-			_statusCode = STATUS_OK;
-		} else {
-			std::cerr << RED << strExec << " " << strScript << " failed with exit code " << exitCode
-					  << RESET << std::endl;
-			_statusCode = STATUS_INTERNAL_SERVER_ERROR;
-		}
+		if (exitCode != 0)
+			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
 	}
 
 	std::string findFinalUri(RequestParsingResult& request) {
@@ -396,24 +348,19 @@ private:
 			_statusCode = STATUS_OK;
 			buildAutoIndexPage(request);
 		} else {
-			_statusCode = STATUS_FORBIDDEN;
-			buildErrorPage(request);
+			buildErrorPage(request, STATUS_FORBIDDEN);
 		}
 	}
 
 	void buildRedirect(RequestParsingResult& request) {
-		_statusCode = static_cast<StatusCode>(_return.first);
 		_headers["location"] = _return.second;
-		buildErrorPage(request);
+		buildErrorPage(request, static_cast<StatusCode>(_return.first));
 	}
 
 	void buildAutoIndexPage(RequestParsingResult& request) {
 		DIR* dir = opendir(findFinalUri(request).c_str());
-		if (dir == NULL) {
-			_statusCode = STATUS_INTERNAL_SERVER_ERROR;
-			buildErrorPage(request);
-			return;
-		}
+		if (dir == NULL)
+			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
 		_body = "<head>\n"
 				"    <title>Index of " +
 				request.success.uri +

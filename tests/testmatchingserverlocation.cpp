@@ -69,7 +69,7 @@ void testServer() {
 			continue;
 		std::istringstream iss(line);
 		std::string ip, serverName;
-		std::size_t port;
+		size_t port;
 		int expected;
 		if (!(iss >> ip >> port >> serverName >> expected)) {
 			std::cerr << "Invalid line in testmatchingserver.txt: " << line << std::endl;
