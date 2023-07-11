@@ -354,6 +354,7 @@ private:
 		std::string filepath = _uploadDir[_uploadDir.size() - 1] == '/'
 								   ? _uploadDir + filename
 								   : _uploadDir + "/" + filename;
+		return filepath;
 	}
 
 	void handleIndex(RequestParsingResult& request) {
