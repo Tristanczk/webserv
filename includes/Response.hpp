@@ -19,16 +19,17 @@ public:
 		initMethodMap();
 	}
 
-	Response(std::string rootDir, bool autoIndex,
+	Response(std::string rootDir, std::string uploadDir, bool autoIndex,
 			 std::map<int, std::string> const& serverErrorPages,
 			 std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& serverIndexPages,
 			 std::vector<std::string> const& indexPages, std::string locationUri,
 			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
 			 std::string cgiExec)
-		: _rootDir(rootDir), _autoIndex(autoIndex), _serverErrorPages(serverErrorPages),
-		  _errorPages(errorPages), _serverIndexPages(serverIndexPages), _indexPages(indexPages),
-		  _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
+		: _rootDir(rootDir), _uploadDir(uploadDir), _autoIndex(autoIndex),
+		  _serverErrorPages(serverErrorPages), _errorPages(errorPages),
+		  _serverIndexPages(serverIndexPages), _indexPages(indexPages), _locationUri(locationUri),
+		  _return(redirect), _cgiExec(cgiExec) {
 		for (int i = 0; i < NO_METHOD; ++i)
 			_allowedMethods[i] = allowedMethods[i];
 		initMethodMap();
@@ -84,6 +85,7 @@ private:
 	// these variables will be extracted from the correct location or from the correct virtual
 	// server if needed
 	std::string _rootDir;
+	std::string _uploadDir;
 	bool _autoIndex;
 	std::map<int, std::string> _serverErrorPages;
 	std::map<int, std::string> _errorPages;

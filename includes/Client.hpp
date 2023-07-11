@@ -28,11 +28,12 @@ public:
 			return RESPONSE_PENDING;
 		Response res =
 			result.location
-				? Response(result.location->getRootDir(), result.location->getAutoIndex(),
-						   result.virtualServer->getErrorPages(), result.location->getErrorPages(),
-						   result.virtualServer->getIndexPages(), result.location->getIndexPages(),
-						   result.location->getUri(), result.location->getReturn(),
-						   result.location->getAllowedMethod(), result.location->getCgiExec())
+				? Response(result.location->getRootDir(), result.location->getRootDir(),
+						   result.location->getAutoIndex(), result.virtualServer->getErrorPages(),
+						   result.location->getErrorPages(), result.virtualServer->getIndexPages(),
+						   result.location->getIndexPages(), result.location->getUri(),
+						   result.location->getReturn(), result.location->getAllowedMethod(),
+						   result.location->getCgiExec())
 				: Response(result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
 						   result.virtualServer->getErrorPages(),
 						   result.virtualServer->getIndexPages());
