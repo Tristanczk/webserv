@@ -2,7 +2,6 @@
 
 #include "../includes/webserv.hpp"
 
-#include <algorithm>
 #include <dirent.h>
 #include <sys/stat.h>
 

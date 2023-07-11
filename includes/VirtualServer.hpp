@@ -1,6 +1,7 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <algorithm>
 
 class VirtualServer {
 public:
@@ -49,25 +50,14 @@ public:
 	}
 
 	VirtualServerMatch isMatching(in_port_t port, in_addr_t addr, std::string serverName) const {
-		const bool addrIsAny = addr == htonl(INADDR_ANY);
-		const bool serverAddrIsAny = _address.sin_addr.s_addr == htonl(INADDR_ANY);
-		if (port != _address.sin_port)
+		const bool addrIsAny =
+			addr == htonl(INADDR_ANY) || _address.sin_addr.s_addr == htonl(INADDR_ANY);
+		if (port != _address.sin_port || (!addrIsAny && addr != _address.sin_addr.s_addr))
 			return VS_MATCH_NONE;
-		if (!addrIsAny && !serverAddrIsAny && addr != _address.sin_addr.s_addr)
-			return VS_MATCH_NONE;
-		if (serverName.empty())
-			return (addrIsAny || serverAddrIsAny) ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
-		// TODO _serverNames.find, investigate why it doesn't work (std::find error when compiling)
-		// std::vector<std::string>::iterator it =
-		// 	std::find(_serverNames.begin(), _serverNames.end(), serverName);
-		// if (it != _serverNames.end())
-		// 	return (addrIsAny || serverAddrIsAny) ? VS_MATCH_SERVER : VS_MATCH_BOTH;
-		for (std::vector<std::string>::const_iterator it = _serverNames.begin();
-			 it != _serverNames.end(); it++) {
-			if (*it == serverName)
-				return (addrIsAny || serverAddrIsAny) ? VS_MATCH_SERVER : VS_MATCH_BOTH;
-		}
-		return (addrIsAny || serverAddrIsAny) ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
+		if (serverName.empty() ||
+			std::find(_serverNames.begin(), _serverNames.end(), serverName) == _serverNames.end())
+			return addrIsAny ? VS_MATCH_INADDR_ANY : VS_MATCH_IP;
+		return addrIsAny ? VS_MATCH_SERVER : VS_MATCH_BOTH;
 	}
 
 	Location* findMatchingLocation(std::string const& requestPath) {

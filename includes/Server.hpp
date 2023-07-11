@@ -1,6 +1,7 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <cstdio>
 #include <sys/epoll.h>
 
 extern bool run;
@@ -14,11 +15,8 @@ public:
 			 ++it) {
 			close(*it);
 		}
-		for (int i = 0; i < _numFds; ++i) {
-			if (_eventList[i].data.fd != STDIN_FILENO) {
-				close(_eventList[i].data.fd);
-			}
-		}
+		for (int i = 0; i < _numFds; ++i)
+			close(_eventList[i].data.fd);
 		if (_epollFd != -1)
 			close(_epollFd);
 	};
@@ -58,7 +56,6 @@ public:
 	}
 
 	void loop() {
-		int clientFd;
 		while (run) {
 			_numFds = epoll_wait(_epollFd, _eventList, MAX_EVENTS, -1);
 			if (_numFds < 0) {
@@ -70,26 +67,25 @@ public:
 				std::set<int>::iterator it = _listenSockets.find(_eventList[i].data.fd);
 				if (it != _listenSockets.end()) {
 					Client client;
-					// TODO : should we exit the server in case of accept error ?
-					syscall(clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
-											  &client.getAddressLen()),
-							"accept");
+					int clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
+										  &client.getAddressLen());
+					if (clientFd < 0) {
+						std::cerr << RED << "accept: " << std::strerror(errno) << RESET
+								  << std::endl;
+						continue;
+					}
 					client.setInfo(clientFd);
 					client.findAssociatedServers(_virtualServers);
 					syscallEpoll(_epollFd, EPOLL_CTL_ADD, clientFd, EPOLLIN | EPOLLRDHUP,
 								 "EPOLL_CTL_ADD");
 					_clients[clientFd] = client;
 				} else {
-					clientFd = _eventList[i].data.fd;
+					int clientFd = _eventList[i].data.fd;
 					Client& client = _clients[clientFd];
 					ResponseStatusEnum status;
-					// checking for error first (in the event that EPOLLIN is set at the same time
-					// as an error flag, which is unlikely but I did not read anything indicating
-					// that it is impossible that is is completely impossible)
 					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
 						close(clientFd);
 						_clients.erase(clientFd);
-						continue;
 					} else if (_eventList[i].events & EPOLLIN) {
 						status = client.handleRequests();
 						if (status == RESPONSE_FAILURE) {
