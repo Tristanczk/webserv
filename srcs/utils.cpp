@@ -1,8 +1,9 @@
 #include "../includes/webserv.hpp"
 
 int comparePrefix(const std::string& locationUri, const std::string& requestPath) {
-	if (requestPath + "/" == locationUri)
+	if (requestPath + "/" == locationUri) {
 		return locationUri.size();
+	}
 	return startswith(requestPath, locationUri) ? locationUri.size() : 0;
 }
 
@@ -14,8 +15,9 @@ bool configFileError(const std::string& message) {
 // TODO catch RegexError instead of generic exception where this function is called
 bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 	regex_t regex;
-	if (regcomp(&regex, regexStr, REG_EXTENDED) != 0)
+	if (regcomp(&regex, regexStr, REG_EXTENDED) != 0) {
 		throw RegexError();
+	}
 	int regint = regexec(&regex, matchStr, 0, NULL, 0);
 	regfree(&regex);
 	return regint == 0;
@@ -28,9 +30,11 @@ bool endswith(const std::string& str, const std::string& end) {
 const std::string* findCommonString(const std::vector<std::string>& vec1,
 									const std::vector<std::string>& vec2) {
 	std::set<std::string> set1(vec1.begin(), vec1.end());
-	for (std::vector<std::string>::const_iterator it = vec2.begin(); it != vec2.end(); ++it)
-		if (set1.find(*it) != set1.end())
+	for (std::vector<std::string>::const_iterator it = vec2.begin(); it != vec2.end(); ++it) {
+		if (set1.find(*it) != set1.end()) {
 			return &*it;
+		}
+	}
 	return NULL;
 }
 
@@ -43,8 +47,9 @@ std::string fullRead(int fd) {
 		syscall(buflen = read(fd, buf, BUFFER_SIZE - 1), "read");
 		buf[buflen] = '\0';
 		message += buf;
-		if (buflen < BUFFER_SIZE - 1)
+		if (buflen < BUFFER_SIZE - 1) {
 			return message;
+		}
 	}
 }
 
@@ -87,21 +92,25 @@ bool getIpValue(std::string ip, uint32_t& res) {
 		ip.replace(idx, 1, 1, ' ');
 		++dots;
 	}
-	if (dots != 3)
+	if (dots != 3) {
 		return false;
+	}
 	std::istringstream iss(ip);
 	std::string check;
 	int val[4];
-	if (!(iss >> val[0] >> val[1] >> val[2] >> val[3]))
+	if (!(iss >> val[0] >> val[1] >> val[2] >> val[3])) {
 		return false;
+	}
 	res = 0;
 	for (int i = 0; i < 4; ++i) {
-		if (val[i] < 0 || val[i] > 255)
+		if (val[i] < 0 || val[i] > 255) {
 			return false;
+		}
 		res = res << 8 | val[i];
 	}
-	if (iss >> check)
+	if (iss >> check) {
 		return false;
+	}
 	res = htonl(res);
 	return true;
 }
@@ -128,11 +137,13 @@ void perrored(const char* funcName) {
 }
 
 bool readContent(std::string& uri, std::string& content) {
-	if (isDirectory(uri))
+	if (isDirectory(uri)) {
 		return false;
+	}
 	std::ifstream file(uri.c_str());
-	if (!file.good())
+	if (!file.good()) {
 		return false;
+	}
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	content = buffer.str();
@@ -145,16 +156,18 @@ bool startswith(const std::string& str, const std::string& start) {
 
 std::string strlower(const std::string& s) {
 	std::string l;
-	for (size_t i = 0; i < s.size(); ++i)
+	for (size_t i = 0; i < s.size(); ++i) {
 		l += tolower(s[i]);
+	}
 	return l;
 }
 
 std::string strtrim(const std::string& s, const std::string& remove) {
 	std::string result = s;
 	std::string::size_type pos = result.find_first_not_of(remove);
-	if (pos == std::string::npos)
+	if (pos == std::string::npos) {
 		return result;
+	}
 	result.erase(0, pos);
 	pos = result.find_last_not_of(remove);
 	result.erase(pos + 1);
@@ -169,7 +182,8 @@ bool validateUri(const std::string& uri, const std::string& keyword) {
 
 std::string vecToString(const std::vector<unsigned char>& vec) {
 	std::string result;
-	for (size_t i = 0; i < vec.size(); ++i)
+	for (size_t i = 0; i < vec.size(); ++i) {
 		result += vec[i];
+	}
 	return result;
 }

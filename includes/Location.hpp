@@ -17,29 +17,33 @@ public:
 
 	bool initUri(std::istringstream& iss) {
 		std::string modifier, uri, check;
-		if (!(iss >> modifier >> uri))
+		if (!(iss >> modifier >> uri)) {
 			return configFileError(ERROR_LOCATION_FORMAT);
+		}
 		if (uri == "{") {
 			_uri = modifier + (modifier[modifier.size() - 1] == '/' ? "" : "/");
 			_modifier = DIRECTORY;
 		} else {
 			_uri = uri;
-			if (modifier == "~")
+			if (modifier == "~") {
 				_modifier = REGEX;
-			else if (modifier == "=")
+			} else if (modifier == "=") {
 				_modifier = EXACT;
-			else
+			} else {
 				return configFileError("invalid modifier for location: " + modifier);
-			if (!(iss >> check))
+			}
+			if (!(iss >> check)) {
 				return configFileError(ERROR_LOCATION_FORMAT);
+			}
 		}
 		if (_modifier != REGEX && _uri[0] != '/') {
 			return configFileError(
 				"location uri must start with a slash when not using a regex modifier: " + _uri);
 			_rootDir += _uri; // TODO Tristan please check
 		}
-		if (iss >> check)
+		if (iss >> check) {
 			return configFileError(ERROR_LOCATION_FORMAT);
+		}
 		return true;
 	}
 
@@ -48,19 +52,21 @@ public:
 		bool empty = true;
 		for (; std::getline(config, line);) {
 			std::istringstream iss(line);
-			if (!(iss >> keyword) || keyword[0] == '#')
+			if (!(iss >> keyword) || keyword[0] == '#') {
 				continue;
-			else if (keyword == "}") {
-				if (empty)
+			} else if (keyword == "}") {
+				if (empty) {
 					return configFileError("empty location block");
+				}
 				checkIndexPages();
 				checkReturn();
 				return checkUpload();
 			} else {
 				try {
 					KeywordHandler handler = _keywordHandlers.at(keyword);
-					if (!(this->*handler)(iss))
+					if (!(this->*handler)(iss)) {
 						return false;
+					}
 				} catch (const std::exception& e) {
 					return configFileError("invalid keyword in location block: " + keyword);
 				}
@@ -127,17 +133,22 @@ private:
 	bool parseReturn(std::istringstream& iss) { return ::parseReturn(iss, _return); }
 
 	bool parseCgi(std::istringstream& iss) {
-		if (!(iss >> _cgiExec))
+		if (!(iss >> _cgiExec)) {
 			return configFileError("missing information after cgi keyword");
-		if (!iss.eof())
+		}
+		if (!iss.eof()) {
 			return configFileError("too many arguments after cgi keyword");
-		if (!validateUri(_cgiExec, "cgi"))
+		}
+		if (!validateUri(_cgiExec, "cgi")) {
 			return false;
+		}
 		struct stat sb;
-		if (stat(_cgiExec.c_str(), &sb) != 0)
+		if (stat(_cgiExec.c_str(), &sb) != 0) {
 			return configFileError("cgi interpreter not found: " + _cgiExec);
-		if (!S_ISREG(sb.st_mode) || access(_cgiExec.c_str(), X_OK) != 0)
+		}
+		if (!S_ISREG(sb.st_mode) || access(_cgiExec.c_str(), X_OK) != 0) {
 			return configFileError("cgi interpreter is not executable: " + _cgiExec);
+		}
 		return true;
 	}
 
@@ -153,52 +164,63 @@ private:
 
 	bool parseLimitExcept(std::istringstream& iss) {
 		std::string method;
-		if (!(iss >> method))
+		if (!(iss >> method)) {
 			return configFileError("missing information after limit_except keyword");
+		}
 		std::fill_n(_allowedMethods, NO_METHOD, false);
 		do {
-			if (!updateMethod(method))
+			if (!updateMethod(method)) {
 				return false;
+			}
 		} while (iss >> method);
 		return true;
 	}
 
 	bool updateMethod(std::string const& method) {
 		if (method == "GET") {
-			if (_allowedMethods[GET])
+			if (_allowedMethods[GET]) {
 				return configFileError("multiple GET instructions in limit_except directive");
+			}
 			_allowedMethods[GET] = true;
 		} else if (method == "POST") {
-			if (_allowedMethods[POST])
+			if (_allowedMethods[POST]) {
 				return configFileError("multiple POST instructions in limit_except directive");
+			}
 			_allowedMethods[POST] = true;
 		} else if (method == "DELETE") {
-			if (_allowedMethods[DELETE])
+			if (_allowedMethods[DELETE]) {
 				return configFileError("multiple DELETE instructions in limit_except directive");
+			}
 			_allowedMethods[DELETE] = true;
-		} else
+		} else {
 			return configFileError("invalid method in limit_except directive: " + method);
+		}
 		return true;
 	}
 
 	void checkIndexPages() {
-		if (_indexPages.empty())
+		if (_indexPages.empty()) {
 			_indexPages = _serverIndexPages;
+		}
 	}
 
 	void checkReturn() {
-		if (_return.first == -1 && _serverReturn.first != -1)
+		if (_return.first == -1 && _serverReturn.first != -1) {
 			_return = _serverReturn;
+		}
 	}
 
 	bool checkUpload() {
-		if (_allowedMethods[POST] && _uploadDir.empty())
+		if (_allowedMethods[POST] && _uploadDir.empty()) {
 			return configFileError("upload_directory not specified for POST method");
-		if (_allowedMethods[DELETE] && _uploadDir.empty())
+		}
+		if (_allowedMethods[DELETE] && _uploadDir.empty()) {
 			return configFileError("upload_directory not specified for DELETE method");
-		if (!_uploadDir.empty() && !_allowedMethods[POST] && !_allowedMethods[DELETE])
+		}
+		if (!_uploadDir.empty() && !_allowedMethods[POST] && !_allowedMethods[DELETE]) {
 			return configFileError(
 				"upload_directory specified but POST or DELETE methods not allowed");
+		}
 		return true;
 	}
 };

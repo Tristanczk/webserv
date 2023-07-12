@@ -88,12 +88,15 @@ void initMimeTypes() {
 	std::ifstream ifs("/etc/mime.types");
 	std::string line, mime, extension;
 	while (true) {
-		if (!std::getline(ifs, line))
+		if (!std::getline(ifs, line)) {
 			return;
+		}
 		std::stringstream lineStream(line);
-		if (line.empty() || line[0] == '#' || !(lineStream >> mime))
+		if (line.empty() || line[0] == '#' || !(lineStream >> mime)) {
 			continue;
-		while (lineStream >> extension)
+		}
+		while (lineStream >> extension) {
 			setMimeType(extension, mime);
+		}
 	}
 }

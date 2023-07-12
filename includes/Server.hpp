@@ -18,15 +18,18 @@ public:
 			 ++it) {
 			close(*it);
 		}
-		for (int i = 0; i < _numFds; ++i)
+		for (int i = 0; i < _numFds; ++i) {
 			close(_eventList[i].data.fd);
-		if (_epollFd != -1)
+		}
+		if (_epollFd != -1) {
 			close(_epollFd);
+		}
 	};
 
 	bool init(const char* filename) {
-		if (!parseConfig(filename))
+		if (!parseConfig(filename)) {
 			return false;
+		}
 		findVirtualServersToBind();
 		connectVirtualServers();
 		return true;
@@ -43,18 +46,22 @@ public:
 			return false;
 		}
 		for (std::string line; std::getline(config, line);) {
-			if (line[0] == '#' || line.empty())
+			if (line[0] == '#' || line.empty()) {
 				continue;
+			}
 			if (line == "server {") {
 				VirtualServer vs;
-				if (!vs.init(config))
+				if (!vs.init(config)) {
 					return false;
+				}
 				_virtualServers.push_back(vs);
-			} else
+			} else {
 				return configFileError("invalid line in config file: " + line);
+			}
 		}
-		if (_virtualServers.empty())
+		if (_virtualServers.empty()) {
 			return configFileError("no server found in " + std::string(filename));
+		}
 		return checkDuplicateServers();
 	}
 
@@ -62,8 +69,9 @@ public:
 		while (run) {
 			_numFds = epoll_wait(_epollFd, _eventList, MAX_EVENTS, -1);
 			if (_numFds < 0) {
-				if (!run)
+				if (!run) {
 					break;
+				}
 				throw SystemError("epoll_wait");
 			}
 			for (int i = 0; i < _numFds; ++i) {
@@ -94,17 +102,19 @@ public:
 						if (status == RESPONSE_FAILURE) {
 							close(clientFd);
 							_clients.erase(clientFd);
-						} else if (status == RESPONSE_SUCCESS)
+						} else if (status == RESPONSE_SUCCESS) {
 							syscallEpoll(_epollFd, EPOLL_CTL_MOD, clientFd, EPOLLOUT | EPOLLRDHUP,
 										 "EPOLL_CTL_MOD");
+						}
 					} else if (_eventList[i].events & EPOLLOUT) {
 						status = client.pushResponse();
 						if (status == RESPONSE_FAILURE) {
 							close(clientFd);
 							_clients.erase(clientFd);
-						} else if (status == RESPONSE_SUCCESS)
+						} else if (status == RESPONSE_SUCCESS) {
 							syscallEpoll(_epollFd, EPOLL_CTL_MOD, clientFd, EPOLLIN | EPOLLRDHUP,
 										 "EPOLL_CTL_MOD");
+						}
 					}
 				}
 			}
@@ -132,13 +142,14 @@ private:
 					const std::vector<std::string>& serverNamesJ =
 						_virtualServers[j].getServerNames();
 					std::string conflict;
-					if (serverNamesI.empty() && serverNamesJ.empty())
+					if (serverNamesI.empty() && serverNamesJ.empty()) {
 						conflict = "\"\"";
-					else {
+					} else {
 						const std::string* commonServerName =
 							findCommonString(serverNamesI, serverNamesJ);
-						if (!commonServerName)
+						if (!commonServerName) {
 							continue;
+						}
 						conflict = *commonServerName;
 					}
 					return configFileError("conflicting server on " +
@@ -158,10 +169,11 @@ private:
 				std::vector<VirtualServer*>::iterator it = _virtualServersToBind.begin();
 				port = _virtualServers[i].getPort();
 				while (it != _virtualServersToBind.end()) {
-					if (port == (*it)->getPort())
+					if (port == (*it)->getPort()) {
 						it = _virtualServersToBind.erase(it);
-					else
+					} else {
 						++it;
+					}
 				}
 				_virtualServersToBind.push_back(&_virtualServers[i]);
 			} else {
@@ -176,8 +188,9 @@ private:
 						break;
 					}
 				}
-				if (!check)
+				if (!check) {
 					_virtualServersToBind.push_back(&_virtualServers[i]);
+				}
 			}
 		}
 	}

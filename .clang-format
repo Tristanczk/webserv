@@ -21,3 +21,4 @@ BraceWrapping:
   IndentBraces: false
 AlwaysBreakTemplateDeclarations: Yes
 SpacesInAngles: Leave
+InsertBraces: true

@@ -8,8 +8,9 @@ void signalHandler(int signum) {
 }
 
 void syscall(int returnValue, const char* funcName) {
-	if (returnValue == -1)
+	if (returnValue == -1) {
 		throw SystemError(funcName);
+	}
 }
 
 void syscallEpoll(int epollFd, int operation, int eventFd, int flags, const char* opName) {

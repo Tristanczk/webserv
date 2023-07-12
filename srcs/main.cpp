@@ -10,8 +10,9 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	Server server;
-	if (!server.init(conf))
+	if (!server.init(conf)) {
 		return EXIT_FAILURE;
+	}
 	initStatusMessageMap();
 	initMimeTypes();
 	try {

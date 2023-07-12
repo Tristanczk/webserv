@@ -28,8 +28,9 @@ public:
 		: _bodyPos(0), _statusCode(STATUS_NONE), _rootDir(rootDir), _uploadDir(uploadDir),
 		  _autoIndex(autoIndex), _serverErrorPages(serverErrorPages), _errorPages(errorPages),
 		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
-		for (int i = 0; i < NO_METHOD; ++i)
+		for (int i = 0; i < NO_METHOD; ++i) {
 			_allowedMethods[i] = allowedMethods[i];
+		}
 		initMethodMap();
 	}
 
@@ -56,20 +57,24 @@ public:
 		std::string line;
 		if (_bodyPos == 0) {
 			std::cout << GREEN << "=== RESPONSE START ===" << RESET << std::endl;
-			if (!pushStringToClient(fd, _statusLine))
+			if (!pushStringToClient(fd, _statusLine)) {
 				return RESPONSE_FAILURE;
+			}
 			for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
 				 it != _headers.end(); it++) {
 				line = it->first + ": " + it->second + "\r\n";
-				if (!pushStringToClient(fd, line))
+				if (!pushStringToClient(fd, line)) {
 					return RESPONSE_FAILURE;
+				}
 			}
 			line = "\r\n";
-			if (!pushStringToClient(fd, line))
+			if (!pushStringToClient(fd, line)) {
 				return RESPONSE_FAILURE;
+			}
 		}
-		if (!pushBodyChunkToClient(fd))
+		if (!pushBodyChunkToClient(fd)) {
 			return RESPONSE_FAILURE;
+		}
 		if (_bodyPos == _body.size()) {
 			std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
 			return RESPONSE_SUCCESS;
@@ -105,10 +110,11 @@ private:
 
 	void buildGet(RequestParsingResult& request) {
 		_statusCode = STATUS_OK;
-		if (isDirectory(findFinalUri(request)))
+		if (isDirectory(findFinalUri(request))) {
 			handleIndex(request);
-		else
+		} else {
 			buildPage(request);
+		}
 	}
 
 	void buildPost(RequestParsingResult& request) {
@@ -123,8 +129,9 @@ private:
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
 		std::ofstream ofs(getFileUri(request).c_str());
-		if (ofs.fail())
+		if (ofs.fail()) {
 			return buildErrorPage(request, STATUS_BAD_REQUEST);
+		}
 		std::string bodyStr(request.success.body.begin(), request.success.body.end());
 		ofs << bodyStr;
 		ofs.close();
@@ -133,12 +140,13 @@ private:
 
 	void buildDelete(RequestParsingResult& request) {
 		std::string uri = getFileUri(request);
-		if (isDirectory(uri))
+		if (isDirectory(uri)) {
 			return buildErrorPage(request, STATUS_FORBIDDEN);
-		else if (!isValidFile(uri))
+		} else if (!isValidFile(uri)) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
-		else if (std::remove(uri.c_str()) == -1)
+		} else if (std::remove(uri.c_str()) == -1) {
 			return buildErrorPage(request, STATUS_FORBIDDEN);
+		}
 		_statusCode = STATUS_NO_CONTENT;
 	}
 
@@ -179,8 +187,9 @@ private:
 		_headers["date"] = getDate();
 		_headers["server"] = SERVER_VERSION;
 		_headers["content-length"] = toString(_body.length());
-		if (_headers.find("content-type") == _headers.end())
+		if (_headers.find("content-type") == _headers.end()) {
 			_headers["content-type"] = DEFAULT_CONTENT_TYPE;
+		}
 		//_headers["connection"] = "close"; TODO
 	}
 
@@ -188,9 +197,9 @@ private:
 		_statusCode = statusCode;
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
 		std::string errorPageUri;
-		if (it != _errorPages.end())
+		if (it != _errorPages.end()) {
 			errorPageUri = "." + _rootDir + it->second;
-		else {
+		} else {
 			it = _serverErrorPages.find(_statusCode);
 			errorPageUri = it != _serverErrorPages.end()
 							   ? "." + request.virtualServer->getRootDir() + it->second
@@ -201,14 +210,16 @@ private:
 					"code " +
 					toString(_statusCode);
 			_headers["content-type"] = "text/plain";
-		} else
+		} else {
 			_headers["content-type"] = "text/html";
+		}
 	}
 
 	void buildPage(RequestParsingResult& request) {
 		std::string uri = findFinalUri(request);
-		if (!readContent(uri, _body))
+		if (!readContent(uri, _body)) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
+		}
 		std::string extension = getExtension(uri);
 		std::map<std::string, std::string>::const_iterator it = MIME_TYPES.find(extension);
 		_headers["content-type"] = it != MIME_TYPES.end() ? it->second : DEFAULT_CONTENT_TYPE;
@@ -265,10 +276,11 @@ private:
 					std::istringstream iss(value);
 					iss >> value;
 					if (value.size() == 3 && isdigit(value[0]) && isdigit(value[1]) &&
-						isdigit(value[2]))
+						isdigit(value[2])) {
 						_statusCode = static_cast<StatusCode>(std::atoi(value.c_str()));
-					else
+					} else {
 						return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
+					}
 				}
 			}
 		}
@@ -276,8 +288,9 @@ private:
 		buffer << iss.rdbuf();
 		_body = buffer.str();
 		const int exitCode = WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
-		if (exitCode != 0)
+		if (exitCode != 0) {
 			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	std::string findFinalUri(RequestParsingResult& request) {
@@ -287,16 +300,19 @@ private:
 		std::string uri = request.success.uri;
 		// to ensure that the final link will be well formated whether the user put a trailing
 		// slash at the end of the location and at the beginning of the uri or not
-		if (_rootDir[_rootDir.size() - 1] == '/')
+		if (_rootDir[_rootDir.size() - 1] == '/') {
 			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
-		if (uri[0] == '/')
+		}
+		if (uri[0] == '/') {
 			uri = uri.substr(1);
-		if (location == NULL)
+		}
+		if (location == NULL) {
 			return "." + _rootDir + "/" + uri;
+		}
 		LocationModifierEnum modifier = location->getModifier();
-		if (modifier == DIRECTORY)
+		if (modifier == DIRECTORY) {
 			return "." + _rootDir + "/" + uri.substr(_locationUri.size() - 1);
-		else if (modifier == REGEX) {
+		} else if (modifier == REGEX) {
 			return "." + _rootDir + "/" + uri;
 		} else {
 			return "." + _rootDir + "/" + getBasename(uri);
@@ -344,8 +360,9 @@ private:
 
 	void buildAutoIndexPage(RequestParsingResult& request) {
 		DIR* dir = opendir(findFinalUri(request).c_str());
-		if (dir == NULL)
+		if (dir == NULL) {
 			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
+		}
 		_body = "<head>\n"
 				"    <title>Index of " +
 				request.success.uri +
@@ -403,8 +420,9 @@ private:
 			_locationUri = "";
 			_return.first = -1;
 			_return.second = "";
-			for (int i = 0; i < NO_METHOD; i++)
+			for (int i = 0; i < NO_METHOD; i++) {
 				_allowedMethods[i] = true;
+			}
 			_cgiExec = "";
 		} else {
 			Location* location = request.location;
@@ -415,8 +433,9 @@ private:
 			_indexPages = location->getIndexPages();
 			_locationUri = location->getUri();
 			_return = location->getReturn();
-			for (int i = 0; i < NO_METHOD; i++)
+			for (int i = 0; i < NO_METHOD; i++) {
 				_allowedMethods[i] = location->getAllowedMethod()[i];
+			}
 			_cgiExec = location->getCgiExec();
 		}
 	}
@@ -425,8 +444,9 @@ private:
 		std::string html = "<tr>\n\
 					<td><a href=\"";
 		std::string name = static_cast<std::string>(entry->d_name);
-		if (entry->d_type == DT_DIR)
+		if (entry->d_type == DT_DIR) {
 			name += '/';
+		}
 		html += name;
 		html += "\">";
 		html += name;

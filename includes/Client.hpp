@@ -9,25 +9,30 @@ public:
 	};
 
 	~Client() {
-		if (_currentRequest != NULL)
+		if (_currentRequest != NULL) {
 			delete _currentRequest;
-		if (_currentResponse != NULL)
+		}
+		if (_currentResponse != NULL) {
 			delete _currentResponse;
+		}
 	};
 
 	ResponseStatusEnum handleRequest() {
 		std::string request = fullRead(_fd);
-		if (request.empty())
+		if (request.empty()) {
 			return RESPONSE_FAILURE;
+		}
 		std::cout << YELLOW << "=== REQUEST START ===" << std::endl
 				  << strtrim(request, "\r\n") << std::endl
 				  << "=== REQUEST END ===" << std::endl
 				  << RESET;
-		if (_currentRequest == NULL)
+		if (_currentRequest == NULL) {
 			_currentRequest = new Request(_associatedServers, _ip, _port);
+		}
 		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
-		if (result.result == REQUEST_PARSING_PROCESSING)
+		if (result.result == REQUEST_PARSING_PROCESSING) {
 			return RESPONSE_PENDING;
+		}
 		_currentResponse =
 			result.location
 				? new Response(result.location->getRootDir(), result.location->getUploadDir(),

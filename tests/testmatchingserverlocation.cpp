@@ -6,8 +6,9 @@ static int findBestMatchServer(const std::string& ip, size_t port, const std::st
 							   std::vector<VirtualServer>& vServers) {
 	int bestMatch = -1;
 	in_addr_t ipValue;
-	if (!getIpValue(ip, ipValue))
+	if (!getIpValue(ip, ipValue)) {
 		return -2;
+	}
 	in_port_t portValue = htons(port);
 	VirtualServerMatch bestMatchLevel = VS_MATCH_NONE;
 	for (size_t i = 0; i < vServers.size(); ++i) {
@@ -22,8 +23,9 @@ static int findBestMatchServer(const std::string& ip, size_t port, const std::st
 
 static int findBestMatchLocation(const std::string& uri, VirtualServer& server) {
 	std::vector<Location> const& locations = server.getLocations();
-	if (locations.empty() || uri.empty())
+	if (locations.empty() || uri.empty()) {
 		return -1;
+	}
 	int curRegex = -1;
 	int curPrefix = -1;
 	int prefixLength = 0;
@@ -35,21 +37,22 @@ static int findBestMatchLocation(const std::string& uri, VirtualServer& server) 
 			std::cerr << e.what() << std::endl;
 			return -2;
 		}
-		if (matchLevel == LOCATION_MATCH_EXACT)
+		if (matchLevel == LOCATION_MATCH_EXACT) {
 			return i;
-		else if (matchLevel == LOCATION_MATCH_REGEX && curRegex == -1)
+		} else if (matchLevel == LOCATION_MATCH_REGEX && curRegex == -1) {
 			curRegex = i;
-		else if (matchLevel > prefixLength) {
+		} else if (matchLevel > prefixLength) {
 			curPrefix = i;
 			prefixLength = matchLevel;
 		}
 	}
-	if (curRegex != -1)
+	if (curRegex != -1) {
 		return curRegex;
-	else if (curPrefix != -1)
+	} else if (curPrefix != -1) {
 		return curPrefix;
-	else
+	} else {
 		return -1;
+	}
 }
 
 void testServer() {
@@ -65,8 +68,9 @@ void testServer() {
 	}
 	int i = 0;
 	for (std::string line; std::getline(config, line);) {
-		if (line[0] == '#' || line.empty())
+		if (line[0] == '#' || line.empty()) {
 			continue;
+		}
 		std::istringstream iss(line);
 		std::string ip, serverName;
 		size_t port;
@@ -75,14 +79,16 @@ void testServer() {
 			std::cerr << "Invalid line in testmatchingserver.txt: " << line << std::endl;
 			continue;
 		}
-		if (serverName == "*")
+		if (serverName == "*") {
 			serverName = "";
+		}
 		std::string testNb = "Test " + toString(++i);
 		int match = findBestMatchServer(ip, port, serverName, vServers);
 		bool result = expected == match;
 		displayResult(testNb, result);
-		if (!result)
+		if (!result) {
 			std::cerr << "Expected: " << expected << " | found: " << match << std::endl;
+		}
 	}
 }
 
@@ -98,8 +104,9 @@ void testLocation() {
 		return;
 	}
 	for (std::string line; std::getline(config, line);) {
-		if (line[0] == '#' || line.empty())
+		if (line[0] == '#' || line.empty()) {
 			continue;
+		}
 		std::istringstream iss(line);
 		std::string uri;
 		int expected;
@@ -111,7 +118,8 @@ void testLocation() {
 		int match = findBestMatchLocation(uri, vServer);
 		bool result = expected == match;
 		displayResult(uri, result);
-		if (!result)
+		if (!result) {
 			std::cerr << "Expected: " << expected << " | found: " << match << std::endl;
+		}
 	}
 }

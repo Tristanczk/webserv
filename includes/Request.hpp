@@ -12,32 +12,38 @@ public:
 	}
 
 	RequestParsingResult parse(const char* s = NULL, size_t size = 0) {
-		for (size_t i = 0; i < size; ++i)
+		for (size_t i = 0; i < size; ++i) {
 			_queue.push(s[i]);
+		}
 		while (!_queue.empty()) {
 			unsigned char c = _queue.front();
 			_queue.pop();
 			if (_isInBody) {
 				_body.push_back(c);
-				if (_body.size() == _contentLength)
+				if (_body.size() == _contentLength) {
 					return parsingSuccess();
+				}
 			} else {
 				++_headerSize;
-				if (_headerSize > MAX_HEADER_SIZE)
+				if (_headerSize > MAX_HEADER_SIZE) {
 					return parsingFailure(STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE);
+				}
 				const bool expectsNewline = !_line.empty() && _line[_line.size() - 1] == '\r';
-				if (expectsNewline ? c != '\n' : c != '\r' && !std::isprint(c))
+				if (expectsNewline ? c != '\n' : c != '\r' && !std::isprint(c)) {
 					return parsingFailure(STATUS_BAD_REQUEST);
+				}
 				_line += c;
 				if (endswith(_line, "\r\n")) {
 					_line.resize(_line.size() - 2);
 					const StatusCode statusCode = _line.empty()	   ? checkHeaders()
 												  : _isRequestLine ? parseRequestLine()
 																   : parseHeaderLine();
-					if (statusCode != STATUS_NONE)
+					if (statusCode != STATUS_NONE) {
 						return parsingFailure(statusCode);
-					if (_line.empty() && _contentLength == 0)
+					}
+					if (_line.empty() && _contentLength == 0) {
 						return parsingSuccess();
+					}
 					_line.clear();
 				}
 			}
@@ -89,22 +95,27 @@ private:
 		std::string methodString, version, check;
 		std::istringstream iss(_line);
 		_isRequestLine = false;
-		if (!(iss >> methodString >> _uri >> version) || (iss >> check) || _uri[0] != '/')
+		if (!(iss >> methodString >> _uri >> version) || (iss >> check) || _uri[0] != '/') {
 			return STATUS_BAD_REQUEST;
-		if (methodString == "DELETE")
+		}
+		if (methodString == "DELETE") {
 			_method = DELETE;
-		else if (methodString == "GET")
+		} else if (methodString == "GET") {
 			_method = GET;
-		else if (methodString == "POST")
+		} else if (methodString == "POST") {
 			_method = POST;
-		else
+		} else {
 			return STATUS_METHOD_NOT_ALLOWED;
-		if (_uri.size() > MAX_URI_SIZE)
+		}
+		if (_uri.size() > MAX_URI_SIZE) {
 			return STATUS_URI_TOO_LONG;
-		if (!validateUri(_uri))
+		}
+		if (!validateUri(_uri)) {
 			return STATUS_BAD_REQUEST;
-		if (version != HTTP_VERSION)
+		}
+		if (version != HTTP_VERSION) {
 			return STATUS_HTTP_VERSION_NOT_SUPPORTED;
+		}
 		findMatchingLocation(_uri);
 		return STATUS_NONE;
 	}
@@ -116,10 +127,11 @@ private:
 			char c = _line[i];
 			switch (headerState) {
 			case HEADER_KEY:
-				if (c == ':')
+				if (c == ':') {
 					headerState = HEADER_SKIP;
-				else
+				} else {
 					key += tolower(c);
+				}
 				break;
 			case HEADER_SKIP:
 				if (c != ' ') {
@@ -132,30 +144,36 @@ private:
 				break;
 			}
 		}
-		if (key.empty() || value.empty())
+		if (key.empty() || value.empty()) {
 			return STATUS_BAD_REQUEST;
+		}
 		_headers[key] = value;
 		return STATUS_NONE;
 	}
 
 	StatusCode checkHeaders() {
 		_isInBody = true;
-		if (_isRequestLine)
+		if (_isRequestLine) {
 			return STATUS_BAD_REQUEST;
+		}
 		std::map<std::string, std::string>::const_iterator host = _headers.find("host");
-		if (host == _headers.end())
+		if (host == _headers.end()) {
 			return STATUS_BAD_REQUEST;
+		}
 		findMatchingServerAndLocation(host->second);
 		if (_method == POST) {
 			std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
-			if (it == _headers.end())
+			if (it == _headers.end()) {
 				return STATUS_LENGTH_REQUIRED;
+			}
 			const std::string contentLengthString = it->second;
-			if (contentLengthString.find_first_not_of("0123456789") != std::string::npos)
+			if (contentLengthString.find_first_not_of("0123456789") != std::string::npos) {
 				return STATUS_BAD_REQUEST;
+			}
 			_contentLength = std::strtol(contentLengthString.c_str(), NULL, 10);
-			if (_contentLength > _maxBodySize)
+			if (_contentLength > _maxBodySize) {
 				return STATUS_PAYLOAD_TOO_LARGE;
+			}
 		}
 		return STATUS_NONE;
 	}
@@ -182,8 +200,9 @@ private:
 	}
 
 	void findMatchingLocation(const std::string& uri) {
-		if (_matchingServer == NULL || _matchingServer->getLocations().empty() || uri.empty())
+		if (_matchingServer == NULL || _matchingServer->getLocations().empty() || uri.empty()) {
 			return;
+		}
 		_matchingLocation = _matchingServer->findMatchingLocation(uri);
 	}
 
@@ -222,8 +241,9 @@ private:
 		}
 		if (rpr.success.method == POST && rpr.success.query.empty()) {
 			std::map<std::string, std::string>::const_iterator it = _headers.find("content-type");
-			if (it != _headers.end() && it->second == "application/x-www-form-urlencoded")
+			if (it != _headers.end() && it->second == "application/x-www-form-urlencoded") {
 				rpr.success.query = vecToString(_body);
+			}
 		}
 		clear();
 		return rpr;
