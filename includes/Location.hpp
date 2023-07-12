@@ -55,9 +55,7 @@ public:
 					return configFileError("empty location block");
 				checkIndexPages();
 				checkReturn();
-				if (!checkUpload())
-					return false;
-				return true;
+				return checkUpload();
 			} else {
 				try {
 					KeywordHandler handler = _keywordHandlers.at(keyword);
@@ -87,6 +85,7 @@ public:
 	LocationModifierEnum getModifier() const { return _modifier; }
 	std::string getUri() const { return _uri; }
 	std::string getRootDir() const { return _rootDir; }
+	std::string getUploadDir() const { return _uploadDir; }
 	std::string getCgiExec() const { return _cgiExec; }
 	bool getAutoIndex() const { return _autoIndex; }
 	std::pair<long, std::string> getReturn() const { return _return; }

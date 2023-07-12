@@ -28,7 +28,7 @@ public:
 			return RESPONSE_PENDING;
 		_currentResponse =
 			result.location
-				? new Response(result.location->getRootDir(), result.location->getRootDir(),
+				? new Response(result.location->getRootDir(), result.location->getUploadDir(),
 							   result.location->getAutoIndex(),
 							   result.virtualServer->getErrorPages(),
 							   result.location->getErrorPages(), result.location->getIndexPages(),

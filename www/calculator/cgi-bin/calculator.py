@@ -1,6 +1,4 @@
 import cgi
-import os
-import sys
 
 
 def get_answer(n1, op, n2):

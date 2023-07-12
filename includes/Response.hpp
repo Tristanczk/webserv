@@ -89,8 +89,6 @@ private:
 	size_t _bodyPos;
 	StatusCode _statusCode;
 
-	// these variables will be extracted from the correct location or from the correct virtual
-	// server if needed
 	std::string _rootDir;
 	std::string _uploadDir;
 	bool _autoIndex;
