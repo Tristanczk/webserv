@@ -1,0 +1,15 @@
+#format is path of the request | expected final uri of the file to get
+test.php ./www/php/test.php
+/random/test/script.py ./www/python/random/test/script.py
+/hello/lolo/test ./www/hello/lolo/test
+/random/test/lol ./www/random/lol
+/random/lol/lol ./www/random/lol/lol
+/test/404.html ./www/test/error/404.html
+/test/405.html ./www/test/405.html
+/here/there/lol/test ./www/lololo/test
+/here/there/lol/ ./www/lololo/
+test.html ./var/www/html/test.html
+/random/test.php ./www/php/random/test.php
+/random/test.phpp ./www/random/test.phpp
+/bonjour/random/random_file ./www/bonjour/random/random_file
+/bonjour/random/random_file.py ./www/python/bonjour/random/random_file.py

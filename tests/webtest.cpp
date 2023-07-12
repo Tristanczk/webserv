@@ -19,5 +19,6 @@ int main() {
 	testParseConfig();
 	testServer();
 	testLocation();
+	testFinalUri();
 	return status;
 }

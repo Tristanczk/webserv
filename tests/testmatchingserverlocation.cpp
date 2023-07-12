@@ -55,6 +55,32 @@ static int findBestMatchLocation(const std::string& uri, VirtualServer& server) 
 	}
 }
 
+static std::string findFinalUri(std::string& uri, std::string _rootDir,
+								LocationModifierEnum modifier, bool locExists,
+								std::string _locationUri) {
+	// note : this function will be called after checking if the requested uri is a file or
+	// a directory
+	// to ensure that the final link will be well formated whether the user put a trailing
+	// slash at the end of the location and at the beginning of the uri or not
+	if (_rootDir[_rootDir.size() - 1] == '/') {
+		_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
+	}
+	// if (uri[0] == '/') {
+	// 	uri = uri.substr(1);
+	// }
+	uri = uri.substr(1); // removed: if (uri[0] == '/')
+	if (!locExists) {
+		return "." + _rootDir + "/" + uri;
+	}
+	if (modifier == DIRECTORY) {
+		return "." + _rootDir + "/" + uri.substr(_locationUri.size() - 1);
+	} else if (modifier == REGEX) {
+		return "." + _rootDir + "/" + uri;
+	} else {
+		return "." + _rootDir + "/" + getBasename(uri);
+	}
+}
+
 void testServer() {
 	Server server;
 	server.parseConfig("./conf/valid/testmatching.conf");
@@ -120,6 +146,45 @@ void testLocation() {
 		displayResult(uri, result);
 		if (!result) {
 			std::cerr << "Expected: " << expected << " | found: " << match << std::endl;
+		}
+	}
+}
+
+void testFinalUri() {
+	Server server;
+	server.parseConfig("./conf/valid/testmatching.conf");
+	VirtualServer& vServer = server.getVirtualServers()[0];
+	std::string test = "Test final uri";
+	displayTitle(test);
+	std::ifstream config("./tests/testsfinaluri.txt");
+	if (!config.good()) {
+		std::cerr << "Cannot open file for testing final uri" << std::endl;
+		return;
+	}
+	for (std::string line; std::getline(config, line);) {
+		if (line[0] == '#' || line.empty()) {
+			continue;
+		}
+		std::istringstream iss(line);
+		std::string uri;
+		std::string expectedFinalUri;
+		if (!(iss >> uri >> expectedFinalUri)) {
+			std::cerr << RED << "Invalid line in testmatchinglocation.txt: " << line << RESET
+					  << std::endl;
+			continue;
+		}
+		int locnb = findBestMatchLocation(uri, vServer);
+		std::string finalUri;
+		if (locnb == -1) {
+			finalUri = findFinalUri(uri, vServer.getRootDir(), DIRECTORY, false, "");
+		} else {
+			Location loc = vServer.getLocations()[locnb];
+			finalUri = findFinalUri(uri, loc.getRootDir(), loc.getModifier(), true, loc.getUri());
+		}
+		bool result = finalUri == expectedFinalUri;
+		displayResult(uri, result);
+		if (!result) {
+			std::cerr << "Expected: " << expectedFinalUri << " | found: " << finalUri << std::endl;
 		}
 	}
 }

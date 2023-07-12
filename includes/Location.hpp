@@ -39,7 +39,6 @@ public:
 		if (_modifier != REGEX && _uri[0] != '/') {
 			return configFileError(
 				"location uri must start with a slash when not using a regex modifier: " + _uri);
-			_rootDir += _uri; // TODO Tristan please check
 		}
 		if (iss >> check) {
 			return configFileError(ERROR_LOCATION_FORMAT);

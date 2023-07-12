@@ -20,3 +20,4 @@ void displayResult(const std::string&, bool);
 void testParseConfig();
 void testServer();
 void testLocation();
+void testFinalUri();
