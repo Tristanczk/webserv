@@ -242,6 +242,7 @@ private:
 		rpr.location = _matchingLocation;
 		rpr.success.method = _method;
 		rpr.success.headers = _headers;
+		rpr.success.cookies = _cookies;
 		rpr.success.body = _body;
 		rpr.success.uri = _uri;
 		rpr.success.query = _query;
