@@ -242,6 +242,12 @@ private:
 	}
 
 	void buildCgi(RequestParsingResult& request) {
+		char* strExec = const_cast<char*>(_cgiExec.c_str());
+		std::string finalUri = findFinalUri(request);
+		char* strScript = const_cast<char*>(finalUri.c_str());
+		if (access(strScript, F_OK) != 0) {
+			return buildErrorPage(request, STATUS_NOT_FOUND);
+		}
 		int pipefd[2];
 		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
@@ -250,9 +256,6 @@ private:
 			close(pipefd[0]);
 			dup2(pipefd[1], STDOUT_FILENO);
 			close(pipefd[1]);
-			char* strExec = const_cast<char*>(_cgiExec.c_str());
-			std::string finalUri = findFinalUri(request);
-			char* strScript = const_cast<char*>(finalUri.c_str());
 			char* argv[] = {strExec, strScript, NULL};
 			char* env[CGI_ENV_SIZE];
 			std::memset(env, 0, sizeof(env));
