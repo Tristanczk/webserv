@@ -44,6 +44,8 @@
 #define MAX_HEADER_SIZE 1048576
 #define CGI_ENV_SIZE 256
 
+#define DEBUG false
+
 #define CGI_VERSION "CGI/1.1"
 #define HTTP_VERSION "HTTP/1.1"
 #define SERVER_VERSION "webserv/4.2"

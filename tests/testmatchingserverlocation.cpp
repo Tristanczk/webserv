@@ -85,8 +85,7 @@ void testServer() {
 	Server server;
 	server.parseConfig("./conf/valid/testmatching.conf");
 	std::vector<VirtualServer>& vServers = server.getVirtualServers();
-	std::string test = "Test matching server";
-	displayTitle(test);
+	displayTitle("MATCHING SERVER");
 	std::ifstream config("./tests/testsmatchingserver.txt");
 	if (!config.good()) {
 		std::cerr << "Cannot open file for testing matching server" << std::endl;
@@ -122,8 +121,7 @@ void testLocation() {
 	Server server;
 	server.parseConfig("./conf/valid/testmatching.conf");
 	VirtualServer& vServer = server.getVirtualServers()[0];
-	std::string test = "Test matching location";
-	displayTitle(test);
+	displayTitle("MATCHING LOCATION");
 	std::ifstream config("./tests/testsmatchinglocation.txt");
 	if (!config.good()) {
 		std::cerr << "Cannot open file for testing matching location" << std::endl;
@@ -154,8 +152,7 @@ void testFinalUri() {
 	Server server;
 	server.parseConfig("./conf/valid/testmatching.conf");
 	VirtualServer& vServer = server.getVirtualServers()[0];
-	std::string test = "Test final uri";
-	displayTitle(test);
+	displayTitle("FINAL URI");
 	std::ifstream config("./tests/testsfinaluri.txt");
 	if (!config.good()) {
 		std::cerr << "Cannot open file for testing final uri" << std::endl;

@@ -52,7 +52,9 @@ public:
 	ResponseStatusEnum pushResponseToClient(int fd) {
 		std::string line;
 		if (_bodyPos == 0) {
-			std::cout << GREEN << "=== RESPONSE START ===" << RESET << std::endl;
+			if (DEBUG) {
+				std::cout << GREEN << "=== RESPONSE START ===" << RESET << std::endl;
+			}
 			if (!pushStringToClient(fd, _statusLine)) {
 				return RESPONSE_FAILURE;
 			}
@@ -72,7 +74,9 @@ public:
 			return RESPONSE_FAILURE;
 		}
 		if (_bodyPos == _body.size()) {
-			std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
+			if (DEBUG) {
+				std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
+			}
 			return RESPONSE_SUCCESS;
 		}
 		return RESPONSE_PENDING;
@@ -147,7 +151,9 @@ private:
 	}
 
 	bool pushStringToClient(int fd, std::string& line) {
-		std::cout << GREEN << line << RESET;
+		if (DEBUG) {
+			std::cout << GREEN << line << RESET;
+		}
 		size_t totalSent = 0;
 		while (totalSent < line.size()) {
 			int curSent = send(fd, line.c_str() + totalSent, line.size() - totalSent, MSG_NOSIGNAL);
@@ -163,12 +169,14 @@ private:
 	bool pushBodyChunkToClient(int fd) {
 		size_t toSend =
 			std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE));
-		int sent = send(fd, _body.c_str() + _bodyPos, toSend, MSG_NOSIGNAL);
+		ssize_t sent = send(fd, _body.c_str() + _bodyPos, toSend, MSG_NOSIGNAL);
 		if (sent < 0) {
 			perrored("send");
 			return false;
 		}
-		std::cout << GREEN << _body.substr(_bodyPos, sent) << RESET;
+		if (DEBUG) {
+			std::cout << GREEN << _body.substr(_bodyPos, sent) << RESET;
+		}
 		_bodyPos += sent;
 		return true;
 	}
@@ -234,6 +242,12 @@ private:
 	}
 
 	void buildCgi(RequestParsingResult& request) {
+		char* strExec = const_cast<char*>(_cgiExec.c_str());
+		std::string finalUri = findFinalUri(request);
+		char* strScript = const_cast<char*>(finalUri.c_str());
+		if (access(strScript, F_OK) != 0) {
+			return buildErrorPage(request, STATUS_NOT_FOUND);
+		}
 		int pipefd[2];
 		syscall(pipe(pipefd), "pipe");
 		pid_t pid = fork();
@@ -242,9 +256,6 @@ private:
 			close(pipefd[0]);
 			dup2(pipefd[1], STDOUT_FILENO);
 			close(pipefd[1]);
-			char* strExec = const_cast<char*>(_cgiExec.c_str());
-			std::string finalUri = findFinalUri(request);
-			char* strScript = const_cast<char*>(finalUri.c_str());
 			char* argv[] = {strExec, strScript, NULL};
 			char* env[CGI_ENV_SIZE];
 			std::memset(env, 0, sizeof(env));
@@ -437,6 +448,9 @@ private:
 		std::string html = "<tr>\n\
 					<td><a href=\"";
 		std::string name = static_cast<std::string>(entry->d_name);
+		if (name == ".") {
+			return "";
+		}
 		if (entry->d_type == DT_DIR) {
 			name += '/';
 		}

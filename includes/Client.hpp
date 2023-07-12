@@ -22,10 +22,12 @@ public:
 		if (request.empty()) {
 			return RESPONSE_FAILURE;
 		}
-		std::cout << YELLOW << "=== REQUEST START ===" << std::endl
-				  << strtrim(request, "\r\n") << std::endl
-				  << "=== REQUEST END ===" << std::endl
-				  << RESET;
+		if (DEBUG) {
+			std::cout << YELLOW << "=== REQUEST START ===" << std::endl
+					  << strtrim(request, "\r\n") << std::endl
+					  << "=== REQUEST END ===" << std::endl
+					  << RESET;
+		}
 		if (_currentRequest == NULL) {
 			_currentRequest = new Request(_associatedServers, _ip, _port);
 		}
@@ -35,8 +37,7 @@ public:
 		}
 		_currentResponse =
 			result.location
-				? new Response(result.location->getRootDir(),
-							   result.location->getUploadDir(),
+				? new Response(result.location->getRootDir(), result.location->getUploadDir(),
 							   result.location->getAutoIndex(),
 							   result.virtualServer->getErrorPages(),
 							   result.location->getErrorPages(), result.location->getIndexPages(),
