@@ -1,5 +1,5 @@
 #format is path of the request | expected location in the first server of the testmatching.conf (-1 if for no match)
-test.php 1
+/test.php 1
 /random/test/script.py 2
 /hello/lolo/test 0
 /random/test/lol 5
