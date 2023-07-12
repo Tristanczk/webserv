@@ -2,6 +2,7 @@
 
 #include "webserv.hpp"
 #include <algorithm>
+#include <stdexcept>
 
 class VirtualServer {
 public:
@@ -43,7 +44,7 @@ public:
 					if (!(this->*handler)(iss)) {
 						return false;
 					}
-				} catch (const std::exception& e) {
+				} catch (const std::out_of_range& e) {
 					return configFileError("invalid keyword in configuration file: " + keyword);
 				}
 			}

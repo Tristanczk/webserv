@@ -67,7 +67,7 @@ public:
 					if (!(this->*handler)(iss)) {
 						return false;
 					}
-				} catch (const std::exception& e) {
+				} catch (const std::out_of_range& e) {
 					return configFileError("invalid keyword in location block: " + keyword);
 				}
 				empty = false;
