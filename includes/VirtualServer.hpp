@@ -1,8 +1,6 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <algorithm>
-#include <stdexcept>
 
 class VirtualServer {
 public:

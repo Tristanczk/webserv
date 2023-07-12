@@ -1,8 +1,6 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <cstdio>
-#include <sys/epoll.h>
 
 extern bool run;
 

@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <iostream>
 #include <istream>
+#include <iterator>
 #include <map>
 #include <netinet/in.h>
 #include <queue>
@@ -22,6 +23,7 @@
 #include <set>
 #include <sstream>
 #include <stdlib.h>
+#include <stdexcept>
 #include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>

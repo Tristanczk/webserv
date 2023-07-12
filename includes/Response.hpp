@@ -1,10 +1,6 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <cstddef>
-#include <iterator>
-#include <string>
-#include <vector>
 
 extern const std::map<StatusCode, std::string> STATUS_MESSAGES;
 extern const std::map<std::string, std::string> MIME_TYPES;
