@@ -56,6 +56,7 @@
 #define RESET "\033[0m"
 #define RED "\033[31m"
 #define GREEN "\033[32m"
+#define YELLOW "\033[33m"
 #define BLUE "\033[34m"
 
 #define SPACES " \f\n\r\t\v"
@@ -216,6 +217,7 @@ void initAllowedMethods(bool[NO_METHOD]);
 bool isDirectory(const std::string&);
 bool isValidFile(const std::string& path);
 bool isValidErrorCode(int);
+void perrored(const char*);
 bool readContent(std::string&, std::string&);
 std::string removeDuplicateSlashes(const std::string&);
 bool startswith(const std::string&, const std::string&);

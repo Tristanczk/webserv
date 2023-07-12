@@ -8,7 +8,10 @@ extern bool run;
 
 class Server {
 public:
-	Server() { syscall(_epollFd = epoll_create1(0), "epoll_create1"); };
+	Server() : _numFds(0) {
+		std::memset(_eventList, 0, sizeof(_eventList));
+		syscall(_epollFd = epoll_create1(0), "epoll_create1");
+	};
 
 	~Server() {
 		for (std::set<int>::iterator it = _listenSockets.begin(); it != _listenSockets.end();
@@ -187,18 +190,11 @@ private:
 			syscall(setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)),
 					"setsockopt");
 			struct sockaddr_in addr = _virtualServersToBind[i]->getAddress();
+			std::cout << BLUE << "Listening on port " << htons(addr.sin_port) << ". 👂\n" << RESET;
 			syscall(bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)), "bind");
 			syscall(listen(socketFd, SOMAXCONN), "listen");
 			syscallEpoll(_epollFd, EPOLL_CTL_ADD, socketFd, EPOLLIN, "EPOLL_CTL_ADD");
 			_listenSockets.insert(socketFd);
-		}
-	}
-
-public:
-	static void printVirtualServers(const std::vector<VirtualServer>& virtualServers) {
-		for (size_t i = 0; i < virtualServers.size(); ++i) {
-			std::cout << "Server " << i << ":" << std::endl;
-			virtualServers[i].print();
 		}
 	}
 };

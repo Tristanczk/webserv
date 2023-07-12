@@ -57,7 +57,7 @@ public:
 	ResponseStatusEnum pushResponseToClient(int fd) {
 		std::string line;
 		if (_bodyPos == 0) {
-			std::cout << "=== RESPONSE START ===" << std::endl;
+			std::cout << GREEN << "=== RESPONSE START ===" << RESET << std::endl;
 			if (!pushStringToClient(fd, _statusLine))
 				return RESPONSE_FAILURE;
 			for (std::map<std::string, std::string>::const_iterator it = _headers.begin();
@@ -72,11 +72,12 @@ public:
 		}
 		if (!pushBodyChunkToClient(fd))
 			return RESPONSE_FAILURE;
-		std::cout << _bodyPos << " / " << _body.size() << std::endl;
 		if (_bodyPos == _body.size()) {
-			std::cout << "=== RESPONSE END ===" << std::endl;
+			std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
 			return RESPONSE_SUCCESS;
 		}
+		std::cout << GREEN << "=== RESPONSE CHUNK (" << _bodyPos << " / " << _body.size()
+				  << ") ===" << RESET << std::endl;
 		return RESPONSE_PENDING;
 	}
 
@@ -146,31 +147,29 @@ private:
 	}
 
 	bool pushStringToClient(int fd, std::string& line) {
-		std::cout << strtrim(line, "\r\n") << std::endl;
-		size_t sent = 0;
-		while (sent < line.size()) {
-			int cur_sent = send(fd, line.c_str() + sent, line.size() - sent, MSG_NOSIGNAL);
-			if (cur_sent <= 0) {
-				std::perror("send");
+		std::cout << GREEN << line << RESET;
+		size_t totalSent = 0;
+		while (totalSent < line.size()) {
+			int curSent = send(fd, line.c_str() + totalSent, line.size() - totalSent, MSG_NOSIGNAL);
+			if (curSent <= 0) {
+				perrored("send");
 				return false;
 			}
-			sent += cur_sent;
+			totalSent += curSent;
 		}
 		return true;
 	}
 
 	bool pushBodyChunkToClient(int fd) {
-		size_t cur_sent =
-			send(fd, _body.c_str() + _bodyPos,
-				 std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE)),
-				 MSG_NOSIGNAL);
-		if (send(fd, _body.c_str() + _bodyPos,
-				 std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE)),
-				 MSG_NOSIGNAL) < 0) {
-			std::perror("send");
+		size_t toSend =
+			std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE));
+		size_t sent = send(fd, _body.c_str() + _bodyPos, toSend, MSG_NOSIGNAL);
+		if (sent < 0) {
+			perrored("send");
 			return false;
 		}
-		_bodyPos += cur_sent;
+		std::cout << GREEN << _body.substr(_bodyPos, sent) << RESET;
+		_bodyPos += sent;
 		return true;
 	}
 
@@ -186,7 +185,7 @@ private:
 		_headers["content-length"] = toString(_body.length());
 		if (_headers.find("content-type") == _headers.end())
 			_headers["content-type"] = DEFAULT_CONTENT_TYPE;
-		//_headers["connection"] = "close";
+		//_headers["connection"] = "close"; TODO
 	}
 
 	void buildErrorPage(RequestParsingResult& request, StatusCode statusCode) {
@@ -201,7 +200,6 @@ private:
 							   ? "." + request.virtualServer->getRootDir() + it->second
 							   : "./www/error/default_error.html";
 		}
-		std::cout << errorPageUri << std::endl;
 		if (!readContent(errorPageUri, _body)) {
 			_body = "There was an error while trying to access the specified error page for error "
 					"code " +
@@ -213,7 +211,6 @@ private:
 
 	void buildPage(RequestParsingResult& request) {
 		std::string uri = findFinalUri(request);
-		std::cout << "final uri: " << uri << std::endl;
 		if (!readContent(uri, _body))
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		std::string extension = getExtension(uri);
@@ -252,7 +249,7 @@ private:
 			std::memset(env, 0, sizeof(env));
 			createEnv(env, request);
 			execve(strExec, argv, env);
-			std::perror("execve");
+			perrored("execve");
 			exit(EXIT_FAILURE);
 		}
 		_statusCode = STATUS_OK;
@@ -326,9 +323,7 @@ private:
 				 it != _indexPages.end(); it++) {
 				filepath = (*it)[0] == '/' ? findFinalUri(request) + (*it).substr(1)
 										   : findFinalUri(request) + *it;
-				std::cout << "filepath: " << filepath << std::endl;
 				if (isValidFile(filepath)) {
-					std::cout << "valid index file: " << *it << std::endl;
 					std::string indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
 					request.success.uri += indexFile;
 					request.location =
@@ -337,7 +332,6 @@ private:
 					buildPage(request);
 					return;
 				}
-				std::cout << "invalid index file: " << *it << std::endl;
 			}
 		}
 		if (_autoIndex) {

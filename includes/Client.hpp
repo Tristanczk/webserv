@@ -18,9 +18,10 @@ public:
 		std::string request = readRequest();
 		if (request.empty())
 			return RESPONSE_FAILURE;
-		std::cout << "=== REQUEST START ===" << std::endl;
-		std::cout << strtrim(request, "\r\n") << std::endl;
-		std::cout << "=== REQUEST END ===" << std::endl;
+		std::cout << YELLOW << "=== REQUEST START ===" << std::endl
+				  << strtrim(request, "\r\n") << std::endl
+				  << "=== REQUEST END ===" << std::endl
+				  << RESET;
 		if (_currentRequest == NULL)
 			_currentRequest = new Request(_associatedServers, _ip, _port);
 		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
@@ -87,9 +88,4 @@ private:
 	Response* _currentResponse;
 
 	std::string readRequest() { return fullRead(_fd); }
-
-public:
-	void printHostPort() {
-		std::cout << "Client host:port: " << getIpString(_ip) << ":" << ntohs(_port) << std::endl;
-	}
 };
