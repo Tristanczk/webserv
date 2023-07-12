@@ -448,6 +448,9 @@ private:
 		std::string html = "<tr>\n\
 					<td><a href=\"";
 		std::string name = static_cast<std::string>(entry->d_name);
+		if (name == ".") {
+			return "";
+		}
 		if (entry->d_type == DT_DIR) {
 			name += '/';
 		}
