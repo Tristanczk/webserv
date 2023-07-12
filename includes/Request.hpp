@@ -180,12 +180,12 @@ private:
 
 	void findMatchingServerAndLocation(const std::string& host) {
 		const size_t colon = host.find(':');
-		findBestMatch(colon == std::string::npos ? host : host.substr(0, colon));
+		findMatchingServer(colon == std::string::npos ? host : host.substr(0, colon));
 		findMatchingLocation(_uri);
 		_maxBodySize = _matchingServer->getBodySize();
 	}
 
-	void findBestMatch(const std::string& serverName) {
+	void findMatchingServer(const std::string& serverName) {
 		int bestMatch = -1;
 		VirtualServerMatch bestMatchLevel = VS_MATCH_NONE;
 		for (size_t i = 0; i < _associatedServers.size(); ++i) {
@@ -200,10 +200,9 @@ private:
 	}
 
 	void findMatchingLocation(const std::string& uri) {
-		if (_matchingServer == NULL || _matchingServer->getLocations().empty() || uri.empty()) {
-			return;
+		if (_matchingServer != NULL && !_matchingServer->getLocations().empty() && !uri.empty()) {
+			_matchingLocation = _matchingServer->findMatchingLocation(uri);
 		}
-		_matchingLocation = _matchingServer->findMatchingLocation(uri);
 	}
 
 	RequestParsingResult parsingProcessing() {

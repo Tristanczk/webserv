@@ -182,7 +182,6 @@ private:
 					  STATUS_MESSAGES.find(_statusCode)->second + "\r\n";
 	}
 
-	// TODO Kebab-Case maybe?
 	void buildHeader() {
 		_headers["date"] = getDate();
 		_headers["server"] = SERVER_VERSION;
@@ -303,9 +302,7 @@ private:
 		if (_rootDir[_rootDir.size() - 1] == '/') {
 			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 		}
-		if (uri[0] == '/') {
-			uri = uri.substr(1);
-		}
+		uri = uri.substr(1); // removed: if (uri[0] == '/')
 		if (location == NULL) {
 			return "." + _rootDir + "/" + uri;
 		}

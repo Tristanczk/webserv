@@ -35,7 +35,8 @@ public:
 		}
 		_currentResponse =
 			result.location
-				? new Response(result.location->getRootDir(), result.location->getUploadDir(),
+				? new Response(result.location->getRootDir(),
+							   result.location->getUploadDir(), // TODO Tristan please check,
 							   result.location->getAutoIndex(),
 							   result.virtualServer->getErrorPages(),
 							   result.location->getErrorPages(), result.location->getIndexPages(),
