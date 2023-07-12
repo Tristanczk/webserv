@@ -12,7 +12,6 @@ bool configFileError(const std::string& message) {
 	return false;
 }
 
-// TODO catch RegexError instead of generic exception where this function is called
 bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 	regex_t regex;
 	if (regcomp(&regex, regexStr, REG_EXTENDED) != 0) {
