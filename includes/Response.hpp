@@ -235,11 +235,27 @@ private:
 		std::strcpy(env[i] + key.size() + 1, value.c_str());
 	}
 
-	static char** createEnv(char** env, RequestParsingResult& request) {
-		std::vector<std::string> envec;
-		exportEnv(env, 0, "QUERY_STRING", request.success.query);
-		return env;
-	}
+static char** createEnv(char** env, const RequestParsingResult& request,
+						const char* strScript) {
+	std::vector<std::string> envec;
+	exportEnv(env, 0, "CONTENT_LENGTH", toString(request.success.body.size()));
+	std::map<std::string, std::string>::const_iterator it =
+		request.success.headers.find("content-type");
+	exportEnv(env, 1, "CONTENT_TYPE",
+				it == request.success.headers.end() ? DEFAULT_CONTENT_TYPE : it->second);
+	exportEnv(env, 2, "GATEWAY_INTERFACE", CGI_VERSION);
+	exportEnv(env, 3, "PATH_INFO", strScript); // TODO
+	exportEnv(env, 4, "QUERY_STRING", request.success.query);
+	exportEnv(env, 5, "REQUEST_METHOD",
+				request.success.method == GET	   ? "GET"
+				: request.success.method == POST ? "POST"
+												: "DELETE");
+	exportEnv(env, 6, "SCRIPT_NAME", strScript); // TODO
+	exportEnv(env, 7, "SERVER_PROTOCOL", HTTP_VERSION);
+	exportEnv(env, 8, "SERVER_SOFTWARE", SERVER_VERSION);
+	// TODO add HTTP_ headers
+	return env;
+}
 
 	void buildCgi(RequestParsingResult& request) {
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
@@ -259,7 +275,7 @@ private:
 			char* argv[] = {strExec, strScript, NULL};
 			char* env[CGI_ENV_SIZE];
 			std::memset(env, 0, sizeof(env));
-			createEnv(env, request);
+			createEnv(env, request, strScript);
 			execve(strExec, argv, env);
 			perrored("execve");
 			exit(EXIT_FAILURE);
