@@ -147,9 +147,7 @@ private:
 		_statusCode = STATUS_NO_CONTENT;
 	}
 
-	// TODO remove this function and use EPOLLOUT instead
 	bool pushStringToClient(int fd, std::string& line) {
-		// TODO tout ca me parait tres louche et potentiellement bloquant
 		std::cout << strtrim(line, "\r\n") << std::endl;
 		size_t sent = 0;
 		while (sent < line.size()) {

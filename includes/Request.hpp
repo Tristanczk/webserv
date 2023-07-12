@@ -136,7 +136,6 @@ private:
 		}
 		if (key.empty() || value.empty())
 			return STATUS_BAD_REQUEST;
-		// TODO handle duplicates
 		_headers[key] = value;
 		return STATUS_NONE;
 	}
@@ -149,8 +148,8 @@ private:
 		if (host == _headers.end())
 			return STATUS_BAD_REQUEST;
 		findMatchingServerAndLocation(host->second);
-		std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
 		if (_method == POST) {
+			std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
 			if (it == _headers.end())
 				return STATUS_LENGTH_REQUIRED;
 			const std::string contentLengthString = it->second;

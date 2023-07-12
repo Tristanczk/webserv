@@ -87,7 +87,7 @@ public:
 						close(clientFd);
 						_clients.erase(clientFd);
 					} else if (_eventList[i].events & EPOLLIN) {
-						status = client.handleRequests();
+						status = client.handleRequest();
 						if (status == RESPONSE_FAILURE) {
 							close(clientFd);
 							_clients.erase(clientFd);

@@ -14,7 +14,7 @@ public:
 			delete _currentResponse;
 	};
 
-	ResponseStatusEnum handleRequests() {
+	ResponseStatusEnum handleRequest() {
 		std::string request = readRequest();
 		if (request.empty())
 			return RESPONSE_FAILURE;
