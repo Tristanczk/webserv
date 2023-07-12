@@ -76,6 +76,7 @@ private:
 	std::string _uri;
 	std::string _query;
 	std::map<std::string, std::string> _headers;
+	std::vector<std::string> _cookies;
 	std::vector<unsigned char> _body;
 
 	void clear() {
@@ -90,6 +91,7 @@ private:
 		_uri.clear();
 		_query.clear();
 		_headers.clear();
+		_cookies.clear();
 		_body.clear();
 	}
 
@@ -153,6 +155,9 @@ private:
 		}
 		if (key.empty() || value.empty()) {
 			return STATUS_BAD_REQUEST;
+		}
+		if (key == "cookie") {
+			_cookies.push_back(value);
 		}
 		_headers[key] = value;
 		return STATUS_NONE;
@@ -237,6 +242,7 @@ private:
 		rpr.location = _matchingLocation;
 		rpr.success.method = _method;
 		rpr.success.headers = _headers;
+		rpr.success.cookies = _cookies;
 		rpr.success.body = _body;
 		rpr.success.uri = _uri;
 		rpr.success.query = _query;

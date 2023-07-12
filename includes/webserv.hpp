@@ -170,6 +170,7 @@ typedef struct RequestParsingSuccess {
 	std::string uri;
 	std::string query;
 	std::map<std::string, std::string> headers;
+	std::vector<std::string> cookies;
 	std::vector<unsigned char> body;
 } RequestParsingSuccess;
 
