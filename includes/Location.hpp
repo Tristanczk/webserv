@@ -80,6 +80,7 @@ public:
 		case DIRECTORY:
 			return comparePrefix(_uri, requestPath);
 		case REGEX:
+			std::cout << RED << _uri << " " << requestPath << RESET << std::endl;
 			return doesRegexMatch(_uri.c_str(), requestPath.c_str()) ? LOCATION_MATCH_REGEX
 																	 : LOCATION_MATCH_NONE;
 		case EXACT:

@@ -74,6 +74,7 @@ private:
 
 	RequestMethod _method;
 	std::string _uri;
+	std::string _query;
 	std::map<std::string, std::string> _headers;
 	std::vector<unsigned char> _body;
 
@@ -87,6 +88,7 @@ private:
 		_isInBody = false;
 		_method = NO_METHOD;
 		_uri.clear();
+		_query.clear();
 		_headers.clear();
 		_body.clear();
 	}
@@ -115,6 +117,11 @@ private:
 		}
 		if (version != HTTP_VERSION) {
 			return STATUS_HTTP_VERSION_NOT_SUPPORTED;
+		}
+		size_t queryIdx = _uri.find('?');
+		if (queryIdx != std::string::npos) {
+			_query = _uri.substr(queryIdx + 1);
+			_uri = _uri.substr(0, queryIdx);
 		}
 		findMatchingLocation(_uri);
 		return STATUS_NONE;
@@ -232,12 +239,7 @@ private:
 		rpr.success.headers = _headers;
 		rpr.success.body = _body;
 		rpr.success.uri = _uri;
-		rpr.success.query = "";
-		size_t queryIdx = rpr.success.uri.find('?');
-		if (queryIdx != std::string::npos) {
-			rpr.success.query = rpr.success.uri.substr(queryIdx + 1);
-			rpr.success.uri = rpr.success.uri.substr(0, queryIdx);
-		}
+		rpr.success.query = _query;
 		if (rpr.success.method == POST && rpr.success.query.empty()) {
 			std::map<std::string, std::string>::const_iterator it = _headers.find("content-type");
 			if (it != _headers.end() && it->second == "application/x-www-form-urlencoded") {

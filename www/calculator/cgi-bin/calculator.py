@@ -22,12 +22,6 @@ def get_answer(n1, op, n2):
         raise ValueError("Invalid operator.")
 
 
-def fill(index, name, value):
-    return index.replace(
-        f'name="{name}" value=""', f'name="{name}" value="{value}"'
-    )
-
-
 OPERATIONS = {"add": "+", "sub": "-", "mul": "*", "div": "/"}
 
 form = cgi.FieldStorage()
