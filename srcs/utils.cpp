@@ -153,6 +153,17 @@ bool startswith(const std::string& str, const std::string& start) {
 	return str.size() >= start.size() && !str.compare(0, start.size(), start);
 }
 
+std::string strjoin(const std::vector<std::string>& vec, const std::string& sep) {
+	std::string result;
+	for (std::vector<std::string>::const_iterator it = vec.begin(); it != vec.end(); ++it) {
+		if (it != vec.begin()) {
+			result += sep;
+		}
+		result += *it;
+	}
+	return result;
+}
+
 std::string strlower(const std::string& s) {
 	std::string l;
 	for (size_t i = 0; i < s.size(); ++i) {

@@ -226,6 +226,7 @@ void perrored(const char*);
 bool readContent(std::string&, std::string&);
 std::string removeDuplicateSlashes(const std::string&);
 bool startswith(const std::string&, const std::string&);
+std::string strjoin(const std::vector<std::string>& vec, const std::string& sep);
 std::string strlower(const std::string&);
 std::string strtrim(const std::string&, const std::string&);
 bool validateUri(const std::string&, const std::string& = "");

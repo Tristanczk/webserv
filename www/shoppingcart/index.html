@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Shopping Cart Example</title>
+	<script>
+		function addToCart(item) {
+			var xmlhttp = new XMLHttpRequest();
+			xmlhttp.open("GET", "/cgi-bin/shoppingcart.py?item=" + item + "&action=add", true);
+			xmlhttp.send();
+		}
+
+		function removeFromCart(item) {
+			var xmlhttp = new XMLHttpRequest();
+			xmlhttp.open("GET", "/cgi-bin/shoppingcart.py?item=" + item + "&action=remove", true);
+			xmlhttp.send();
+		}
+	</script>
+</head>
+
+<body>
+	<h1>Shopping Cart</h1>
+	<table>
+		<tr>
+			<th>Item</th>
+			<th>Add</th>
+			<th>Remove</th>
+		</tr>
+		<tr>
+			<td>Computer</td>
+			<td><button onclick="addToCart('computer')">+</button></td>
+			<td><button onclick="removeFromCart('computer')">-</button></td>
+		</tr>
+		<tr>
+			<td>Phone</td>
+			<td><button onclick="addToCart('phone')">+</button></td>
+			<td><button onclick="removeFromCart('phone')">-</button></td>
+		</tr>
+		<tr>
+			<td>Printer</td>
+			<td><button onclick="addToCart('printer')">+</button></td>
+			<td><button onclick="removeFromCart('printer')">-</button></td>
+		</tr>
+	</table>
+</body>
+
+</html>
