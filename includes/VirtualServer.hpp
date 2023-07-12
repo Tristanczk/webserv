@@ -9,7 +9,7 @@ public:
 		_address.sin_family = AF_INET;
 		_address.sin_port = htons(DEFAULT_PORT);
 		_address.sin_addr.s_addr = htonl(INADDR_ANY);
-		_rootDir = "./www/";
+		_rootDir = "/www";
 		_autoIndex = false;
 		_bodySize = DEFAULT_BODY_SIZE;
 		_return.first = -1;

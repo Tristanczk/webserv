@@ -163,7 +163,7 @@ private:
 	bool pushBodyChunkToClient(int fd) {
 		size_t toSend =
 			std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE));
-		size_t sent = send(fd, _body.c_str() + _bodyPos, toSend, MSG_NOSIGNAL);
+		int sent = send(fd, _body.c_str() + _bodyPos, toSend, MSG_NOSIGNAL);
 		if (sent < 0) {
 			perrored("send");
 			return false;

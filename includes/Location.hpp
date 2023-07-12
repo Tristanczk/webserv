@@ -86,6 +86,7 @@ public:
 		case EXACT:
 			return requestPath == _uri ? LOCATION_MATCH_EXACT : LOCATION_MATCH_NONE;
 		}
+		return LOCATION_MATCH_NONE;
 	}
 
 	LocationModifierEnum getModifier() const { return _modifier; }
