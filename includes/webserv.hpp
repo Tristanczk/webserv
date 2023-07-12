@@ -22,8 +22,8 @@
 #include <regex.h>
 #include <set>
 #include <sstream>
-#include <stdlib.h>
 #include <stdexcept>
+#include <stdlib.h>
 #include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
@@ -43,6 +43,8 @@
 #define RESPONSE_BUFFER_SIZE 1048576
 #define MAX_HEADER_SIZE 1048576
 #define CGI_ENV_SIZE 256
+
+#define DEBUG false
 
 #define CGI_VERSION "CGI/1.1"
 #define HTTP_VERSION "HTTP/1.1"

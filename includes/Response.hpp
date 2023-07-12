@@ -52,7 +52,9 @@ public:
 	ResponseStatusEnum pushResponseToClient(int fd) {
 		std::string line;
 		if (_bodyPos == 0) {
-			std::cout << GREEN << "=== RESPONSE START ===" << RESET << std::endl;
+			if (DEBUG) {
+				std::cout << GREEN << "=== RESPONSE START ===" << RESET << std::endl;
+			}
 			if (!pushStringToClient(fd, _statusLine)) {
 				return RESPONSE_FAILURE;
 			}
@@ -72,7 +74,9 @@ public:
 			return RESPONSE_FAILURE;
 		}
 		if (_bodyPos == _body.size()) {
-			std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
+			if (DEBUG) {
+				std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
+			}
 			return RESPONSE_SUCCESS;
 		}
 		return RESPONSE_PENDING;
@@ -147,7 +151,9 @@ private:
 	}
 
 	bool pushStringToClient(int fd, std::string& line) {
-		std::cout << GREEN << line << RESET;
+		if (DEBUG) {
+			std::cout << GREEN << line << RESET;
+		}
 		size_t totalSent = 0;
 		while (totalSent < line.size()) {
 			int curSent = send(fd, line.c_str() + totalSent, line.size() - totalSent, MSG_NOSIGNAL);
@@ -163,12 +169,14 @@ private:
 	bool pushBodyChunkToClient(int fd) {
 		size_t toSend =
 			std::min(_body.size() - _bodyPos, static_cast<size_t>(RESPONSE_BUFFER_SIZE));
-		int sent = send(fd, _body.c_str() + _bodyPos, toSend, MSG_NOSIGNAL);
+		ssize_t sent = send(fd, _body.c_str() + _bodyPos, toSend, MSG_NOSIGNAL);
 		if (sent < 0) {
 			perrored("send");
 			return false;
 		}
-		std::cout << GREEN << _body.substr(_bodyPos, sent) << RESET;
+		if (DEBUG) {
+			std::cout << GREEN << _body.substr(_bodyPos, sent) << RESET;
+		}
 		_bodyPos += sent;
 		return true;
 	}
