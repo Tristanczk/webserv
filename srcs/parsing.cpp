@@ -74,11 +74,8 @@ bool parseErrorPages(std::istringstream& iss, std::map<int, std::string>& errorP
 	}
 	for (std::vector<int>::iterator it = codeList.begin(); it != codeList.end(); it++) {
 		int codeValue = *it;
-		if (errorPages.find(codeValue) == errorPages.end()) {
+		if (errorPages.find(codeValue) == errorPages.end())
 			errorPages[codeValue] = code;
-			// we replace the value only if the key does not exist, else it is the
-			// first defined error page that is taken into account
-		}
 	}
 	return true;
 }

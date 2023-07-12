@@ -4,8 +4,6 @@
 
 class Request {
 public:
-	// we consider the first corresponding server to be the default one in case there is an error
-	// before finishing parsing the headers
 	Request(std::vector<VirtualServer*>& associatedServers, in_addr_t& ip, in_port_t& port)
 		: _associatedServers(associatedServers), _ip(ip), _port(port),
 		  _maxBodySize(DEFAULT_BODY_SIZE), _matchingServer(associatedServers[0]),

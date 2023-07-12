@@ -11,8 +11,6 @@ extern const std::map<std::string, std::string> MIME_TYPES;
 
 class Response {
 public:
-	// constructor in case of non matching location block, there won't be a locationUri, a redirect,
-	// allowedMethods or link to cgiExec as they are exclusively defined in the location block
 	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
 		: _bodyPos(0), _statusCode(STATUS_NONE), _rootDir(rootDir), _autoIndex(autoIndex),
@@ -76,8 +74,6 @@ public:
 			std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
 			return RESPONSE_SUCCESS;
 		}
-		std::cout << GREEN << "=== RESPONSE CHUNK (" << _bodyPos << " / " << _body.size()
-				  << ") ===" << RESET << std::endl;
 		return RESPONSE_PENDING;
 	}
 
@@ -231,7 +227,6 @@ private:
 		return env;
 	}
 
-	// TODO use EPOLLOUT to send the response
 	void buildCgi(RequestParsingResult& request) {
 		int pipefd[2];
 		syscall(pipe(pipefd), "pipe");

@@ -7,6 +7,7 @@ public:
 	Client() : _addressLen(sizeof(_address)), _currentRequest(NULL), _currentResponse(NULL) {
 		std::memset(&_address, 0, sizeof(_address));
 	};
+
 	~Client() {
 		if (_currentRequest != NULL)
 			delete _currentRequest;
@@ -15,7 +16,7 @@ public:
 	};
 
 	ResponseStatusEnum handleRequest() {
-		std::string request = readRequest();
+		std::string request = fullRead(_fd);
 		if (request.empty())
 			return RESPONSE_FAILURE;
 		std::cout << YELLOW << "=== REQUEST START ===" << std::endl
@@ -46,7 +47,8 @@ public:
 
 	ResponseStatusEnum pushResponse() {
 		ResponseStatusEnum status = _currentResponse->pushResponseToClient(_fd);
-		if (status == RESPONSE_SUCCESS) {
+		// TODO check why it used to be: if (status == RESPONSE_SUCCESS)
+		if (status != RESPONSE_PENDING) {
 			delete _currentResponse;
 			_currentResponse = NULL;
 		}
@@ -86,6 +88,4 @@ private:
 	std::queue<Response> _responseQueue;
 	Request* _currentRequest;
 	Response* _currentResponse;
-
-	std::string readRequest() { return fullRead(_fd); }
 };
