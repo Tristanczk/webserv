@@ -22,8 +22,8 @@
 #include <regex.h>
 #include <set>
 #include <sstream>
-#include <stdlib.h>
 #include <stdexcept>
+#include <stdlib.h>
 #include <string>
 #include <sys/epoll.h>
 #include <sys/socket.h>
@@ -168,6 +168,7 @@ typedef struct RequestParsingSuccess {
 	std::string uri;
 	std::string query;
 	std::map<std::string, std::string> headers;
+	std::vector<std::string> cookies;
 	std::vector<unsigned char> body;
 } RequestParsingSuccess;
 

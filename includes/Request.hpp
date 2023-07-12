@@ -75,6 +75,7 @@ private:
 	RequestMethod _method;
 	std::string _uri;
 	std::map<std::string, std::string> _headers;
+	std::vector<std::string> _cookies;
 	std::vector<unsigned char> _body;
 
 	void clear() {
@@ -88,6 +89,7 @@ private:
 		_method = NO_METHOD;
 		_uri.clear();
 		_headers.clear();
+		_cookies.clear();
 		_body.clear();
 	}
 
@@ -146,6 +148,9 @@ private:
 		}
 		if (key.empty() || value.empty()) {
 			return STATUS_BAD_REQUEST;
+		}
+		if (key == "cookie") {
+			_cookies.push_back(value);
 		}
 		_headers[key] = value;
 		return STATUS_NONE;
