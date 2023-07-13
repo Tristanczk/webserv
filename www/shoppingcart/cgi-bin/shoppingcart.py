@@ -9,87 +9,99 @@ import sys
 
 RESET = "\033[0m"
 RED = "\033[31m"
-DEBUG = True
+DEBUG = False
 
 
 def debug(s):
     if DEBUG:
         print(RED + str(s) + RESET, file=sys.stderr)
 
-debug("Starting shopping cart")
-request_body_size = int(os.environ["CONTENT_LENGTH"])
-request_body = sys.stdin.read(request_body_size)
-debug(f"Request body: {request_body}")
+COOKIE_SIZE = 6
+MIN_COOKIE = 10 ** (COOKIE_SIZE - 1)
+MAX_COOKIE = 10**COOKIE_SIZE - 1
+PATH = path = os.path.join(
+    os.path.dirname(
+        os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename)
+    ),
+    "shoppingcart.txt",
+)
 
 
-# COOKIE_SIZE = 6
-# MIN_COOKIE = 10 ** (COOKIE_SIZE - 1)
-# MAX_COOKIE = 10**COOKIE_SIZE - 1
-# PATH = path = os.path.join(
-#     os.path.dirname(
-#         os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename)
-#     ),
-#     "shoppingcart.txt",
-# )
+def get_random_uid(uids):
+    while True:
+        uid = random.randint(MIN_COOKIE, MAX_COOKIE)
+        if uid not in uids:
+            return uid
 
 
-# def get_random_uid(uids):
-#     while True:
-#         uid = random.randint(MIN_COOKIE, MAX_COOKIE)
-#         if uid not in uids:
-#             return uid
+def get_cookies():
+    cookies = dict()
+    for cookie in os.environ["HTTP_COOKIE"].split(";"):
+        debug(f"cookie: {cookie}")
+        if "=" in cookie:
+            key, value = cookie.split("=")
+            cookies[key] = value
+    return cookies
 
+def printHtml(computers, phones, printers, setcookies, database, cookieValue):
+    print("Content-Type: text/html")
+    if setcookies:
+        print(f"Set-Cookie: UID={cookieValue}")
+    print()
 
-# def get_cookies():
-#     cookies = dict()
-#     for cookie in os.environ["HTTP_COOKIE"].split(","):
-#         if "=" in cookie:
-#             key, value = cookie.split("=")
-#             cookies[key] = value
-#     return cookies
+    print("<!DOCTYPE html>")
+    print('<html lang="en">')
+    print("<head><title>Cart</title></head>")
+    print("<body>")
 
+    print(
+        f"<p>There are {computers} computers, {phones} phones and "
+        f"{printers} printers in your cart.</p>"
+    )
+    print("<a href='/'>Go back to shop.</a>")
 
-# cookies = get_cookies()
+    print("</body>")
+    print("</html>")
 
-# database = dict()
-# for line in open(path).read().splitlines():
-#     uid, computers, phones, printers = line.split(",", 1)
-#     database[uid] = (computers, phones, printers)
+setcookies = False
+cookies = get_cookies()
+debug(f"cookies: {cookies}")
+database = dict()
+for line in open(path).read().splitlines():
+    debug(line)
+    uid, computers, phones, printers = line.split(",", 3)
+    database[uid] = (int(computers), int(phones), int(printers))
 
+if "UID" in cookies:
+    uid = cookies["UID"]
+else:
+    uid = get_random_uid(database.keys())
+    database[uid] = (0, 0, 0)
+    setcookies = True
 
-# form = cgi.FieldStorage()
-# item = form.getvalue("item") or ""
-# cnt = form.getvalue("count") or "0"
-# try:
-#     cnt = int(cnt)
-# except ValueError:
-#     cnt = 0
+debug(f"UID: {uid}")
 
-# print(item, cnt, file=sys.stderr)
+form = cgi.FieldStorage()
+item = form.getvalue("item") or ""
+cnt = form.getvalue("count") or "0"
+try:
+    cnt = int(cnt)
+except ValueError:
+    cnt = 0
 
-# computers = phones = printers = 0
-# if item == "computer":
-#     computers += cnt
-# elif item == "phone":
-#     phones += cnt
-# elif item == "printer":
-#     printers += cnt
+debug(f"Item: {item}, count: {cnt}")
 
-# print("Content-Type: text/html")
-# # if set_cookie:
-# #     print(f"Set-Cookie: UID={get_random_uid(database.keys())}")
-# print()
+computers, phones, printers = database[uid]
+if item == "computer":
+    computers += cnt
+elif item == "phone":
+    phones += cnt
+elif item == "printer":
+    printers += cnt
+database[uid] = (computers, phones, printers)
 
-# print("<!DOCTYPE html>")
-# print('<html lang="en">')
-# print("<head><title>Cart</title></head>")
-# print("<body>")
+with open(path, "w") as f:
+    for uid, (computers, phones, printers) in database.items():
+        f.write(f"{uid},{computers},{phones},{printers}\n")
 
-# print(
-#     f"<p>There are {computers} computers, {phones} phones and "
-#     f"{printers} printers in your cart.</p>"
-# )
-# print("<a href='/'>Go back to shop.</a>")
-
-# print("</body>")
-# print("</html>")
+printHtml(computers, phones, printers, setcookies, database, uid)
