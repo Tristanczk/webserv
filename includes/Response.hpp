@@ -253,6 +253,7 @@ private:
 		exportEnv(env, 7, "SERVER_PROTOCOL", HTTP_VERSION);
 		exportEnv(env, 8, "SERVER_SOFTWARE", SERVER_VERSION);
 		exportEnv(env, 9, "HTTP_COOKIE", strjoin(request.success.cookies, ","));
+		exportEnv(env, 10, "REDIRECT_STATUS", "200");
 		// TODO add HTTP_ headers
 		return env;
 	}
