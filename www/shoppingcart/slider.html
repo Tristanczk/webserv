@@ -5,7 +5,18 @@
 	<title>Color Slider</title>
 	<script src="slider.js" defer></script>
 	<style>
-		button {
+		body {
+			transition: background-color 0.2s ease;
+		}
+
+		.container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 15px;
+		}
+
+		#saveColor {
 			font-family: Arial, sans-serif;
 			font-size: 1em;
 			padding: 10px 20px;
@@ -14,55 +25,57 @@
 			border: none;
 			border-radius: 5px;
 			cursor: pointer;
-			transition: background-color 0.3s ease;
+			transition: background-color 0.2s ease;
 		}
 
-		button:hover {
+		#saveColor:hover {
 			background-color: #45a049;
 		}
 
 		.slider {
-			-webkit-appearance: none;
-			width: 20%;
-			height: 20px;
+			appearance: none;
+			max-width: 20%;
+			height: 15px;
 			outline: none;
 			transition: opacity .2s;
 		}
 
-		.slider.red::-webkit-slider-thumb {
-			-webkit-appearance: none;
+		.slider::-webkit-slider-thumb {
 			appearance: none;
 			width: 25px;
 			height: 25px;
-			background: #f33;
 			cursor: pointer;
+		}
+
+		.slider.invisible::-webkit-slider-thumb {
+			display: none;
+		}
+
+		.slider.visible::-webkit-slider-thumb {
+			display: block;
+		}
+
+		.slider.red::-webkit-slider-thumb {
+			background: #f33;
 		}
 
 		.slider.green::-webkit-slider-thumb {
-			-webkit-appearance: none;
-			appearance: none;
-			width: 25px;
-			height: 25px;
 			background: #3f3;
-			cursor: pointer;
 		}
 
 		.slider.blue::-webkit-slider-thumb {
-			-webkit-appearance: none;
-			appearance: none;
-			width: 25px;
-			height: 25px;
 			background: #33f;
-			cursor: pointer;
 		}
 	</style>
 </head>
 
-<body id="body" style="background-color: rgb(42,42,42);">
-	<input type="range" min="0" max="255" value="42" id="red" class="slider red">
-	<input type="range" min="0" max="255" value="42" id="green" class="slider green">
-	<input type="range" min="0" max="255" value="42" id="blue" class="slider blue">
-	<button id="saveColor">Save Color</button>
+<body id="body" style="background-color: rgb(128,128,128);">
+	<div class="container">
+		<input type="range" min="0" max="255" value="128" id="red" class="slider invisible red">
+		<input type="range" min="0" max="255" value="128" id="green" class="slider invisible green">
+		<input type="range" min="0" max="255" value="128" id="blue" class="slider invisible blue">
+		<button id="saveColor">Save Color</button>
+	</div>
 </body>
 
 </html>

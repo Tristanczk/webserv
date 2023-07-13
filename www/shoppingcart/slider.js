@@ -53,14 +53,21 @@ window.onload = function () {
 	const color = getCookie('color');
 	if (color) {
 		body.style.backgroundColor = color;
-		const red = parseInt(color.substr(1, 2), 16);
-		const green = parseInt(color.substr(3, 2), 16);
-		const blue = parseInt(color.substr(5, 2), 16);
+		const red = parseInt(color.substring(1, 3), 16);
+		const green = parseInt(color.substring(3, 5), 16);
+		const blue = parseInt(color.substring(5, 7), 16);
 
 		console.log(red, green, blue);
 
 		document.getElementById('red').value = red;
 		document.getElementById('green').value = green;
 		document.getElementById('blue').value = blue;
+
+		document.getElementById('red').value = red;
+		document.getElementById('red').classList.add('visible');
+		document.getElementById('green').value = green;
+		document.getElementById('green').classList.add('visible');
+		document.getElementById('blue').value = blue;
+		document.getElementById('blue').classList.add('visible');
 	}
 }
