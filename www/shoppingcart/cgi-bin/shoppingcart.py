@@ -52,6 +52,7 @@ except ValueError:
 
 print(item, cnt, file=sys.stderr)
 
+computers = phones = printers = 0
 if item == "computer":
     computers += cnt
 elif item == "phone":
@@ -60,8 +61,8 @@ elif item == "printer":
     printers += cnt
 
 print("Content-Type: text/html")
-if set_cookie:
-    print(f"Set-Cookie: UID={get_random_uid(database.keys())}")
+# if set_cookie:
+#     print(f"Set-Cookie: UID={get_random_uid(database.keys())}")
 print()
 
 print("<!DOCTYPE html>")
