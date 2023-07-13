@@ -24,9 +24,5 @@ int main(int argc, char* argv[]) {
 	} catch (const SystemError& e) {
 		perrored(e.funcName);
 		return EXIT_FAILURE;
-	} catch (const std::exception& e) {
-		std::cerr << RED << "Server killed by unexpected exception: " << e.what() << RESET
-				  << std::endl;
-		return EXIT_FAILURE;
 	}
 }

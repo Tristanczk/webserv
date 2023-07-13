@@ -6,6 +6,7 @@ import sys
 
 # TODO remove lines in file if cookie expired
 # TODO add expiration date to cookie
+# TODO create database if it doesn't exist
 
 RESET = "\033[0m"
 RED = "\033[31m"
@@ -16,10 +17,11 @@ def debug(s):
     if DEBUG:
         print(RED + str(s) + RESET, file=sys.stderr)
 
+
 COOKIE_SIZE = 6
 MIN_COOKIE = 10 ** (COOKIE_SIZE - 1)
 MAX_COOKIE = 10**COOKIE_SIZE - 1
-PATH = path = os.path.join(
+PATH = os.path.join(
     os.path.dirname(
         os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename)
     ),
@@ -43,6 +45,7 @@ def get_cookies():
             cookies[key] = value
     return cookies
 
+
 def printHtml(computers, phones, printers, setcookies, database, cookieValue):
     print("Content-Type: text/html")
     if setcookies:
@@ -63,11 +66,12 @@ def printHtml(computers, phones, printers, setcookies, database, cookieValue):
     print("</body>")
     print("</html>")
 
+
 setcookies = False
 cookies = get_cookies()
 debug(f"cookies: {cookies}")
 database = dict()
-for line in open(path).read().splitlines():
+for line in open(PATH).read().splitlines():
     debug(line)
     uid, computers, phones, printers = line.split(",", 3)
     database[uid] = (int(computers), int(phones), int(printers))
@@ -100,7 +104,7 @@ elif item == "printer":
     printers += cnt
 database[uid] = (computers, phones, printers)
 
-with open(path, "w") as f:
+with open(PATH, "w") as f:
     for uid, (computers, phones, printers) in database.items():
         f.write(f"{uid},{computers},{phones},{printers}\n")
 
