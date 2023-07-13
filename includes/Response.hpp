@@ -330,6 +330,8 @@ private:
 		// a directory
 		Location* location = request.location;
 		std::string uri = request.success.uri;
+		if (DEBUG)
+			std::cout << RED << "request uri : " << uri << RESET << std::endl;
 		// to ensure that the final link will be well formated whether the user put a trailing
 		// slash at the end of the location and at the beginning of the uri or not
 		if (_rootDir[_rootDir.size() - 1] == '/') {
