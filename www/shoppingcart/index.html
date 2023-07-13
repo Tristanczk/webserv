@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Shop</title>
+</head>
+
+<body>
+	<h1>Shop</h1>
+
+	<form action="/cgi-bin/shoppingcart.py" method="GET">
+		<label for="item">Item</label>
+		<select name="item" required>
+			<option value="" selected disabled hidden></option>
+			<option value="computer">Computer</option>
+			<option value="phone">Phone</option>
+			<option value="printer">Printer</option>
+		</select>
+		<label for="count">Count</label>
+		<input type="number" name="count" value="0" style="width:80px;" required>
+		<input type="submit" value="update cart">
+	</form>
+</body>
+
+</html>

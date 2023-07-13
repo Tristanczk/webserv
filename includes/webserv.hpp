@@ -226,8 +226,10 @@ void perrored(const char*);
 bool readContent(std::string&, std::string&);
 std::string removeDuplicateSlashes(const std::string&);
 bool startswith(const std::string&, const std::string&);
+std::string strjoin(const std::vector<std::string>&, const std::string&);
 std::string strlower(const std::string&);
 std::string strtrim(const std::string&, const std::string&);
+std::string toString(RequestMethod);
 bool validateUri(const std::string&, const std::string& = "");
 std::string vecToString(const std::vector<unsigned char>&);
 
@@ -236,8 +238,7 @@ void syscall(int, const char*);
 void syscallEpoll(int, int, int, int, const char*);
 
 bool parseAutoIndex(std::istringstream&, bool&);
-bool parseDirectory(std::istringstream& iss, std::string& root, const std::string& block,
-					const std::string& keyword);
+bool parseDirectory(std::istringstream&, std::string&, const std::string&, const std::string&);
 bool parseErrorCode(std::string&, std::vector<int>&);
 bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
 bool parseIndex(std::istringstream&, std::vector<std::string>&);

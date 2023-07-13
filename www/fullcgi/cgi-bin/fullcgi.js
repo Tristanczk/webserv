@@ -1,5 +1,3 @@
-const querystring = require('querystring');
-
 let html = `Content-Type: text/html
 
 <!DOCTYPE html>

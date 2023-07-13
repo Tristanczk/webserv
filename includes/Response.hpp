@@ -35,10 +35,10 @@ public:
 	void buildResponse(RequestParsingResult& request) {
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			buildErrorPage(request, request.statusCode);
-		} else if (!_allowedMethods[request.success.method]) {
-			buildErrorPage(request, STATUS_METHOD_NOT_ALLOWED);
 		} else if (!_cgiExec.empty()) {
 			buildCgi(request);
+		} else if (!_allowedMethods[request.success.method]) {
+			buildErrorPage(request, STATUS_METHOD_NOT_ALLOWED);
 		} else if (_return.first != -1) {
 			buildRedirect(request);
 		} else {
@@ -193,11 +193,12 @@ private:
 		if (_headers.find("content-type") == _headers.end()) {
 			_headers["content-type"] = DEFAULT_CONTENT_TYPE;
 		}
-		//_headers["connection"] = "close"; TODO
+		_headers["connection"] = "close"; // TODO keep-alive?
 	}
 
 	void buildErrorPage(RequestParsingResult& request, StatusCode statusCode) {
 		_statusCode = statusCode;
+		std::cout << RED << _statusCode << " for uri " << request.success.uri << RESET << std::endl;
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
 		std::string errorPageUri;
 		if (it != _errorPages.end()) {
@@ -235,27 +236,26 @@ private:
 		std::strcpy(env[i] + key.size() + 1, value.c_str());
 	}
 
-static char** createEnv(char** env, const RequestParsingResult& request,
-						const char* strScript) {
-	std::vector<std::string> envec;
-	exportEnv(env, 0, "CONTENT_LENGTH", toString(request.success.body.size()));
-	std::map<std::string, std::string>::const_iterator it =
-		request.success.headers.find("content-type");
-	exportEnv(env, 1, "CONTENT_TYPE",
-				it == request.success.headers.end() ? DEFAULT_CONTENT_TYPE : it->second);
-	exportEnv(env, 2, "GATEWAY_INTERFACE", CGI_VERSION);
-	exportEnv(env, 3, "PATH_INFO", strScript); // TODO
-	exportEnv(env, 4, "QUERY_STRING", request.success.query);
-	exportEnv(env, 5, "REQUEST_METHOD",
-				request.success.method == GET	   ? "GET"
-				: request.success.method == POST ? "POST"
-												: "DELETE");
-	exportEnv(env, 6, "SCRIPT_NAME", strScript); // TODO
-	exportEnv(env, 7, "SERVER_PROTOCOL", HTTP_VERSION);
-	exportEnv(env, 8, "SERVER_SOFTWARE", SERVER_VERSION);
-	// TODO add HTTP_ headers
-	return env;
-}
+	// TODO C++ way with vector of string
+	static char** createEnv(char** env, const RequestParsingResult& request,
+							const char* strScript) {
+		std::vector<std::string> envec;
+		exportEnv(env, 0, "CONTENT_LENGTH", toString(request.success.body.size()));
+		std::map<std::string, std::string>::const_iterator it =
+			request.success.headers.find("content-type");
+		exportEnv(env, 1, "CONTENT_TYPE",
+				  it == request.success.headers.end() ? DEFAULT_CONTENT_TYPE : it->second);
+		exportEnv(env, 2, "GATEWAY_INTERFACE", CGI_VERSION);
+		exportEnv(env, 3, "PATH_INFO", strScript); // TODO
+		exportEnv(env, 4, "QUERY_STRING", request.success.query);
+		exportEnv(env, 5, "REQUEST_METHOD", toString(request.success.method));
+		exportEnv(env, 6, "SCRIPT_NAME", strScript); // TODO
+		exportEnv(env, 7, "SERVER_PROTOCOL", HTTP_VERSION);
+		exportEnv(env, 8, "SERVER_SOFTWARE", SERVER_VERSION);
+		exportEnv(env, 9, "HTTP_COOKIE", strjoin(request.success.cookies, ","));
+		// TODO add HTTP_ headers
+		return env;
+	}
 
 	void buildCgi(RequestParsingResult& request) {
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
@@ -264,14 +264,19 @@ static char** createEnv(char** env, const RequestParsingResult& request,
 		if (access(strScript, F_OK) != 0) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
-		int pipefd[2];
-		syscall(pipe(pipefd), "pipe");
+		int childToParent[2];
+		syscall(pipe(childToParent), "pipe");
+		int parentToChild[2];
+		syscall(pipe(parentToChild), "pipe");
 		pid_t pid = fork();
 		syscall(pid, "fork");
 		if (pid == 0) {
-			close(pipefd[0]);
-			dup2(pipefd[1], STDOUT_FILENO);
-			close(pipefd[1]);
+			close(parentToChild[1]);
+			dup2(parentToChild[0], STDIN_FILENO);
+			close(parentToChild[0]);
+			close(childToParent[0]);
+			dup2(childToParent[1], STDOUT_FILENO);
+			close(childToParent[1]);
 			char* argv[] = {strExec, strScript, NULL};
 			char* env[CGI_ENV_SIZE];
 			std::memset(env, 0, sizeof(env));
@@ -281,9 +286,13 @@ static char** createEnv(char** env, const RequestParsingResult& request,
 			exit(EXIT_FAILURE);
 		}
 		_statusCode = STATUS_OK;
-		close(pipefd[1]);
-		std::string response = fullRead(pipefd[0]);
-		close(pipefd[0]);
+		close(parentToChild[0]);
+		write(parentToChild[1], vecToString(request.success.body).c_str(),
+			  request.success.body.size());
+		close(parentToChild[1]);
+		close(childToParent[1]);
+		std::string response = fullRead(childToParent[0]);
+		close(childToParent[0]);
 		int wstatus;
 		wait(&wstatus);
 		std::istringstream iss(response);
@@ -325,7 +334,7 @@ static char** createEnv(char** env, const RequestParsingResult& request,
 		if (_rootDir[_rootDir.size() - 1] == '/') {
 			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 		}
-		uri = uri.substr(1); // removed: if (uri[0] == '/')
+		uri = uri.substr(1);
 		if (location == NULL) {
 			return "." + _rootDir + "/" + uri;
 		}
@@ -380,55 +389,53 @@ static char** createEnv(char** env, const RequestParsingResult& request,
 
 	void buildAutoIndexPage(RequestParsingResult& request) {
 		DIR* dir = opendir(findFinalUri(request).c_str());
-		if (dir == NULL) {
+		if (!dir) {
 			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
 		}
-		_body = "<head>\n"
-				"    <title>Index of " +
-				request.success.uri +
-				"</title>\n"
-				"    <style>\n"
-				"        body {\n"
-				"            font-family: Arial, sans-serif;\n"
-				"            margin: 20px;\n"
-				"        }\n"
-				"\n"
-				"        table {\n"
-				"            width: 100%;\n"
-				"            border-collapse: collapse;\n"
-				"        }\n"
-				"\n"
-				"        th,\n"
-				"        td {\n"
-				"            padding: 8px;\n"
-				"            text-align: left;\n"
-				"            border-bottom: 1px solid #ddd;\n"
-				"        }\n"
-				"\n"
-				"        th {\n"
-				"            background-color: #f2f2f2;\n"
-				"        }\n"
-				"    </style>\n"
-				"</head>";
-		_body += "<body>\n\
-				<h1>Index of " +
-				 request.success.uri + "</h1>\n\
-				<table>\n\
-				<thead>\n\
-				<tr>\n\
-				<th>Name</th>\n\
-				</tr>\n\
-				</thead >\n\
-				<tbody>\n ";
-		struct dirent* entry;
-		while ((entry = readdir(dir)) != NULL) {
-			_body += getAutoIndexEntry(entry);
-		}
-		_body += "</tbody>\n\
-				</table>\n\
-				</body>\n\
-				</html>\n";
 		_headers["content-type"] = "text/html";
+
+		_body += "<!DOCTYPE html>\n";
+		_body += "<html>\n";
+		_body += "<head>\n";
+		_body += "<title>" + request.success.uri + "</title>\n";
+		_body += "<meta charset=\"utf-8\">\n";
+		_body += "<style>\n";
+		_body += "body { font-family: Arial, sans-serif; background-color: #f5f5f5; color: #333; "
+				 "margin: 40px; }\n";
+		_body +=
+			"h1 { border-bottom: 1px solid #eee; padding-bottom: 0.3em; margin-bottom: 20px; }\n";
+		_body += "li { margin: 10px 0; font-size: 1.2em; }\n";
+		_body += "ul { list-style: none; padding-left: 0; }\n";
+		_body += "a { color: #3498db; text-decoration: none; }\n";
+		_body += "a:hover { color: #2980b9; }\n";
+		_body += "div { width: 80%; margin: auto; max-width: 800px; }\n";
+		_body += "</style>\n";
+		_body += "</head>\n";
+		_body += "<body>\n";
+		_body += "<div>\n";
+		_body += "<h1>Index of " + request.success.uri + "</h1>\n";
+		_body += "<ul>\n";
+
+		struct dirent* entry;
+		while ((entry = readdir(dir))) {
+			if (std::strcmp(entry->d_name, ".") == 0) {
+				continue;
+			}
+			bool isParent = std::strcmp(entry->d_name, "..") == 0;
+			if (isParent && request.success.uri == "/") {
+				continue;
+			}
+			std::string name =
+				isParent ? "↩" : std::string(entry->d_name) + (entry->d_type == DT_DIR ? "/" : "");
+			std::string link =
+				request.success.uri + (request.success.uri == "/" ? "" : "/") + entry->d_name;
+			_body += "<li><a href=\"" + link + "\">" + name + "</a></li>\n";
+		}
+
+		_body += "</ul>\n";
+		_body += "</div>\n";
+		_body += "</body>\n";
+		_body += "</html>\n";
 	}
 
 	void reinitResponseVariables(RequestParsingResult& request) {
@@ -458,23 +465,5 @@ static char** createEnv(char** env, const RequestParsingResult& request,
 			}
 			_cgiExec = location->getCgiExec();
 		}
-	}
-
-	std::string getAutoIndexEntry(struct dirent* entry) {
-		std::string html = "<tr>\n\
-					<td><a href=\"";
-		std::string name = static_cast<std::string>(entry->d_name);
-		if (name == ".") {
-			return "";
-		}
-		if (entry->d_type == DT_DIR) {
-			name += '/';
-		}
-		html += name;
-		html += "\">";
-		html += name;
-		html += "</a></td>\n\
-					</tr>\n";
-		return html;
 	}
 };

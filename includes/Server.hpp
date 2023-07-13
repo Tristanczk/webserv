@@ -63,6 +63,11 @@ public:
 		return checkDuplicateServers();
 	}
 
+	void removeClient(int clientFd) {
+		close(clientFd);
+		_clients.erase(clientFd);
+	}
+
 	void loop() {
 		while (run) {
 			_numFds = epoll_wait(_epollFd, _eventList, MAX_EVENTS, -1);
@@ -93,25 +98,18 @@ public:
 					Client& client = _clients[clientFd];
 					ResponseStatusEnum status;
 					if (_eventList[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
-						close(clientFd);
-						_clients.erase(clientFd);
+						removeClient(clientFd);
 					} else if (_eventList[i].events & EPOLLIN) {
 						status = client.handleRequest();
 						if (status == RESPONSE_FAILURE) {
-							close(clientFd);
-							_clients.erase(clientFd);
+							removeClient(clientFd);
 						} else if (status == RESPONSE_SUCCESS) {
 							syscallEpoll(_epollFd, EPOLL_CTL_MOD, clientFd, EPOLLOUT | EPOLLRDHUP,
 										 "EPOLL_CTL_MOD");
 						}
 					} else if (_eventList[i].events & EPOLLOUT) {
-						status = client.pushResponse();
-						if (status == RESPONSE_FAILURE) {
-							close(clientFd);
-							_clients.erase(clientFd);
-						} else if (status == RESPONSE_SUCCESS) {
-							syscallEpoll(_epollFd, EPOLL_CTL_MOD, clientFd, EPOLLIN | EPOLLRDHUP,
-										 "EPOLL_CTL_MOD");
+						if (client.pushResponse() != RESPONSE_PENDING) {
+							removeClient(clientFd);
 						}
 					}
 				}

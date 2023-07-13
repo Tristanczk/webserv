@@ -153,6 +153,17 @@ bool startswith(const std::string& str, const std::string& start) {
 	return str.size() >= start.size() && !str.compare(0, start.size(), start);
 }
 
+std::string strjoin(const std::vector<std::string>& vec, const std::string& sep) {
+	std::string result;
+	for (std::vector<std::string>::const_iterator it = vec.begin(); it != vec.end(); ++it) {
+		if (it != vec.begin()) {
+			result += sep;
+		}
+		result += *it;
+	}
+	return result;
+}
+
 std::string strlower(const std::string& s) {
 	std::string l;
 	for (size_t i = 0; i < s.size(); ++i) {
@@ -171,6 +182,10 @@ std::string strtrim(const std::string& s, const std::string& remove) {
 	pos = result.find_last_not_of(remove);
 	result.erase(pos + 1);
 	return result;
+}
+
+std::string toString(RequestMethod method) {
+	return method == GET ? "GET" : method == POST ? "POST" : "DELETE";
 }
 
 bool validateUri(const std::string& uri, const std::string& keyword) {
