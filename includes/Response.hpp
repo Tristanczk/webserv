@@ -236,6 +236,7 @@ private:
 		std::strcpy(env[i] + key.size() + 1, value.c_str());
 	}
 
+	// TODO C++ way with vector of string
 	static char** createEnv(char** env, const RequestParsingResult& request,
 							const char* strScript) {
 		std::vector<std::string> envec;

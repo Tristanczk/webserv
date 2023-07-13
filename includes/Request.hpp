@@ -195,6 +195,7 @@ private:
 
 	void findMatchingServerAndLocation(const std::string& host) {
 		const size_t colon = host.find(':');
+		// TODO Is it normal to ignore the port number?
 		findMatchingServer(colon == std::string::npos ? host : host.substr(0, colon));
 		findMatchingLocation(_uri);
 		_maxBodySize = _matchingServer->getBodySize();
