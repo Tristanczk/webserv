@@ -62,10 +62,13 @@ window.onload = function () {
 		console.log(red, green, blue);
 
 		document.getElementById('red').value = red;
+		document.getElementById('red').classList.remove('invisible');
 		document.getElementById('red').classList.add('visible');
 		document.getElementById('green').value = green;
+		document.getElementById('green').classList.remove('invisible');
 		document.getElementById('green').classList.add('visible');
 		document.getElementById('blue').value = blue;
+		document.getElementById('blue').classList.remove('invisible');
 		document.getElementById('blue').classList.add('visible');
 	}
 }
