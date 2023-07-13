@@ -6,3 +6,4 @@ webtest
 test-cgi.cpp
 test.cpp
 __pycache__
+ubuntu_cgi_tester
