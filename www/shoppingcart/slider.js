@@ -60,10 +60,6 @@ window.onload = function () {
 		console.log(red, green, blue);
 
 		document.getElementById('red').value = red;
-		document.getElementById('green').value = green;
-		document.getElementById('blue').value = blue;
-
-		document.getElementById('red').value = red;
 		document.getElementById('red').classList.add('visible');
 		document.getElementById('green').value = green;
 		document.getElementById('green').classList.add('visible');
