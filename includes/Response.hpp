@@ -193,7 +193,7 @@ private:
 		if (_headers.find("content-type") == _headers.end()) {
 			_headers["content-type"] = DEFAULT_CONTENT_TYPE;
 		}
-		//_headers["connection"] = "close"; TODO
+		_headers["connection"] = "close"; // TODO keep-alive?
 	}
 
 	void buildErrorPage(RequestParsingResult& request, StatusCode statusCode) {
