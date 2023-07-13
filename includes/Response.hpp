@@ -264,6 +264,8 @@ private:
 		char* strScript = const_cast<char*>(finalUri.c_str());
 		if (access(strScript, F_OK) != 0) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
+		} else if (_autoIndex && isDirectory(strScript)) {
+			return buildAutoIndexPage(request);
 		}
 		int childToParent[2];
 		syscall(pipe(childToParent), "pipe");
@@ -284,14 +286,19 @@ private:
 			createEnv(env, request, strScript);
 			execve(strExec, argv, env);
 			perrored("execve");
+			for (size_t i = 0; i < CGI_ENV_SIZE; ++i) {
+				if (env[i]) {
+					delete env[i];
+				}
+			}
 			exit(EXIT_FAILURE);
 		}
 		_statusCode = STATUS_OK;
 		close(parentToChild[0]);
+		close(childToParent[1]);
 		write(parentToChild[1], vecToString(request.success.body).c_str(),
 			  request.success.body.size());
 		close(parentToChild[1]);
-		close(childToParent[1]);
 		std::string response = fullRead(childToParent[0]);
 		close(childToParent[0]);
 		int wstatus;
@@ -321,6 +328,8 @@ private:
 		_body = buffer.str();
 		const int exitCode = WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
 		if (exitCode != 0) {
+			std::cout << RED << strExec << ' ' << strScript << " failed with code " << exitCode
+					  << '.' << std::endl;
 			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -338,20 +347,17 @@ private:
 		if (_rootDir[_rootDir.size() - 1] == '/') {
 			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 		}
-		uri = uri.substr(1);
 		if (location == NULL) {
 			return "." + _rootDir + "/" + uri;
 		}
 		LocationModifierEnum modifier = location->getModifier();
-		std::cout << RED;
-		std::cout << "_rootDir: " << _rootDir << std::endl;
-		std::cout << "uri: " << uri << std::endl;
-		std::cout << "_locationUri: " << _locationUri << std::endl;
-		std::cout << RESET;
+		std::cout << RED << "_rootDir: " << _rootDir << RESET << '\n';
+		std::cout << RED << "uri: " << uri << RESET << '\n';
+		std::cout << RED << "_locationUri: " << _locationUri << RESET << '\n';
 		if (modifier == DIRECTORY) {
-			return "." + _rootDir + "/" + uri.substr(_locationUri.size() - 1);
+			return "." + _rootDir + uri.substr(_locationUri.size() - 1);
 		} else if (modifier == REGEX) {
-			return "." + _rootDir + "/" + uri;
+			return "." + _rootDir + uri;
 		} else {
 			return "." + _rootDir + "/" + getBasename(uri);
 		}
@@ -440,6 +446,7 @@ private:
 				request.success.uri + (request.success.uri == "/" ? "" : "/") + entry->d_name;
 			_body += "<li><a href=\"" + link + "\">" + name + "</a></li>\n";
 		}
+		closedir(dir);
 
 		_body += "</ul>\n";
 		_body += "</div>\n";

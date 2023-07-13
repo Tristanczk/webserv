@@ -50,7 +50,9 @@ function getCookie(name) {
 }
 
 window.onload = function () {
-	const color = getCookie('color');
+	let color = getCookie('color');
+	if (!color || color.length != 7)
+		color = "#808080";
 	if (color) {
 		body.style.backgroundColor = color;
 		const red = parseInt(color.substring(1, 3), 16);
