@@ -6,7 +6,7 @@
 	<script src="slider.js" defer></script>
 	<style>
 		body {
-			transition: background-color 0.3s ease;
+			transition: background-color 0.2s ease;
 		}
 
 		.container {
@@ -37,7 +37,6 @@
 			max-width: 20%;
 			height: 15px;
 			outline: none;
-			transition: opacity .2s;
 		}
 
 		.slider::-webkit-slider-thumb {
@@ -45,13 +44,6 @@
 			width: 25px;
 			height: 25px;
 			cursor: pointer;
-		}
-
-		.slider.invisible::-webkit-slider-thumb {
-			display: none;
-		}
-
-		.slider.visible::-webkit-slider-thumb {
 			display: block;
 		}
 
@@ -71,9 +63,9 @@
 
 <body id="body" style="background-color: rgb(128,128,128);">
 	<div class="container">
-		<input type="range" min="0" max="255" value="128" id="red" class="slider invisible red">
-		<input type="range" min="0" max="255" value="128" id="green" class="slider invisible green">
-		<input type="range" min="0" max="255" value="128" id="blue" class="slider invisible blue">
+		<input type="range" min="0" max="255" value="128" id="red" class="slider red">
+		<input type="range" min="0" max="255" value="128" id="green" class="slider green">
+		<input type="range" min="0" max="255" value="128" id="blue" class="slider blue">
 		<button id="saveColor">Save Color</button>
 	</div>
 </body>

@@ -351,9 +351,6 @@ private:
 			return "." + _rootDir + "/" + uri;
 		}
 		LocationModifierEnum modifier = location->getModifier();
-		std::cout << RED << "_rootDir: " << _rootDir << RESET << '\n';
-		std::cout << RED << "uri: " << uri << RESET << '\n';
-		std::cout << RED << "_locationUri: " << _locationUri << RESET << '\n';
 		if (modifier == DIRECTORY) {
 			return "." + _rootDir + uri.substr(_locationUri.size() - 1);
 		} else if (modifier == REGEX) {

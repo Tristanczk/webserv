@@ -51,8 +51,11 @@ function getCookie(name) {
 
 window.onload = function () {
 	let color = getCookie('color');
-	if (!color || color.length != 7)
+	let hexColorPattern = /^#[0-9A-Fa-f]{6}$/;
+	if (!color || !hexColorPattern.test(color)) {
 		color = "#808080";
+	}
+
 	if (color) {
 		body.style.backgroundColor = color;
 		const red = parseInt(color.substring(1, 3), 16);
@@ -61,14 +64,22 @@ window.onload = function () {
 
 		console.log(red, green, blue);
 
-		document.getElementById('red').value = red;
-		document.getElementById('red').classList.remove('invisible');
-		document.getElementById('red').classList.add('visible');
-		document.getElementById('green').value = green;
-		document.getElementById('green').classList.remove('invisible');
-		document.getElementById('green').classList.add('visible');
-		document.getElementById('blue').value = blue;
-		document.getElementById('blue').classList.remove('invisible');
-		document.getElementById('blue').classList.add('visible');
+		const duration = 200;
+		const start = performance.now();
+
+		const startRed = parseInt(document.getElementById('red').value);
+		const startGreen = parseInt(document.getElementById('green').value);
+		const startBlue = parseInt(document.getElementById('blue').value);
+
+		requestAnimationFrame(function animate(time) {
+			let timeFraction = (time - start) / duration;
+			if (timeFraction > 1) timeFraction = 1;
+
+			document.getElementById('red').value = startRed + (red - startRed) * timeFraction;
+			document.getElementById('green').value = startGreen + (green - startGreen) * timeFraction;
+			document.getElementById('blue').value = startBlue + (blue - startBlue) * timeFraction;
+
+			if (timeFraction < 1) requestAnimationFrame(animate);
+		});
 	}
 }
