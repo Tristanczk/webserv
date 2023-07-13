@@ -2,9 +2,6 @@
 
 #include "../includes/webserv.hpp"
 
-#include <dirent.h>
-#include <sys/stat.h>
-
 #define RESET "\033[0m"
 #define BOLDBLUE "\033[1m\033[34m"
 #define RED "\033[31m"
