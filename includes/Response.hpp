@@ -388,55 +388,45 @@ private:
 
 	void buildAutoIndexPage(RequestParsingResult& request) {
 		DIR* dir = opendir(findFinalUri(request).c_str());
-		if (dir == NULL) {
+		if (!dir) {
 			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
 		}
-		_body = "<head>\n"
-				"    <title>Index of " +
-				request.success.uri +
-				"</title>\n"
-				"    <style>\n"
-				"        body {\n"
-				"            font-family: Arial, sans-serif;\n"
-				"            margin: 20px;\n"
-				"        }\n"
-				"\n"
-				"        table {\n"
-				"            width: 100%;\n"
-				"            border-collapse: collapse;\n"
-				"        }\n"
-				"\n"
-				"        th,\n"
-				"        td {\n"
-				"            padding: 8px;\n"
-				"            text-align: left;\n"
-				"            border-bottom: 1px solid #ddd;\n"
-				"        }\n"
-				"\n"
-				"        th {\n"
-				"            background-color: #f2f2f2;\n"
-				"        }\n"
-				"    </style>\n"
-				"</head>";
-		_body += "<body>\n\
-				<h1>Index of " +
-				 request.success.uri + "</h1>\n\
-				<table>\n\
-				<thead>\n\
-				<tr>\n\
-				<th>Name</th>\n\
-				</tr>\n\
-				</thead >\n\
-				<tbody>\n ";
-		struct dirent* entry;
-		while ((entry = readdir(dir)) != NULL) {
-			_body += getAutoIndexEntry(entry);
-		}
-		_body += "</tbody>\n\
-				</table>\n\
-				</body>\n\
-				</html>\n";
 		_headers["content-type"] = "text/html";
+
+		_body += "<!DOCTYPE html>\n";
+		_body += "<html>\n";
+		_body += "<head>\n";
+		_body += "<title>Autoindex</title>\n";
+		_body += "<style>\n";
+		_body += "body { font-family: Arial, sans-serif; background-color: #f5f5f5; color: #333; "
+				 "margin: 40px; }\n";
+		_body +=
+			"h1 { border-bottom: 1px solid #eee; padding-bottom: 0.3em; margin-bottom: 20px; }\n";
+		_body += "li { margin: 10px 0; }\n";
+		_body += "ul { list-style: none; padding-left: 0; }\n";
+		_body += "a { color: #3498db; text-decoration: none; }\n";
+		_body += "a:hover { color: #2980b9; }\n";
+		_body += "div { width: 80%; margin: auto; max-width: 800px; }\n";
+		_body += "</style>\n";
+		_body += "</head>\n";
+		_body += "<body>\n";
+		_body += "<div>\n";
+		_body += "<h1>Index of " + request.success.uri + "</h1>\n";
+		_body += "<ul>\n";
+
+		struct dirent* entry;
+		while ((entry = readdir(dir))) {
+			if (std::strcmp(entry->d_name, ".") == 0) {
+				continue;
+			}
+			_body += "<li><a href=\"" + request.success.uri + "/" + entry->d_name + "\">" +
+					 entry->d_name + (entry->d_type == DT_DIR ? "/" : "") + "</a></li>\n";
+		}
+
+		_body += "</ul>\n";
+		_body += "</div>\n";
+		_body += "</body>\n";
+		_body += "</html>\n";
 	}
 
 	void reinitResponseVariables(RequestParsingResult& request) {
@@ -466,23 +456,5 @@ private:
 			}
 			_cgiExec = location->getCgiExec();
 		}
-	}
-
-	std::string getAutoIndexEntry(struct dirent* entry) {
-		std::string html = "<tr>\n\
-					<td><a href=\"";
-		std::string name = static_cast<std::string>(entry->d_name);
-		if (name == ".") {
-			return "";
-		}
-		if (entry->d_type == DT_DIR) {
-			name += '/';
-		}
-		html += name;
-		html += "\">";
-		html += name;
-		html += "</a></td>\n\
-					</tr>\n";
-		return html;
 	}
 };
