@@ -270,7 +270,7 @@ private:
 		pid_t pid = fork();
 		syscall(pid, "fork");
 		if (pid == 0) {
-			close(parentToChild[1]); // Close the write end of the POST data pipe
+			close(parentToChild[1]);
 			dup2(parentToChild[0], STDIN_FILENO);
 			close(parentToChild[0]);
 			close(childToParent[0]);
@@ -333,7 +333,7 @@ private:
 		if (_rootDir[_rootDir.size() - 1] == '/') {
 			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
 		}
-		uri = uri.substr(1); // removed: if (uri[0] == '/')
+		uri = uri.substr(1);
 		if (location == NULL) {
 			return "." + _rootDir + "/" + uri;
 		}
@@ -396,13 +396,14 @@ private:
 		_body += "<!DOCTYPE html>\n";
 		_body += "<html>\n";
 		_body += "<head>\n";
-		_body += "<title>Autoindex</title>\n";
+		_body += "<title>" + request.success.uri + "</title>\n";
+		_body += "<meta charset=\"utf-8\">\n";
 		_body += "<style>\n";
 		_body += "body { font-family: Arial, sans-serif; background-color: #f5f5f5; color: #333; "
 				 "margin: 40px; }\n";
 		_body +=
 			"h1 { border-bottom: 1px solid #eee; padding-bottom: 0.3em; margin-bottom: 20px; }\n";
-		_body += "li { margin: 10px 0; }\n";
+		_body += "li { margin: 10px 0; font-size: 1.2em; }\n";
 		_body += "ul { list-style: none; padding-left: 0; }\n";
 		_body += "a { color: #3498db; text-decoration: none; }\n";
 		_body += "a:hover { color: #2980b9; }\n";
@@ -419,8 +420,15 @@ private:
 			if (std::strcmp(entry->d_name, ".") == 0) {
 				continue;
 			}
-			_body += "<li><a href=\"" + request.success.uri + "/" + entry->d_name + "\">" +
-					 entry->d_name + (entry->d_type == DT_DIR ? "/" : "") + "</a></li>\n";
+			bool isParent = std::strcmp(entry->d_name, "..") == 0;
+			if (isParent && request.success.uri == "/") {
+				continue;
+			}
+			std::string name =
+				isParent ? "↩" : std::string(entry->d_name) + (entry->d_type == DT_DIR ? "/" : "");
+			std::string link =
+				request.success.uri + (request.success.uri == "/" ? "" : "/") + entry->d_name;
+			_body += "<li><a href=\"" + link + "\">" + name + "</a></li>\n";
 		}
 
 		_body += "</ul>\n";
