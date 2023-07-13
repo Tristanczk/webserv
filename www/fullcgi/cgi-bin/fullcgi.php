@@ -1,4 +1,6 @@
-<!-- Untested -->
+#!/usr/bin/php-cgi
+
+<!-- Not working yet -->
 
 <?php
 header("Content-Type: text/html");

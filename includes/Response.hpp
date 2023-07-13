@@ -207,7 +207,7 @@ private:
 			it = _serverErrorPages.find(_statusCode);
 			errorPageUri = it != _serverErrorPages.end()
 							   ? "." + request.virtualServer->getRootDir() + it->second
-							   : "./www/error/default_error.html";
+							   : "./www/default_error.html";
 		}
 		if (!readContent(errorPageUri, _body)) {
 			_body = "There was an error while trying to access the specified error page for error "
