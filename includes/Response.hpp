@@ -272,7 +272,7 @@ private:
 		if (pid == 0) {
 			close(parentToChild[1]); // Close the write end of the POST data pipe
 			dup2(parentToChild[0], STDIN_FILENO);
-			// close(parentToChild[0])
+			close(parentToChild[0]);
 			close(childToParent[0]);
 			dup2(childToParent[1], STDOUT_FILENO);
 			close(childToParent[1]);
