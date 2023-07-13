@@ -189,7 +189,7 @@ private:
 	void buildHeader() {
 		_headers["date"] = getDate();
 		_headers["server"] = SERVER_VERSION;
-		_headers["content-length"] = toString(_body.length());
+		_headers["content-length"] = toString(_body.size());
 		if (_headers.find("content-type") == _headers.end()) {
 			_headers["content-type"] = DEFAULT_CONTENT_TYPE;
 		}
@@ -330,8 +330,9 @@ private:
 		// a directory
 		Location* location = request.location;
 		std::string uri = request.success.uri;
-		if (DEBUG)
+		if (DEBUG) {
 			std::cout << RED << "request uri : " << uri << RESET << std::endl;
+		}
 		// to ensure that the final link will be well formated whether the user put a trailing
 		// slash at the end of the location and at the beginning of the uri or not
 		if (_rootDir[_rootDir.size() - 1] == '/') {
