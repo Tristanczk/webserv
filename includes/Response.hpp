@@ -35,10 +35,10 @@ public:
 	void buildResponse(RequestParsingResult& request) {
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			buildErrorPage(request, request.statusCode);
-		} else if (!_allowedMethods[request.success.method]) {
-			buildErrorPage(request, STATUS_METHOD_NOT_ALLOWED);
 		} else if (!_cgiExec.empty()) {
 			buildCgi(request);
+		} else if (!_allowedMethods[request.success.method]) {
+			buildErrorPage(request, STATUS_METHOD_NOT_ALLOWED);
 		} else if (_return.first != -1) {
 			buildRedirect(request);
 		} else {
@@ -198,6 +198,7 @@ private:
 
 	void buildErrorPage(RequestParsingResult& request, StatusCode statusCode) {
 		_statusCode = statusCode;
+		std::cout << RED << _statusCode << " for uri " << request.success.uri << RESET << std::endl;
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
 		std::string errorPageUri;
 		if (it != _errorPages.end()) {
@@ -246,10 +247,7 @@ private:
 		exportEnv(env, 2, "GATEWAY_INTERFACE", CGI_VERSION);
 		exportEnv(env, 3, "PATH_INFO", strScript); // TODO
 		exportEnv(env, 4, "QUERY_STRING", request.success.query);
-		exportEnv(env, 5, "REQUEST_METHOD",
-				  request.success.method == GET	   ? "GET"
-				  : request.success.method == POST ? "POST"
-												   : "DELETE");
+		exportEnv(env, 5, "REQUEST_METHOD", toString(request.success.method));
 		exportEnv(env, 6, "SCRIPT_NAME", strScript); // TODO
 		exportEnv(env, 7, "SERVER_PROTOCOL", HTTP_VERSION);
 		exportEnv(env, 8, "SERVER_SOFTWARE", SERVER_VERSION);
@@ -265,14 +263,19 @@ private:
 		if (access(strScript, F_OK) != 0) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
-		int pipefd[2];
-		syscall(pipe(pipefd), "pipe");
+		int childToParent[2];
+		syscall(pipe(childToParent), "pipe");
+		int parentToChild[2];
+		syscall(pipe(parentToChild), "pipe");
 		pid_t pid = fork();
 		syscall(pid, "fork");
 		if (pid == 0) {
-			close(pipefd[0]);
-			dup2(pipefd[1], STDOUT_FILENO);
-			close(pipefd[1]);
+			close(parentToChild[1]); // Close the write end of the POST data pipe
+			dup2(parentToChild[0], STDIN_FILENO);
+			// close(parentToChild[0])
+			close(childToParent[0]);
+			dup2(childToParent[1], STDOUT_FILENO);
+			close(childToParent[1]);
 			char* argv[] = {strExec, strScript, NULL};
 			char* env[CGI_ENV_SIZE];
 			std::memset(env, 0, sizeof(env));
@@ -282,9 +285,13 @@ private:
 			exit(EXIT_FAILURE);
 		}
 		_statusCode = STATUS_OK;
-		close(pipefd[1]);
-		std::string response = fullRead(pipefd[0]);
-		close(pipefd[0]);
+		close(parentToChild[0]);
+		write(parentToChild[1], vecToString(request.success.body).c_str(),
+			  request.success.body.size());
+		close(parentToChild[1]);
+		close(childToParent[1]);
+		std::string response = fullRead(childToParent[0]);
+		close(childToParent[0]);
 		int wstatus;
 		wait(&wstatus);
 		std::istringstream iss(response);

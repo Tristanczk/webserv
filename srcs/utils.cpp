@@ -184,6 +184,10 @@ std::string strtrim(const std::string& s, const std::string& remove) {
 	return result;
 }
 
+std::string toString(RequestMethod method) {
+	return method == GET ? "GET" : method == POST ? "POST" : "DELETE";
+}
+
 bool validateUri(const std::string& uri, const std::string& keyword) {
 	return !uri.empty() && uri[0] == '/' && uri.find("..") == std::string::npos ? true
 		   : keyword.empty()													? false

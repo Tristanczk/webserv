@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Color Slider</title>
+	<script src="slider.js" defer></script>
+	<style>
+		button {
+			font-family: Arial, sans-serif;
+			font-size: 1em;
+			padding: 10px 20px;
+			color: white;
+			background-color: #4CAF50;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: background-color 0.3s ease;
+		}
+
+		button:hover {
+			background-color: #45a049;
+		}
+
+		.slider {
+			-webkit-appearance: none;
+			width: 20%;
+			height: 20px;
+			outline: none;
+			transition: opacity .2s;
+		}
+
+		.slider.red::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			background: #f33;
+			cursor: pointer;
+		}
+
+		.slider.green::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			background: #3f3;
+			cursor: pointer;
+		}
+
+		.slider.blue::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			background: #33f;
+			cursor: pointer;
+		}
+	</style>
+</head>
+
+<body id="body" style="background-color: rgb(42,42,42);">
+	<input type="range" min="0" max="255" value="42" id="red" class="slider red">
+	<input type="range" min="0" max="255" value="42" id="green" class="slider green">
+	<input type="range" min="0" max="255" value="42" id="blue" class="slider blue">
+	<button id="saveColor">Save Color</button>
+</body>
+
+</html>
