@@ -44,6 +44,8 @@
 #define MAX_HEADER_SIZE 1048576
 #define CGI_ENV_SIZE 256
 
+#define TIMEOUT 10.0
+
 #define DEBUG false
 
 #define CGI_VERSION "CGI/1.1"
