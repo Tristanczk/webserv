@@ -49,6 +49,8 @@ public:
 		}
 		buildStatusLine();
 		buildHeader();
+		std::cout << BLUE << _statusCode << " for uri " << request.success.uri << RESET
+				  << std::endl;
 	}
 
 	ResponseStatusEnum pushResponseToClient(int fd) {
@@ -209,7 +211,6 @@ private:
 
 	void buildErrorPage(RequestParsingResult& request, StatusCode statusCode) {
 		_statusCode = statusCode;
-		std::cout << RED << _statusCode << " for uri " << request.success.uri << RESET << std::endl;
 		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
 		std::string errorPageUri;
 		if (it != _errorPages.end()) {

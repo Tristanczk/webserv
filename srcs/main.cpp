@@ -20,7 +20,6 @@ int main(int argc, char* argv[]) {
 		if (!server.init(conf)) {
 			return EXIT_FAILURE;
 		}
-		std::cout << BLUE << getBasename(argv[0]) << " is running." << RESET << std::endl;
 		std::cout << BLUE << "Press Ctrl+C to exit." << RESET << std::endl;
 		server.loop();
 		std::cout << BLUE << "\rGood bye. 💞" << RESET << std::endl;
