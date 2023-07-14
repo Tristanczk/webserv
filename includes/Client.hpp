@@ -1,6 +1,8 @@
 #pragma once
 
 #include "webserv.hpp"
+#include <bits/types/time_t.h>
+#include <ctime>
 
 class Client {
 public:
@@ -19,7 +21,7 @@ public:
 
 	ResponseStatusEnum handleRequest() {
 		char buffer[BUFFER_SIZE];
-		ssize_t bytesRead = recv(_fd, buffer, BUFFER_SIZE, 0); // TODO flags?
+		ssize_t bytesRead = recv(_fd, buffer, BUFFER_SIZE, 0); // TODO flags? --> a priori pas utile
 		syscall(bytesRead, "recv");
 		if (bytesRead == 0) {
 			return RESPONSE_FAILURE;
@@ -32,10 +34,16 @@ public:
 		}
 		if (_currentRequest == NULL) {
 			_currentRequest = new Request(_associatedServers, _ip, _port);
+			_startTime = std::time(NULL);
 		}
 		RequestParsingResult result = _currentRequest->parse(buffer, bytesRead);
 		if (result.result == REQUEST_PARSING_PROCESSING) {
-			return RESPONSE_PENDING;
+			if (std::difftime(std::time(NULL), _startTime) > TIMEOUT) {
+				result.result = REQUEST_PARSING_FAILURE;
+				result.statusCode = STATUS_REQUEST_TIMEOUT;
+			} else {
+				return RESPONSE_PENDING;
+			}
 		}
 		_currentResponse =
 			result.location
@@ -96,4 +104,5 @@ private:
 	std::queue<Response> _responseQueue;
 	Request* _currentRequest;
 	Response* _currentResponse;
+	time_t _startTime;
 };
