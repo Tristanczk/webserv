@@ -238,39 +238,39 @@ private:
 		_headers["content-type"] = it != MIME_TYPES.end() ? it->second : DEFAULT_CONTENT_TYPE;
 	}
 
-	static void exportEnv(std::vector<std::string>& envec, const std::string& key,
+	static void exportEnv(std::vector<std::string>& env, const std::string& key,
 						  const std::string& value) {
-		envec.push_back(key + '=' + value);
+		env.push_back(key + '=' + value);
 	}
 
 	static std::vector<std::string> createCgiEnv(const RequestParsingResult& request,
 												 const std::string& finalUri) {
 
-		std::vector<std::string> envec;
-		exportEnv(envec, "CONTENT_LENGTH", toString(request.success.body.size()));
+		std::vector<std::string> env;
+		exportEnv(env, "CONTENT_LENGTH", toString(request.success.body.size()));
 		std::map<std::string, std::string>::const_iterator it =
 			request.success.headers.find("content-type");
-		exportEnv(envec, "CONTENT_TYPE",
+		exportEnv(env, "CONTENT_TYPE",
 				  it == request.success.headers.end() ? DEFAULT_CONTENT_TYPE : it->second);
-		exportEnv(envec, "DOCUMENT_ROOT", request.virtualServer->getRootDir());
+		exportEnv(env, "DOCUMENT_ROOT", request.virtualServer->getRootDir());
 		for (std::map<std::string, std::string>::const_iterator it =
 				 request.success.headers.begin();
 			 it != request.success.headers.end(); ++it) {
 			if (CGI_NO_TRANSMISSION.find(it->first) == CGI_NO_TRANSMISSION.end()) {
-				exportEnv(envec, "HTTP_" + strupper(it->first), it->second);
+				exportEnv(env, "HTTP_" + strupper(it->first), it->second);
 			}
 		}
-		exportEnv(envec, "GATEWAY_INTERFACE", CGI_VERSION);
+		exportEnv(env, "GATEWAY_INTERFACE", CGI_VERSION);
 		const std::string absolutePath = getAbsolutePath(finalUri);
-		exportEnv(envec, "PATH_INFO", absolutePath);
-		exportEnv(envec, "QUERY_STRING", request.success.query);
-		exportEnv(envec, "REDIRECT_STATUS", "200");
-		exportEnv(envec, "REQUEST_METHOD", toString(request.success.method));
-		exportEnv(envec, "SCRIPT_NAME", request.success.uri);
-		exportEnv(envec, "SCRIPT_FILENAME", absolutePath);
-		exportEnv(envec, "SERVER_PROTOCOL", HTTP_VERSION);
-		exportEnv(envec, "SERVER_SOFTWARE", SERVER_VERSION);
-		return envec;
+		exportEnv(env, "PATH_INFO", absolutePath);
+		exportEnv(env, "QUERY_STRING", request.success.query);
+		exportEnv(env, "REDIRECT_STATUS", "200");
+		exportEnv(env, "REQUEST_METHOD", toString(request.success.method));
+		exportEnv(env, "SCRIPT_NAME", request.success.uri);
+		exportEnv(env, "SCRIPT_FILENAME", absolutePath);
+		exportEnv(env, "SERVER_PROTOCOL", HTTP_VERSION);
+		exportEnv(env, "SERVER_SOFTWARE", SERVER_VERSION);
+		return env;
 	}
 
 	static void cgiChild(RequestParsingResult& request, int childToParent[2], int parentToChild[2],
@@ -336,8 +336,8 @@ private:
 				if (key == "status") {
 					std::istringstream iss(value);
 					iss >> value;
-					if (value.size() == 3 && isdigit(value[0]) && isdigit(value[1]) &&
-						isdigit(value[2])) {
+					if (value.size() == 3 && std::isdigit(value[0]) && std::isdigit(value[1]) &&
+						std::isdigit(value[2])) {
 						_statusCode = static_cast<StatusCode>(std::atoi(value.c_str()));
 					} else {
 						return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
