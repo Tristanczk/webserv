@@ -52,6 +52,14 @@ std::string fullRead(int fd) {
 	}
 }
 
+std::string getAbsolutePath(const std::string& path) {
+	if (!startswith(path, "./")) {
+		return "/";
+	}
+	char buffer[PATH_MAX];
+	return getcwd(buffer, sizeof(buffer)) ? std::string(buffer) + "/" + path.substr(2) : "/";
+}
+
 std::string getBasename(const std::string& path) { return path.substr(path.find_last_of("/") + 1); }
 
 std::string getExtension(const std::string& path) {

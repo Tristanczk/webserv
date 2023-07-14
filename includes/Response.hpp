@@ -245,7 +245,8 @@ private:
 	}
 
 	static std::vector<std::string> createCgiEnv(const RequestParsingResult& request,
-												 const char* strScript) {
+												 const std::string& finalUri) {
+
 		std::vector<std::string> envec;
 		exportEnv(envec, "CONTENT_LENGTH", toString(request.success.body.size()));
 		std::map<std::string, std::string>::const_iterator it =
@@ -260,17 +261,18 @@ private:
 			}
 		}
 		exportEnv(envec, "GATEWAY_INTERFACE", CGI_VERSION);
-		exportEnv(envec, "PATH_INFO", strScript); // TODO
+		exportEnv(envec, "PATH_INFO", getAbsolutePath(finalUri));
 		exportEnv(envec, "QUERY_STRING", request.success.query);
 		exportEnv(envec, "REDIRECT_STATUS", "200");
 		exportEnv(envec, "REQUEST_METHOD", toString(request.success.method));
-		exportEnv(envec, "SCRIPT_NAME", strScript); // TODO
+		exportEnv(envec, "SCRIPT_NAME", request.success.uri);
 		exportEnv(envec, "SERVER_PROTOCOL", HTTP_VERSION);
 		exportEnv(envec, "SERVER_SOFTWARE", SERVER_VERSION);
 		return envec;
 	}
 
 	static char** vectorToCharArray(const std::vector<std::string>& envec) {
+		// TODO remove
 		for (size_t i = 0; i < envec.size(); ++i) {
 			std::cerr << BLUE << envec[i] << RESET << '\n';
 		}
@@ -308,7 +310,7 @@ private:
 			dup2(childToParent[1], STDOUT_FILENO);
 			close(childToParent[1]);
 			char* argv[] = {strExec, strScript, NULL};
-			char** env = vectorToCharArray(createCgiEnv(request, strScript));
+			char** env = vectorToCharArray(createCgiEnv(request, finalUri));
 			execve(strExec, argv, env);
 			perrored("execve");
 			for (size_t i = 0; env[i]; ++i) {

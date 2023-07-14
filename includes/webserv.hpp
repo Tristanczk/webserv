@@ -213,9 +213,10 @@ bool endswith(const std::string&, const std::string&);
 const std::string* findCommonString(const std::vector<std::string>&,
 									const std::vector<std::string>&);
 std::string fullRead(int);
+std::string getAbsolutePath(const std::string&);
 std::string getBasename(const std::string&);
-std::string getExtension(const std::string&);
 std::string getDate();
+std::string getExtension(const std::string&);
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);
 void initAllowedMethods(bool[NO_METHOD]);
