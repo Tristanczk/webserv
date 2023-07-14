@@ -73,10 +73,10 @@ public:
 			}
 		}
 		if (_method == HEAD) {
-			return RESPONSE_SUCCESS;
 			if (DEBUG) {
 				std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
 			}
+			return RESPONSE_SUCCESS;
 		}
 		if (!pushBodyChunkToClient(fd)) {
 			return RESPONSE_FAILURE;
