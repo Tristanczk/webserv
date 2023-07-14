@@ -49,8 +49,7 @@ public:
 		}
 		buildStatusLine();
 		buildHeader();
-		std::cout << BLUE << _statusCode << " for uri " << request.success.uri << RESET
-				  << std::endl;
+		std::cout << _statusCode << " for uri " << request.success.uri << std::endl;
 	}
 
 	ResponseStatusEnum pushResponseToClient(int fd) {
@@ -315,8 +314,7 @@ private:
 		if (pid == 0) {
 			cgiChild(request, childToParent, parentToChild, strExec, strScript, finalUri);
 		}
-		std::cout << BLUE << strExec << ' ' << strScript << " started with pid " << pid << '.'
-				  << RESET << '\n';
+		std::cout << strExec << ' ' << strScript << " started with pid " << pid << ".\n";
 		pids.insert(pid);
 		_statusCode = STATUS_OK;
 		close(parentToChild[0]);
