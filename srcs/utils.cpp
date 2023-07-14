@@ -167,7 +167,7 @@ std::string strjoin(const std::vector<std::string>& vec, const std::string& sep)
 std::string strlower(const std::string& s) {
 	std::string l;
 	for (size_t i = 0; i < s.size(); ++i) {
-		l += tolower(s[i]);
+		l += std::tolower(s[i]);
 	}
 	return l;
 }
@@ -184,6 +184,14 @@ std::string strtrim(const std::string& s, const std::string& remove) {
 	return result;
 }
 
+std::string strupper(const std::string& s) {
+	std::string l;
+	for (size_t i = 0; i < s.size(); ++i) {
+		l += std::toupper(s[i]);
+	}
+	return l;
+}
+
 std::string toString(RequestMethod method) {
 	return method == GET ? "GET" : method == POST ? "POST" : "DELETE";
 }
@@ -192,12 +200,4 @@ bool validateUri(const std::string& uri, const std::string& keyword) {
 	return !uri.empty() && uri[0] == '/' && uri.find("..") == std::string::npos ? true
 		   : keyword.empty()													? false
 							 : configFileError("invalid path for " + keyword + ": " + uri);
-}
-
-std::string vecToString(const std::vector<unsigned char>& vec) {
-	std::string result;
-	for (size_t i = 0; i < vec.size(); ++i) {
-		result += vec[i];
-	}
-	return result;
 }

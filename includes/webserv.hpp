@@ -171,7 +171,6 @@ typedef struct RequestParsingSuccess {
 	std::string uri;
 	std::string query;
 	std::map<std::string, std::string> headers;
-	std::vector<std::string> cookies;
 	std::vector<unsigned char> body;
 } RequestParsingSuccess;
 
@@ -230,9 +229,9 @@ bool startswith(const std::string&, const std::string&);
 std::string strjoin(const std::vector<std::string>&, const std::string&);
 std::string strlower(const std::string&);
 std::string strtrim(const std::string&, const std::string&);
+std::string strupper(const std::string&);
 std::string toString(RequestMethod);
 bool validateUri(const std::string&, const std::string& = "");
-std::string vecToString(const std::vector<unsigned char>&);
 
 void signalHandler(int);
 void syscall(int, const char*);
@@ -244,8 +243,7 @@ bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
 bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
 
-void initStatusMessageMap();
-void initMimeTypes();
+void initGlobals();
 
 #include "Location.hpp"
 

@@ -2,12 +2,28 @@
 
 const std::map<StatusCode, std::string> STATUS_MESSAGES;
 const std::map<std::string, std::string> MIME_TYPES;
+const std::set<std::string> CGI_NO_TRANSMISSION;
+
+static void insertCgiNoTransmission(const std::string& s) {
+	const_cast<std::set<std::string>&>(CGI_NO_TRANSMISSION).insert(s);
+}
+
+static void initCgiNoTransmission() {
+	insertCgiNoTransmission("authorization");
+	insertCgiNoTransmission("connection");
+	insertCgiNoTransmission("content-length");
+	insertCgiNoTransmission("content-type");
+	insertCgiNoTransmission("keep-alive");
+	insertCgiNoTransmission("proxy-authenticate");
+	insertCgiNoTransmission("proxy-authorization");
+	insertCgiNoTransmission("www-authenticate");
+}
 
 static void setStatusMessage(StatusCode statusCode, const std::string& message) {
 	const_cast<std::map<StatusCode, std::string>&>(STATUS_MESSAGES)[statusCode] = message;
 }
 
-void initStatusMessageMap() {
+static void initStatusMessages() {
 	setStatusMessage(STATUS_CONTINUE, "Continue");
 	setStatusMessage(STATUS_SWITCHING_PROTOCOLS, "Switching Protocols");
 	setStatusMessage(STATUS_PROCESSING, "Processing");
@@ -76,7 +92,7 @@ static void setMimeType(const std::string& extension, const std::string& mime) {
 	const_cast<std::map<std::string, std::string>&>(MIME_TYPES)[extension] = mime;
 }
 
-void initMimeTypes() {
+static void initMimeTypes() {
 	setMimeType("css", "text/css");
 	setMimeType("html", "text/html");
 	setMimeType("jpg", "image/jpeg");
@@ -99,4 +115,10 @@ void initMimeTypes() {
 			setMimeType(extension, mime);
 		}
 	}
+}
+
+void initGlobals() {
+	initCgiNoTransmission();
+	initMimeTypes();
+	initStatusMessages();
 }

@@ -4,6 +4,7 @@
 
 extern const std::map<StatusCode, std::string> STATUS_MESSAGES;
 extern const std::map<std::string, std::string> MIME_TYPES;
+extern const std::set<std::string> CGI_NO_TRANSMISSION;
 
 class Response {
 public:
@@ -243,27 +244,37 @@ private:
 		envec.push_back(key + '=' + value);
 	}
 
-	static std::vector<std::string> createEnvironmentVariables(const RequestParsingResult& request,
-															   const char* strScript) {
+	static std::vector<std::string> createCgiEnv(const RequestParsingResult& request,
+												 const char* strScript) {
 		std::vector<std::string> envec;
 		exportEnv(envec, "CONTENT_LENGTH", toString(request.success.body.size()));
 		std::map<std::string, std::string>::const_iterator it =
 			request.success.headers.find("content-type");
 		exportEnv(envec, "CONTENT_TYPE",
 				  it == request.success.headers.end() ? DEFAULT_CONTENT_TYPE : it->second);
+		for (std::map<std::string, std::string>::const_iterator it =
+				 request.success.headers.begin();
+			 it != request.success.headers.end(); ++it) {
+			if (CGI_NO_TRANSMISSION.find(it->first) == CGI_NO_TRANSMISSION.end()) {
+				exportEnv(envec, "HTTP_" + strupper(it->first), it->second);
+			}
+		}
 		exportEnv(envec, "GATEWAY_INTERFACE", CGI_VERSION);
 		exportEnv(envec, "PATH_INFO", strScript); // TODO
 		exportEnv(envec, "QUERY_STRING", request.success.query);
+		exportEnv(envec, "REDIRECT_STATUS", "200");
 		exportEnv(envec, "REQUEST_METHOD", toString(request.success.method));
 		exportEnv(envec, "SCRIPT_NAME", strScript); // TODO
 		exportEnv(envec, "SERVER_PROTOCOL", HTTP_VERSION);
 		exportEnv(envec, "SERVER_SOFTWARE", SERVER_VERSION);
-		exportEnv(envec, "HTTP_COOKIE", strjoin(request.success.cookies, ","));
-		exportEnv(envec, "REDIRECT_STATUS", "200");
 		return envec;
 	}
 
 	static char** vectorToCharArray(const std::vector<std::string>& envec) {
+		for (size_t i = 0; i < envec.size(); ++i) {
+			std::cerr << BLUE << envec[i] << RESET << '\n';
+		}
+
 		char** array = new char*[envec.size() + 1];
 		for (size_t i = 0; i < envec.size(); ++i) {
 			array[i] = new char[envec[i].size() + 1];
@@ -297,7 +308,7 @@ private:
 			dup2(childToParent[1], STDOUT_FILENO);
 			close(childToParent[1]);
 			char* argv[] = {strExec, strScript, NULL};
-			char** env = vectorToCharArray(createEnvironmentVariables(request, strScript));
+			char** env = vectorToCharArray(createCgiEnv(request, strScript));
 			execve(strExec, argv, env);
 			perrored("execve");
 			for (size_t i = 0; env[i]; ++i) {
@@ -306,13 +317,13 @@ private:
 				}
 			}
 			delete env;
-			exit(EXIT_FAILURE);
+			std::exit(EXIT_FAILURE);
 		}
 		_statusCode = STATUS_OK;
 		close(parentToChild[0]);
 		close(childToParent[1]);
-		write(parentToChild[1], vecToString(request.success.body).c_str(),
-			  request.success.body.size());
+		std::string body = std::string(request.success.body.begin(), request.success.body.end());
+		write(parentToChild[1], body.c_str(), body.size());
 		close(parentToChild[1]);
 		std::string response = fullRead(childToParent[0]);
 		close(childToParent[0]);
