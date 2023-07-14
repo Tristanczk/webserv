@@ -212,6 +212,7 @@ bool doesRegexMatch(const char*, const char*);
 bool endswith(const std::string&, const std::string&);
 const std::string* findCommonString(const std::vector<std::string>&,
 									const std::vector<std::string>&);
+std::string findFinalUri(std::string& uri, std::string rootDir, Location* location);
 std::string fullRead(int);
 std::string getAbsolutePath(const std::string&);
 std::string getBasename(const std::string&);
