@@ -31,7 +31,7 @@ bool parseAutoIndex(std::istringstream& iss, bool& autoIndex) {
 	return true;
 }
 
-bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
+static bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
 	size_t idx = code.find_first_not_of("0123456789");
 	if (idx != std::string::npos) {
 		if (code[idx] == '-') {

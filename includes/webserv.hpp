@@ -240,7 +240,6 @@ void syscallEpoll(int, int, int, int, const char*);
 
 bool parseAutoIndex(std::istringstream&, bool&);
 bool parseDirectory(std::istringstream&, std::string&, const std::string&, const std::string&);
-bool parseErrorCode(std::string&, std::vector<int>&);
 bool parseErrorPages(std::istringstream&, std::map<int, std::string>&);
 bool parseIndex(std::istringstream&, std::vector<std::string>&);
 bool parseReturn(std::istringstream&, std::pair<long, std::string>&);
