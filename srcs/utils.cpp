@@ -37,21 +37,6 @@ const std::string* findCommonString(const std::vector<std::string>& vec1,
 	return NULL;
 }
 
-std::string fullRead(int fd) {
-	std::string message;
-	char buf[BUFFER_SIZE];
-	size_t buflen;
-
-	while (true) {
-		syscall(buflen = read(fd, buf, BUFFER_SIZE - 1), "read");
-		buf[buflen] = '\0';
-		message += buf;
-		if (buflen < BUFFER_SIZE - 1) {
-			return message;
-		}
-	}
-}
-
 std::string getAbsolutePath(const std::string& path) {
 	if (!startswith(path, "./")) {
 		return "/";
@@ -219,4 +204,22 @@ char** vectorToCharArray(const std::vector<std::string>& envec) {
 	}
 	array[envec.size()] = NULL;
 	return array;
+}
+
+std::string findFinalUri(std::string& uri, std::string rootDir, Location* location) {
+	if (rootDir[rootDir.size() - 1] == '/') {
+		rootDir = rootDir.substr(0, rootDir.size() - 1);
+	}
+	if (!location) {
+		return "." + rootDir + uri;
+	}
+	LocationModifierEnum modifier = location->getModifier();
+	std::string locationUri = location->getUri();
+	if (modifier == DIRECTORY) {
+		return "." + rootDir + uri.substr(locationUri.size() - 1);
+	} else if (modifier == REGEX) {
+		return "." + rootDir + uri;
+	} else {
+		return "." + rootDir + "/" + getBasename(uri);
+	}
 }

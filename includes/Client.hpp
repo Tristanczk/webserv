@@ -37,6 +37,18 @@ public:
 		if (result.result == REQUEST_PARSING_PROCESSING) {
 			return RESPONSE_PENDING;
 		}
+		std::string cgiExec = result.location ? result.location->getCgiExec() : "";
+		if (!cgiExec.empty() && result.result == REQUEST_PARSING_SUCCESS) {
+			std::string rootDir = result.location ? result.location->getRootDir()
+												  : result.virtualServer->getRootDir();
+			CgiHandler cgiHandler(cgiExec, result,
+								  findFinalUri(result.success.uri, rootDir, result.location));
+			result.statusCode = cgiHandler.init();
+			if (result.statusCode == STATUS_NONE) {
+				return RESPONSE_PENDING;
+			}
+			result.result = REQUEST_PARSING_FAILURE;
+		}
 		_currentResponse =
 			result.location
 				? new Response(result.location->getRootDir(), result.location->getUploadDir(),
@@ -44,7 +56,7 @@ public:
 							   result.virtualServer->getErrorPages(),
 							   result.location->getErrorPages(), result.location->getIndexPages(),
 							   result.location->getUri(), result.location->getReturn(),
-							   result.location->getAllowedMethods(), result.location->getCgiExec())
+							   result.location->getAllowedMethods())
 				: new Response(
 					  result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
 					  result.virtualServer->getErrorPages(), result.virtualServer->getIndexPages());

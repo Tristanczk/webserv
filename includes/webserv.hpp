@@ -70,6 +70,7 @@
 #define LOCATION_MATCH_REGEX -1
 #define LOCATION_MATCH_NONE 0
 
+class CgiHandler;
 class Client;
 class Location;
 class Request;
@@ -212,7 +213,7 @@ bool doesRegexMatch(const char*, const char*);
 bool endswith(const std::string&, const std::string&);
 const std::string* findCommonString(const std::vector<std::string>&,
 									const std::vector<std::string>&);
-std::string fullRead(int);
+std::string findFinalUri(std::string&, std::string, Location*);
 std::string getAbsolutePath(const std::string&);
 std::string getBasename(const std::string&);
 std::string getDate();
@@ -253,6 +254,8 @@ void initGlobals();
 #include "VirtualServer.hpp"
 
 #include "Request.hpp"
+
+#include "CgiHandler.hpp"
 
 #include "Response.hpp"
 
