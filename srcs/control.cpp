@@ -1,6 +1,13 @@
 #include "../includes/webserv.hpp"
 
 extern bool run;
+extern std::set<pid_t> pids;
+
+void killChildren() {
+	for (std::set<pid_t>::iterator it = pids.begin(); it != pids.end(); ++it) {
+		kill(*it, SIGTERM);
+	}
+}
 
 void signalHandler(int signum) {
 	(void)signum;

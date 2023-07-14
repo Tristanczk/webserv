@@ -140,7 +140,7 @@ bool isValidFile(const std::string& path) {
 bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
 
 void perrored(const char* funcName) {
-	std::cerr << RED << funcName << ": " << strerror(errno) << RESET << std::endl;
+	std::cerr << RED << funcName << ": " << strerror(errno) << RESET << '\n';
 }
 
 bool readContent(std::string& uri, std::string& content) {

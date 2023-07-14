@@ -1,8 +1,8 @@
 #include "../includes/webserv.hpp"
 
-const std::map<StatusCode, std::string> STATUS_MESSAGES;
-const std::map<std::string, std::string> MIME_TYPES;
-const std::set<std::string> CGI_NO_TRANSMISSION;
+extern const std::map<StatusCode, std::string> STATUS_MESSAGES;
+extern const std::map<std::string, std::string> MIME_TYPES;
+extern const std::set<std::string> CGI_NO_TRANSMISSION;
 
 static void insertCgiNoTransmission(const std::string& s) {
 	const_cast<std::set<std::string>&>(CGI_NO_TRANSMISSION).insert(s);
