@@ -229,33 +229,40 @@ private:
 		_headers["content-type"] = it != MIME_TYPES.end() ? it->second : DEFAULT_CONTENT_TYPE;
 	}
 
-	static void exportEnv(char** env, size_t i, const std::string& key, const std::string& value) {
-		env[i] = new char[key.size() + value.size() + 2];
-		std::strcpy(env[i], key.c_str());
-		env[i][key.size()] = '=';
-		std::strcpy(env[i] + key.size() + 1, value.c_str());
+	static void exportEnv(std::vector<std::string>& envec, const std::string& key,
+						  const std::string& value) {
+		envec.push_back(key + '=' + value);
 	}
 
-	// TODO C++ way with vector of string
-	static char** createEnv(char** env, const RequestParsingResult& request,
-							const char* strScript) {
+	static std::vector<std::string> createEnvironmentVariables(const RequestParsingResult& request,
+															   const char* strScript) {
 		std::vector<std::string> envec;
-		exportEnv(env, 0, "CONTENT_LENGTH", toString(request.success.body.size()));
+		exportEnv(envec, "CONTENT_LENGTH", toString(request.success.body.size()));
 		std::map<std::string, std::string>::const_iterator it =
 			request.success.headers.find("content-type");
-		exportEnv(env, 1, "CONTENT_TYPE",
+		exportEnv(envec, "CONTENT_TYPE",
 				  it == request.success.headers.end() ? DEFAULT_CONTENT_TYPE : it->second);
-		exportEnv(env, 2, "GATEWAY_INTERFACE", CGI_VERSION);
-		exportEnv(env, 3, "PATH_INFO", strScript); // TODO
-		exportEnv(env, 4, "QUERY_STRING", request.success.query);
-		exportEnv(env, 5, "REQUEST_METHOD", toString(request.success.method));
-		exportEnv(env, 6, "SCRIPT_NAME", strScript); // TODO
-		exportEnv(env, 7, "SERVER_PROTOCOL", HTTP_VERSION);
-		exportEnv(env, 8, "SERVER_SOFTWARE", SERVER_VERSION);
-		exportEnv(env, 9, "HTTP_COOKIE", strjoin(request.success.cookies, ","));
-		exportEnv(env, 10, "REDIRECT_STATUS", "200");
-		// TODO add HTTP_ headers
-		return env;
+		exportEnv(envec, "GATEWAY_INTERFACE", CGI_VERSION);
+		exportEnv(envec, "PATH_INFO", strScript); // TODO
+		exportEnv(envec, "QUERY_STRING", request.success.query);
+		exportEnv(envec, "REQUEST_METHOD", toString(request.success.method));
+		exportEnv(envec, "SCRIPT_NAME", strScript); // TODO
+		exportEnv(envec, "SERVER_PROTOCOL", HTTP_VERSION);
+		exportEnv(envec, "SERVER_SOFTWARE", SERVER_VERSION);
+		exportEnv(envec, "HTTP_COOKIE", strjoin(request.success.cookies, ","));
+		exportEnv(envec, "REDIRECT_STATUS", "200");
+		return envec;
+	}
+
+	static char** vectorToCharArray(const std::vector<std::string>& envec) {
+		char** array = new char*[envec.size() + 1];
+		for (size_t i = 0; i < envec.size(); ++i) {
+			array[i] = new char[envec[i].size() + 1];
+			std::copy(envec[i].begin(), envec[i].end(), array[i]);
+			array[i][envec[i].size()] = '\0';
+		}
+		array[envec.size()] = NULL;
+		return array;
 	}
 
 	void buildCgi(RequestParsingResult& request) {
@@ -281,16 +288,15 @@ private:
 			dup2(childToParent[1], STDOUT_FILENO);
 			close(childToParent[1]);
 			char* argv[] = {strExec, strScript, NULL};
-			char* env[CGI_ENV_SIZE];
-			std::memset(env, 0, sizeof(env));
-			createEnv(env, request, strScript);
+			char** env = vectorToCharArray(createEnvironmentVariables(request, strScript));
 			execve(strExec, argv, env);
 			perrored("execve");
-			for (size_t i = 0; i < CGI_ENV_SIZE; ++i) {
+			for (size_t i = 0; env[i]; ++i) {
 				if (env[i]) {
 					delete env[i];
 				}
 			}
+			delete env;
 			exit(EXIT_FAILURE);
 		}
 		_statusCode = STATUS_OK;
