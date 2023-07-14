@@ -28,7 +28,7 @@ void signalHandler(int signum) {
 	run = false;
 }
 
-void syscall(int returnValue, const char* funcName) {
+void syscall(long returnValue, const char* funcName) {
 	if (returnValue == -1) {
 		throw SystemError(funcName);
 	}

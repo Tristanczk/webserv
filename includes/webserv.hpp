@@ -237,7 +237,7 @@ char** vectorToCharArray(const std::vector<std::string>&);
 
 void mainDestructor();
 void signalHandler(int);
-void syscall(int, const char*);
+void syscall(long, const char*);
 void syscallEpoll(int, int, int, int, const char*);
 
 bool parseAutoIndex(std::istringstream&, bool&);

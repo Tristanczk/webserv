@@ -18,20 +18,22 @@ public:
 	};
 
 	ResponseStatusEnum handleRequest() {
-		std::string request = fullRead(_fd);
-		if (request.empty()) {
+		char buffer[BUFFER_SIZE];
+		ssize_t bytesRead = recv(_fd, buffer, BUFFER_SIZE, 0); // TODO flags?
+		syscall(bytesRead, "recv");
+		if (bytesRead == 0) {
 			return RESPONSE_FAILURE;
 		}
 		if (DEBUG) {
 			std::cout << YELLOW << "=== REQUEST START ===" << std::endl
-					  << strtrim(request, "\r\n") << std::endl
+					  << strtrim(buffer, "\r\n") << std::endl
 					  << "=== REQUEST END ===" << std::endl
 					  << RESET;
 		}
 		if (_currentRequest == NULL) {
 			_currentRequest = new Request(_associatedServers, _ip, _port);
 		}
-		RequestParsingResult result = _currentRequest->parse(request.c_str(), request.size());
+		RequestParsingResult result = _currentRequest->parse(buffer, bytesRead);
 		if (result.result == REQUEST_PARSING_PROCESSING) {
 			return RESPONSE_PENDING;
 		}
