@@ -2,6 +2,7 @@
 
 #include "webserv.hpp"
 
+extern std::set<pid_t> pids;
 extern const std::map<StatusCode, std::string> STATUS_MESSAGES;
 extern const std::map<std::string, std::string> MIME_TYPES;
 extern const std::set<std::string> CGI_NO_TRANSMISSION;
@@ -274,6 +275,27 @@ private:
 		return envec;
 	}
 
+	static void cgiChild(RequestParsingResult& request, int childToParent[2], int parentToChild[2],
+						 char* strExec, char* strScript, const std::string& finalUri) {
+		close(parentToChild[1]);
+		dup2(parentToChild[0], STDIN_FILENO);
+		close(parentToChild[0]);
+		close(childToParent[0]);
+		dup2(childToParent[1], STDOUT_FILENO);
+		close(childToParent[1]);
+		char* argv[] = {strExec, strScript, NULL};
+		char** env = vectorToCharArray(createCgiEnv(request, finalUri));
+		execve(strExec, argv, env);
+		perrored("execve");
+		for (size_t i = 0; env[i]; ++i) {
+			if (env[i]) {
+				delete env[i];
+			}
+		}
+		delete env;
+		std::exit(EXIT_FAILURE);
+	}
+
 	void buildCgi(RequestParsingResult& request) {
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
 		std::string finalUri = findFinalUri(request);
@@ -290,24 +312,11 @@ private:
 		pid_t pid = fork();
 		syscall(pid, "fork");
 		if (pid == 0) {
-			close(parentToChild[1]);
-			dup2(parentToChild[0], STDIN_FILENO);
-			close(parentToChild[0]);
-			close(childToParent[0]);
-			dup2(childToParent[1], STDOUT_FILENO);
-			close(childToParent[1]);
-			char* argv[] = {strExec, strScript, NULL};
-			char** env = vectorToCharArray(createCgiEnv(request, finalUri));
-			execve(strExec, argv, env);
-			perrored("execve");
-			for (size_t i = 0; env[i]; ++i) {
-				if (env[i]) {
-					delete env[i];
-				}
-			}
-			delete env;
-			std::exit(EXIT_FAILURE);
+			cgiChild(request, childToParent, parentToChild, strExec, strScript, finalUri);
 		}
+		std::cout << BLUE << strExec << ' ' << strScript << " started with pid " << pid << '.'
+				  << RESET << '\n';
+		pids.insert(pid);
 		_statusCode = STATUS_OK;
 		close(parentToChild[0]);
 		close(childToParent[1]);
@@ -318,6 +327,7 @@ private:
 		close(childToParent[0]);
 		int wstatus;
 		wait(&wstatus);
+		pids.erase(pid);
 		std::istringstream iss(response);
 		std::string line;
 		while (std::getline(iss, line) && !line.empty()) {
