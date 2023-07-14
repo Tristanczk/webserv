@@ -192,6 +192,11 @@ private:
 				return configFileError("multiple DELETE instructions in limit_except directive");
 			}
 			_allowedMethods[DELETE] = true;
+		} else if (method == "HEAD") {
+			if (_allowedMethods[HEAD]) {
+				return configFileError("multiple HEAD instructions in limit_except directive");
+			}
+			_allowedMethods[DELETE] = true;
 		} else {
 			return configFileError("invalid method in limit_except directive: " + method);
 		}

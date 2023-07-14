@@ -124,6 +124,7 @@ bool getIpValue(std::string ip, uint32_t& res) {
 void initAllowedMethods(bool allowedMethods[NO_METHOD]) {
 	std::fill_n(allowedMethods, NO_METHOD, false);
 	allowedMethods[GET] = true;
+	allowedMethods[HEAD] = true;
 }
 
 bool isDirectory(const std::string& path) {

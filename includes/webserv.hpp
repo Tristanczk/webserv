@@ -45,7 +45,7 @@
 
 #define TIMEOUT 10.0
 
-#define DEBUG false
+#define DEBUG true
 
 #define CGI_VERSION "CGI/1.1"
 #define HTTP_VERSION "HTTP/1.1"
@@ -92,7 +92,7 @@ typedef enum VirtualServerMatch {
 	VS_MATCH_BOTH,
 } VirtualServerMatch;
 
-typedef enum RequestMethod { GET = 0, POST, DELETE, NO_METHOD } RequestMethod;
+typedef enum RequestMethod { GET = 0, POST, DELETE, HEAD, NO_METHOD } RequestMethod;
 
 typedef enum StatusCode {
 	STATUS_NONE = 0,

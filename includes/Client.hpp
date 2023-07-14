@@ -45,17 +45,20 @@ public:
 				return RESPONSE_PENDING;
 			}
 		}
+		RequestMethod method =
+			result.result == REQUEST_PARSING_SUCCESS ? result.success.method : NO_METHOD;
 		_currentResponse =
 			result.location
-				? new Response(result.location->getRootDir(), result.location->getUploadDir(),
-							   result.location->getAutoIndex(),
+				? new Response(method, result.location->getRootDir(),
+							   result.location->getUploadDir(), result.location->getAutoIndex(),
 							   result.virtualServer->getErrorPages(),
 							   result.location->getErrorPages(), result.location->getIndexPages(),
 							   result.location->getUri(), result.location->getReturn(),
 							   result.location->getAllowedMethods(), result.location->getCgiExec())
-				: new Response(
-					  result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
-					  result.virtualServer->getErrorPages(), result.virtualServer->getIndexPages());
+				: new Response(method, result.virtualServer->getRootDir(),
+							   result.virtualServer->getAutoIndex(),
+							   result.virtualServer->getErrorPages(),
+							   result.virtualServer->getIndexPages());
 		_currentResponse->buildResponse(result);
 		delete _currentRequest;
 		_currentRequest = NULL;

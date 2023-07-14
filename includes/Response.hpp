@@ -8,23 +8,26 @@ extern const std::set<std::string> CGI_NO_TRANSMISSION;
 
 class Response {
 public:
-	Response(std::string rootDir, bool autoIndex, std::map<int, std::string> const& errorPages,
+	Response(RequestMethod method, std::string rootDir, bool autoIndex,
+			 std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages)
-		: _bodyPos(0), _statusCode(STATUS_NONE), _rootDir(rootDir), _autoIndex(autoIndex),
-		  _serverErrorPages(errorPages), _indexPages(indexPages), _return(-1, "") {
+		: _bodyPos(0), _statusCode(STATUS_NONE), _method(method), _rootDir(rootDir),
+		  _autoIndex(autoIndex), _serverErrorPages(errorPages), _indexPages(indexPages),
+		  _return(-1, "") {
 		initAllowedMethods(_allowedMethods);
 		initMethodMap();
 	}
 
-	Response(std::string rootDir, std::string uploadDir, bool autoIndex,
+	Response(RequestMethod method, std::string rootDir, std::string uploadDir, bool autoIndex,
 			 std::map<int, std::string> const& serverErrorPages,
 			 std::map<int, std::string> const& errorPages,
 			 std::vector<std::string> const& indexPages, std::string locationUri,
 			 std::pair<long, std::string> redirect, const bool allowedMethods[NO_METHOD],
 			 std::string cgiExec)
-		: _bodyPos(0), _statusCode(STATUS_NONE), _rootDir(rootDir), _uploadDir(uploadDir),
-		  _autoIndex(autoIndex), _serverErrorPages(serverErrorPages), _errorPages(errorPages),
-		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
+		: _bodyPos(0), _statusCode(STATUS_NONE), _method(method), _rootDir(rootDir),
+		  _uploadDir(uploadDir), _autoIndex(autoIndex), _serverErrorPages(serverErrorPages),
+		  _errorPages(errorPages), _indexPages(indexPages), _locationUri(locationUri),
+		  _return(redirect), _cgiExec(cgiExec) {
 		std::copy(allowedMethods, allowedMethods + NO_METHOD, _allowedMethods);
 		initMethodMap();
 	}
@@ -32,6 +35,8 @@ public:
 	~Response(){};
 
 	void buildResponse(RequestParsingResult& request) {
+		std::cout << "Allowed methods: " << _allowedMethods[GET] << _allowedMethods[POST]
+				  << _allowedMethods[DELETE] << _allowedMethods[HEAD] << std::endl;
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			buildErrorPage(request, request.statusCode);
 		} else if (!_cgiExec.empty()) {
@@ -70,6 +75,12 @@ public:
 				return RESPONSE_FAILURE;
 			}
 		}
+		if (_method == HEAD) {
+			return RESPONSE_SUCCESS;
+			if (DEBUG) {
+				std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
+			}
+		}
 		if (!pushBodyChunkToClient(fd)) {
 			return RESPONSE_FAILURE;
 		}
@@ -90,6 +101,7 @@ private:
 	std::string _body;
 	size_t _bodyPos;
 	StatusCode _statusCode;
+	RequestMethod _method;
 
 	std::string _rootDir;
 	std::string _uploadDir;
@@ -106,6 +118,7 @@ private:
 		_methodHandlers[GET] = &Response::buildGet;
 		_methodHandlers[POST] = &Response::buildPost;
 		_methodHandlers[DELETE] = &Response::buildDelete;
+		_methodHandlers[HEAD] = &Response::buildGet;
 	}
 
 	void buildGet(RequestParsingResult& request) {
@@ -366,8 +379,11 @@ private:
 			std::string filepath;
 			for (std::vector<std::string>::iterator it = _indexPages.begin();
 				 it != _indexPages.end(); it++) {
-				filepath = (*it)[0] == '/' ? findFinalUri(request.success.uri, _rootDir, request.location) + (*it).substr(1)
-										   : findFinalUri(request.success.uri, _rootDir, request.location) + *it;
+				filepath =
+					(*it)[0] == '/'
+						? findFinalUri(request.success.uri, _rootDir, request.location) +
+							  (*it).substr(1)
+						: findFinalUri(request.success.uri, _rootDir, request.location) + *it;
 				if (isValidFile(filepath)) {
 					std::string indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
 					request.success.uri += indexFile;

@@ -106,6 +106,8 @@ private:
 			_method = GET;
 		} else if (methodString == "POST") {
 			_method = POST;
+		} else if (methodString == "HEAD") {
+			_method = HEAD;
 		} else {
 			return STATUS_METHOD_NOT_ALLOWED;
 		}
