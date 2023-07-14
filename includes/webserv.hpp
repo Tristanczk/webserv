@@ -233,6 +233,7 @@ std::string strtrim(const std::string&, const std::string&);
 std::string strupper(const std::string&);
 std::string toString(RequestMethod);
 bool validateUri(const std::string&, const std::string& = "");
+char** vectorToCharArray(const std::vector<std::string>&);
 
 void signalHandler(int);
 void syscall(int, const char*);

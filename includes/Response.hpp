@@ -274,22 +274,6 @@ private:
 		return envec;
 	}
 
-	static char** vectorToCharArray(const std::vector<std::string>& envec) {
-		// TODO remove
-		for (size_t i = 0; i < envec.size(); ++i) {
-			std::cerr << BLUE << envec[i] << RESET << '\n';
-		}
-
-		char** array = new char*[envec.size() + 1];
-		for (size_t i = 0; i < envec.size(); ++i) {
-			array[i] = new char[envec[i].size() + 1];
-			std::copy(envec[i].begin(), envec[i].end(), array[i]);
-			array[i][envec[i].size()] = '\0';
-		}
-		array[envec.size()] = NULL;
-		return array;
-	}
-
 	void buildCgi(RequestParsingResult& request) {
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
 		std::string finalUri = findFinalUri(request);

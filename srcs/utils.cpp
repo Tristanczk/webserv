@@ -209,3 +209,14 @@ bool validateUri(const std::string& uri, const std::string& keyword) {
 		   : keyword.empty()													? false
 							 : configFileError("invalid path for " + keyword + ": " + uri);
 }
+
+char** vectorToCharArray(const std::vector<std::string>& envec) {
+	char** array = new char*[envec.size() + 1];
+	for (size_t i = 0; i < envec.size(); ++i) {
+		array[i] = new char[envec[i].size() + 1];
+		std::copy(envec[i].begin(), envec[i].end(), array[i]);
+		array[i][envec[i].size()] = '\0';
+	}
+	array[envec.size()] = NULL;
+	return array;
+}
