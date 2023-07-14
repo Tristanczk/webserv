@@ -2,11 +2,12 @@
 <html lang="en">
 
 <head>
-	<title>Calculator</title>
+	<title>CGI Scripts</title>
 </head>
 
 <body>
-	<h1>Calculator</h1>
+	<h1>CGI Scripts</h1>
+	<h2>Calculator</h2>
 	<form action="/cgi-bin/calculator.py" method="GET">
 		<input type="number" name="n1" value="">
 		<select name="op">
@@ -18,6 +19,32 @@
 		</select>
 		<input type="number" name="n2" value="">
 		<input type="submit" value="=">
+	</form>
+
+	<h2>SVG Generator</h2>
+	<form action="/cgi-bin/svg.js" method="GET">
+		<label for="name">Name:</label>
+		<input type="text" id="name" name="name">
+		<input type="submit" value="Generate SVG">
+	</form>
+
+	<h2>Environment</h2>
+	<form action="/cgi-bin/environment.js" method="GET">
+		<input type="submit" value="View Environment with the power of JavaScript">
+	</form>
+	<form action="/cgi-bin/environment.php" method="GET">
+		<input type="submit" value="View Environment with the power of PHP">
+	</form>
+	<form action="/cgi-bin/environment.py" method="GET">
+		<input type="submit" value="View Environment with the power of Python">
+	</form>
+
+	<h2>Error Pages</h2>
+	<form action="/cgi-bin/InternalServerError.php" method="GET">
+		<input type="submit" value="Crash your way to 500.html">
+	</form>
+	<form action="/cgi-bin/NotFound.php" method="GET">
+		<input type="submit" value="Get lost to 404.html">
 	</form>
 </body>
 
