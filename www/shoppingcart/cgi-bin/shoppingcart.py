@@ -46,7 +46,7 @@ def get_cookies():
     return cookies
 
 
-def printHtml(computers, phones, printers, setcookies, database, cookieValue):
+def printHtml(computers, phones, printers, setcookies, cookieValue):
     print("Content-Type: text/html")
     if setcookies:
         print(f"Set-Cookie: UID={cookieValue}")
@@ -108,4 +108,4 @@ with open(PATH, "w") as f:
     for uid, (computers, phones, printers) in database.items():
         f.write(f"{uid},{computers},{phones},{printers}\n")
 
-printHtml(computers, phones, printers, setcookies, database, uid)
+printHtml(computers, phones, printers, setcookies, uid)

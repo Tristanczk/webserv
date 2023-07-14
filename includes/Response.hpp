@@ -35,8 +35,6 @@ public:
 	~Response(){};
 
 	void buildResponse(RequestParsingResult& request) {
-		std::cout << "Allowed methods: " << _allowedMethods[GET] << _allowedMethods[POST]
-				  << _allowedMethods[DELETE] << _allowedMethods[HEAD] << std::endl;
 		if (request.result == REQUEST_PARSING_FAILURE) {
 			buildErrorPage(request, request.statusCode);
 		} else if (!_cgiExec.empty()) {
@@ -51,7 +49,6 @@ public:
 		}
 		buildStatusLine();
 		buildHeader();
-		std::cout << _statusCode << " for uri " << request.success.uri << std::endl;
 	}
 
 	ResponseStatusEnum pushResponseToClient(int fd) {

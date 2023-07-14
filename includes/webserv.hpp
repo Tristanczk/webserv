@@ -45,7 +45,7 @@
 
 #define TIMEOUT 10.0
 
-#define DEBUG true
+#define DEBUG false
 
 #define CGI_VERSION "CGI/1.1"
 #define HTTP_VERSION "HTTP/1.1"

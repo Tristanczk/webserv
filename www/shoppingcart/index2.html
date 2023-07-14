@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Online Store</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 20px;
+		}
+
+		h1 {
+			text-align: center;
+		}
+
+		.product {
+			display: inline-block;
+			margin: 10px;
+			padding: 10px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			text-align: center;
+			width: 200px;
+		}
+
+		.product img {
+			width: 120px;
+			height: 120px;
+			margin-bottom: 10px;
+		}
+
+		.product h3 {
+			margin: 0;
+		}
+
+		.cart {
+			margin-top: 20px;
+			padding: 10px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+		}
+
+		.cart-item {
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 10px;
+		}
+
+		.cart-item .name {
+			flex-grow: 1;
+		}
+
+		.cart-total {
+			font-weight: bold;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Online Store</h1>
+
+	<div class="product">
+		<img src="computer.jpg" alt="Computer">
+		<h3>Computer</h3>
+		<button onclick="addToCart('Computer')">Add to Cart</button>
+	</div>
+
+	<div class="product">
+		<img src="phone.jpg" alt="Phone">
+		<h3>Phone</h3>
+		<button onclick="addToCart('Phone')">Add to Cart</button>
+	</div>
+
+	<div class="product">
+		<img src="printer.jpg" alt="Printer">
+		<h3>Printer</h3>
+		<button onclick="addToCart('Printer')">Add to Cart</button>
+	</div>
+
+	<div class="cart">
+		<h2>Cart</h2>
+		<button onclick="displayCart()">Display Cart</button>
+	</div>
+
+	<script src="shoppingcart.js"></script>
+</body>
+
+</html>
