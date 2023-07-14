@@ -135,10 +135,10 @@ private:
 		} else if (it->second == "application/x-www-form-urlencoded" ||
 				   it->second == "multipart/form-data") {
 			return buildErrorPage(request, STATUS_UNSUPPORTED_MEDIA_TYPE);
-		} else if (!isDirectory(_uploadDir)) {
+		} else if (!isDirectory("." + _uploadDir)) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
-		const std::string fileName = getFileUri(request);
+		const std::string fileName = "." + getFileUri(request);
 		bool existed = access(fileName.c_str(), F_OK) == 0;
 		std::ofstream ofs(fileName.c_str());
 		if (ofs.fail()) {
@@ -158,7 +158,7 @@ private:
 	}
 
 	void buildDelete(RequestParsingResult& request) {
-		std::string uri = getFileUri(request);
+		std::string uri = '.' + getFileUri(request);
 		if (isDirectory(uri)) {
 			return buildErrorPage(request, STATUS_FORBIDDEN);
 		} else if (!isValidFile(uri)) {
