@@ -1,11 +1,25 @@
 #include "../includes/webserv.hpp"
 
+extern int epollFd;
 extern bool run;
 extern std::set<pid_t> pids;
 
-void killChildren() {
+static void killChildren() {
+	if (pids.empty()) {
+		return;
+	}
+	std::cout << "Killing children... ";
 	for (std::set<pid_t>::iterator it = pids.begin(); it != pids.end(); ++it) {
+		std::cout << *it << ' ';
 		kill(*it, SIGTERM);
+	}
+	std::cout << '\n';
+}
+
+void mainDestructor() {
+	killChildren();
+	if (epollFd != -1) {
+		close(epollFd);
 	}
 }
 

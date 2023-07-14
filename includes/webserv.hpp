@@ -235,7 +235,7 @@ std::string toString(RequestMethod);
 bool validateUri(const std::string&, const std::string& = "");
 char** vectorToCharArray(const std::vector<std::string>&);
 
-void killChildren();
+void mainDestructor();
 void signalHandler(int);
 void syscall(int, const char*);
 void syscallEpoll(int, int, int, int, const char*);
