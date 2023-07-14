@@ -29,22 +29,25 @@
 	</form>
 
 	<h2>Environment</h2>
-	<form action="/cgi-bin/environment.js" method="GET">
+	<form action="/cgi-bin/environment.js">
 		<input type="submit" value="View Environment with the power of JavaScript">
 	</form>
-	<form action="/cgi-bin/environment.php" method="GET">
+	<form action="/cgi-bin/environment.php">
 		<input type="submit" value="View Environment with the power of PHP">
 	</form>
-	<form action="/cgi-bin/environment.py" method="GET">
+	<form action="/cgi-bin/environment.py">
 		<input type="submit" value="View Environment with the power of Python">
 	</form>
 
 	<h2>Error Pages</h2>
-	<form action="/cgi-bin/InternalServerError.php" method="GET">
-		<input type="submit" value="Crash your way to 500.html">
+	<form action="/cgi-bin/not_found.php">
+		<input type="submit" value="Get lost.">
 	</form>
-	<form action="/cgi-bin/NotFound.php" method="GET">
-		<input type="submit" value="Get lost to 404.html">
+	<form action="/cgi-bin/teapot.php">
+		<input type="submit" value="Teapot.">
+	</form>
+	<form action="/cgi-bin/crash.php">
+		<input type="submit" value="Crash.">
 	</form>
 </body>
 
