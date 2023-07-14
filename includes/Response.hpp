@@ -2,7 +2,6 @@
 
 #include "webserv.hpp"
 
-extern std::set<pid_t> pids;
 extern const std::map<StatusCode, std::string> STATUS_MESSAGES;
 extern const std::map<std::string, std::string> MIME_TYPES;
 extern const std::set<std::string> CGI_NO_TRANSMISSION;
@@ -313,7 +312,6 @@ private:
 			cgiChild(request, childToParent, parentToChild, strExec, strScript, finalUri);
 		}
 		std::cout << strExec << ' ' << strScript << " started with pid " << pid << ".\n";
-		pids.insert(pid);
 		_statusCode = STATUS_OK;
 		close(parentToChild[0]);
 		close(childToParent[1]);
@@ -324,7 +322,6 @@ private:
 		close(childToParent[0]);
 		int wstatus;
 		wait(&wstatus);
-		pids.erase(pid);
 		std::istringstream iss(response);
 		std::string line;
 		while (std::getline(iss, line) && !line.empty()) {

@@ -2,14 +2,13 @@
 
 #include "webserv.hpp"
 
-extern int epollFd;
 extern bool run;
 
 class Server {
 public:
 	Server() : _numFds(0) {
 		std::memset(_eventList, 0, sizeof(_eventList));
-		syscall(epollFd = epoll_create1(0), "epoll_create1");
+		syscall(_epollFd = epoll_create1(0), "epoll_create1");
 	};
 
 	~Server() {
@@ -20,6 +19,7 @@ public:
 		for (int i = 0; i < _numFds; ++i) {
 			close(_eventList[i].data.fd);
 		}
+		close(_epollFd);
 	};
 
 	bool init(const char* filename) {
@@ -68,7 +68,7 @@ public:
 
 	void loop() {
 		while (run) {
-			_numFds = epoll_wait(epollFd, _eventList, MAX_EVENTS, -1);
+			_numFds = epoll_wait(_epollFd, _eventList, MAX_EVENTS, -1);
 			if (_numFds < 0) {
 				if (!run) {
 					break;
@@ -88,7 +88,7 @@ public:
 					}
 					client.setInfo(clientFd);
 					client.findAssociatedServers(_virtualServers);
-					syscallEpoll(epollFd, EPOLL_CTL_ADD, clientFd, EPOLLIN | EPOLLRDHUP,
+					syscallEpoll(_epollFd, EPOLL_CTL_ADD, clientFd, EPOLLIN | EPOLLRDHUP,
 								 "EPOLL_CTL_ADD");
 					_clients[clientFd] = client;
 				} else {
@@ -102,7 +102,7 @@ public:
 						if (status == RESPONSE_FAILURE) {
 							removeClient(clientFd);
 						} else if (status == RESPONSE_SUCCESS) {
-							syscallEpoll(epollFd, EPOLL_CTL_MOD, clientFd, EPOLLOUT | EPOLLRDHUP,
+							syscallEpoll(_epollFd, EPOLL_CTL_MOD, clientFd, EPOLLOUT | EPOLLRDHUP,
 										 "EPOLL_CTL_MOD");
 						}
 					} else if (_eventList[i].events & EPOLLOUT) {
@@ -124,6 +124,7 @@ private:
 	std::set<int> _listenSockets;
 	struct epoll_event _eventList[MAX_EVENTS];
 	std::map<int, Client> _clients;
+	int _epollFd;
 
 	bool checkDuplicateServers() const {
 		for (size_t i = 0; i < _virtualServers.size(); ++i) {
@@ -199,7 +200,7 @@ private:
 			std::cout << BLUE << "Listening on port " << htons(addr.sin_port) << ". 👂\n" << RESET;
 			syscall(bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)), "bind");
 			syscall(listen(socketFd, SOMAXCONN), "listen");
-			syscallEpoll(epollFd, EPOLL_CTL_ADD, socketFd, EPOLLIN, "EPOLL_CTL_ADD");
+			syscallEpoll(_epollFd, EPOLL_CTL_ADD, socketFd, EPOLLIN, "EPOLL_CTL_ADD");
 			_listenSockets.insert(socketFd);
 		}
 	}
