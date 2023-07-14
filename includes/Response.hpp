@@ -253,6 +253,7 @@ private:
 			request.success.headers.find("content-type");
 		exportEnv(envec, "CONTENT_TYPE",
 				  it == request.success.headers.end() ? DEFAULT_CONTENT_TYPE : it->second);
+		exportEnv(envec, "DOCUMENT_ROOT", request.virtualServer->getRootDir());
 		for (std::map<std::string, std::string>::const_iterator it =
 				 request.success.headers.begin();
 			 it != request.success.headers.end(); ++it) {
@@ -261,11 +262,13 @@ private:
 			}
 		}
 		exportEnv(envec, "GATEWAY_INTERFACE", CGI_VERSION);
-		exportEnv(envec, "PATH_INFO", getAbsolutePath(finalUri));
+		const std::string absolutePath = getAbsolutePath(finalUri);
+		exportEnv(envec, "PATH_INFO", absolutePath);
 		exportEnv(envec, "QUERY_STRING", request.success.query);
 		exportEnv(envec, "REDIRECT_STATUS", "200");
 		exportEnv(envec, "REQUEST_METHOD", toString(request.success.method));
 		exportEnv(envec, "SCRIPT_NAME", request.success.uri);
+		exportEnv(envec, "SCRIPT_FILENAME", absolutePath);
 		exportEnv(envec, "SERVER_PROTOCOL", HTTP_VERSION);
 		exportEnv(envec, "SERVER_SOFTWARE", SERVER_VERSION);
 		return envec;

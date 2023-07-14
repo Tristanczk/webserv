@@ -19,9 +19,11 @@ int main(int argc, char* argv[]) {
 		std::cout << BLUE << "Press Ctrl+C to exit." << RESET << std::endl;
 		server.loop();
 		std::cout << BLUE << "\rGood bye. 💞" << RESET << std::endl;
+		// TODO kill children
 		return EXIT_SUCCESS;
 	} catch (const SystemError& e) {
 		perrored(e.funcName);
+		// TODO kill children
 		return EXIT_FAILURE;
 	}
 }
