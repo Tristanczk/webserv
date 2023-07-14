@@ -128,12 +128,21 @@ private:
 		} else if (!isDirectory(_uploadDir)) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
-		std::ofstream ofs(getFileUri(request).c_str());
+		const std::string fileName = getFileUri(request);
+		bool existed = access(fileName.c_str(), F_OK) == 0;
+		std::ofstream ofs(fileName.c_str());
 		if (ofs.fail()) {
 			return buildErrorPage(request, STATUS_BAD_REQUEST);
 		}
 		std::string bodyStr(request.success.body.begin(), request.success.body.end());
 		ofs << bodyStr;
+		if (ofs.fail()) {
+			if (!existed) {
+				std::remove(fileName.c_str());
+			}
+			ofs.close();
+			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
+		}
 		ofs.close();
 		_statusCode = STATUS_CREATED;
 	}

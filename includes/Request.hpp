@@ -115,7 +115,7 @@ private:
 			return STATUS_URI_TOO_LONG;
 		}
 		if (!validateUri(_uri)) {
-			return STATUS_BAD_REQUEST;
+			return STATUS_FORBIDDEN;
 		}
 		if (version != HTTP_VERSION) {
 			return STATUS_HTTP_VERSION_NOT_SUPPORTED;
