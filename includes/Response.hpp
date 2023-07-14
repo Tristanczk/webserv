@@ -110,7 +110,7 @@ private:
 
 	void buildGet(RequestParsingResult& request) {
 		_statusCode = STATUS_OK;
-		if (isDirectory(findFinalUri(request))) {
+		if (isDirectory(findFinalUri(request.success.uri, _rootDir, request.location))) {
 			handleIndex(request);
 		} else {
 			buildPage(request);
@@ -228,7 +228,7 @@ private:
 	}
 
 	void buildPage(RequestParsingResult& request) {
-		std::string uri = findFinalUri(request);
+		std::string uri = findFinalUri(request.success.uri, _rootDir, request.location);
 		if (!readContent(uri, _body)) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
@@ -295,7 +295,7 @@ private:
 
 	void buildCgi(RequestParsingResult& request) {
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
-		std::string finalUri = findFinalUri(request);
+		std::string finalUri = findFinalUri(request.success.uri, _rootDir, request.location);
 		char* strScript = const_cast<char*>(finalUri.c_str());
 		if (access(strScript, F_OK) != 0) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
@@ -353,32 +353,6 @@ private:
 		}
 	}
 
-	std::string findFinalUri(RequestParsingResult& request) {
-		// note : this function will be called after checking if the requested uri is a file or
-		// a directory
-		Location* location = request.location;
-		std::string uri = request.success.uri;
-		if (DEBUG) {
-			std::cout << RED << "request uri : " << uri << RESET << std::endl;
-		}
-		// to ensure that the final link will be well formated whether the user put a trailing
-		// slash at the end of the location and at the beginning of the uri or not
-		if (_rootDir[_rootDir.size() - 1] == '/') {
-			_rootDir = _rootDir.substr(0, _rootDir.size() - 1);
-		}
-		if (location == NULL) {
-			return "." + _rootDir + "/" + uri;
-		}
-		LocationModifierEnum modifier = location->getModifier();
-		if (modifier == DIRECTORY) {
-			return "." + _rootDir + uri.substr(_locationUri.size() - 1);
-		} else if (modifier == REGEX) {
-			return "." + _rootDir + uri;
-		} else {
-			return "." + _rootDir + "/" + getBasename(uri);
-		}
-	}
-
 	std::string getFileUri(RequestParsingResult& request) {
 		std::string filename = getBasename(request.success.uri);
 		std::string filepath = _uploadDir[_uploadDir.size() - 1] == '/'
@@ -392,8 +366,8 @@ private:
 			std::string filepath;
 			for (std::vector<std::string>::iterator it = _indexPages.begin();
 				 it != _indexPages.end(); it++) {
-				filepath = (*it)[0] == '/' ? findFinalUri(request) + (*it).substr(1)
-										   : findFinalUri(request) + *it;
+				filepath = (*it)[0] == '/' ? findFinalUri(request.success.uri, _rootDir, request.location) + (*it).substr(1)
+										   : findFinalUri(request.success.uri, _rootDir, request.location) + *it;
 				if (isValidFile(filepath)) {
 					std::string indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
 					request.success.uri += indexFile;
@@ -419,7 +393,7 @@ private:
 	}
 
 	void buildAutoIndexPage(RequestParsingResult& request) {
-		DIR* dir = opendir(findFinalUri(request).c_str());
+		DIR* dir = opendir(findFinalUri(request.success.uri, _rootDir, request.location).c_str());
 		if (!dir) {
 			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
 		}

@@ -18,7 +18,6 @@ bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 		throw RegexError();
 	}
 	int regint = regexec(&regex, matchStr, 0, NULL, 0);
-	regfree(&regex);
 	return regint == 0;
 }
 
