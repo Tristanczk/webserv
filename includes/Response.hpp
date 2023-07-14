@@ -253,6 +253,7 @@ private:
 		exportEnv(env, "CONTENT_TYPE",
 				  it == request.success.headers.end() ? DEFAULT_CONTENT_TYPE : it->second);
 		exportEnv(env, "DOCUMENT_ROOT", request.virtualServer->getRootDir());
+		exportEnv(env, "GATEWAY_INTERFACE", CGI_VERSION);
 		for (std::map<std::string, std::string>::const_iterator it =
 				 request.success.headers.begin();
 			 it != request.success.headers.end(); ++it) {
@@ -260,7 +261,6 @@ private:
 				exportEnv(env, "HTTP_" + strupper(it->first), it->second);
 			}
 		}
-		exportEnv(env, "GATEWAY_INTERFACE", CGI_VERSION);
 		const std::string absolutePath = getAbsolutePath(finalUri);
 		exportEnv(env, "PATH_INFO", absolutePath);
 		exportEnv(env, "QUERY_STRING", request.success.query);
