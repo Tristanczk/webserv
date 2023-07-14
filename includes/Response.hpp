@@ -500,7 +500,7 @@ private:
 			_locationUri = location->getUri();
 			_return = location->getReturn();
 			for (int i = 0; i < NO_METHOD; i++) {
-				_allowedMethods[i] = location->getAllowedMethod()[i];
+				_allowedMethods[i] = location->getAllowedMethods()[i];
 			}
 			_cgiExec = location->getCgiExec();
 		}

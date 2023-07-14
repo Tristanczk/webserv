@@ -42,7 +42,7 @@ public:
 							   result.virtualServer->getErrorPages(),
 							   result.location->getErrorPages(), result.location->getIndexPages(),
 							   result.location->getUri(), result.location->getReturn(),
-							   result.location->getAllowedMethod(), result.location->getCgiExec())
+							   result.location->getAllowedMethods(), result.location->getCgiExec())
 				: new Response(
 					  result.virtualServer->getRootDir(), result.virtualServer->getAutoIndex(),
 					  result.virtualServer->getErrorPages(), result.virtualServer->getIndexPages());

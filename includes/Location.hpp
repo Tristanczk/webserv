@@ -95,7 +95,7 @@ public:
 	std::string getCgiExec() const { return _cgiExec; }
 	bool getAutoIndex() const { return _autoIndex; }
 	std::pair<long, std::string> getReturn() const { return _return; }
-	const bool* getAllowedMethod() const { return _allowedMethods; }
+	const bool* getAllowedMethods() const { return _allowedMethods; }
 	std::map<int, std::string> const& getErrorPages() const { return _errorPages; }
 	std::vector<std::string> const& getIndexPages() const { return _indexPages; }
 
