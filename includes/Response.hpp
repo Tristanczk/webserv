@@ -303,35 +303,7 @@ private:
 		std::exit(EXIT_FAILURE);
 	}
 
-	void buildCgi(RequestParsingResult& request) {
-		char* strExec = const_cast<char*>(_cgiExec.c_str());
-		std::string finalUri = findFinalUri(request.success.uri, _rootDir, request.location);
-		char* strScript = const_cast<char*>(finalUri.c_str());
-		if (access(strScript, F_OK) != 0) {
-			return buildErrorPage(request, STATUS_NOT_FOUND);
-		} else if (_autoIndex && isDirectory(strScript)) {
-			return buildAutoIndexPage(request);
-		}
-		int childToParent[2];
-		syscall(pipe(childToParent), "pipe");
-		int parentToChild[2];
-		syscall(pipe(parentToChild), "pipe");
-		pid_t pid = fork();
-		syscall(pid, "fork");
-		if (pid == 0) {
-			cgiChild(request, childToParent, parentToChild, strExec, strScript, finalUri);
-		}
-		std::cout << strExec << ' ' << strScript << " started with pid " << pid << ".\n";
-		_statusCode = STATUS_OK;
-		close(parentToChild[0]);
-		close(childToParent[1]);
-		std::string body = std::string(request.success.body.begin(), request.success.body.end());
-		write(parentToChild[1], body.c_str(), body.size());
-		close(parentToChild[1]);
-		std::string response = fullRead(childToParent[0]);
-		close(childToParent[0]);
-		int wstatus;
-		wait(&wstatus);
+	void translateCgiResponse(RequestParsingResult& request, const std::string& response) {
 		std::istringstream iss(response);
 		std::string line;
 		while (std::getline(iss, line) && !line.empty()) {
@@ -343,23 +315,62 @@ private:
 				if (key == "status") {
 					std::istringstream iss(value);
 					iss >> value;
-					if (value.size() == 3 && std::isdigit(value[0]) && std::isdigit(value[1]) &&
-						std::isdigit(value[2])) {
-						_statusCode = static_cast<StatusCode>(std::atoi(value.c_str()));
-					} else {
-						return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
-					}
+					_statusCode = value.size() == 3 && std::isdigit(value[0]) &&
+										  std::isdigit(value[1]) && std::isdigit(value[2])
+									  ? static_cast<StatusCode>(std::atoi(value.c_str()))
+									  : STATUS_INTERNAL_SERVER_ERROR;
 				}
 			}
 		}
-		std::stringstream buffer;
-		buffer << iss.rdbuf();
-		_body = buffer.str();
-		const int exitCode = WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
-		if (exitCode != 0) {
-			std::cout << RED << strExec << ' ' << strScript << " failed with code " << exitCode
-					  << '.' << std::endl;
-			return buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
+		if (_statusCode < 200 || _statusCode > 299) {
+			buildErrorPage(request, _statusCode);
+		} else {
+			std::stringstream buffer;
+			buffer << iss.rdbuf();
+			_body = buffer.str();
+		}
+	}
+
+	void buildCgi(RequestParsingResult& request) {
+		char* strExec = const_cast<char*>(_cgiExec.c_str());
+		std::string finalUri = findFinalUri(request.success.uri, _rootDir, request.location);
+		char* strScript = const_cast<char*>(finalUri.c_str());
+		if (access(strScript, F_OK) != 0) {
+			return buildErrorPage(request, STATUS_NOT_FOUND);
+		} else if (_autoIndex && isDirectory(strScript)) {
+			return buildAutoIndexPage(request);
+		}
+
+		int childToParent[2];
+		int parentToChild[2];
+		syscall(pipe(childToParent), "pipe");
+		syscall(pipe(parentToChild), "pipe");
+		pid_t pid = fork();
+		syscall(pid, "fork");
+		if (pid == 0) {
+			cgiChild(request, childToParent, parentToChild, strExec, strScript, finalUri);
+		}
+
+		if (DEBUG) {
+			std::cout << strExec << ' ' << strScript << " started with pid " << pid << ".\n";
+		}
+		_statusCode = STATUS_OK;
+		close(parentToChild[0]);
+		close(childToParent[1]);
+		std::string body = std::string(request.success.body.begin(), request.success.body.end());
+		write(parentToChild[1], body.c_str(), body.size());
+		close(parentToChild[1]);
+		int exitCode = getExitCode();
+		if (DEBUG) {
+			std::cout << strExec << ' ' << strScript << " exited with code " << exitCode << ".\n";
+		}
+		std::string response = fullRead(childToParent[0]);
+		close(childToParent[0]);
+
+		if (exitCode == 0) {
+			translateCgiResponse(request, response);
+		} else {
+			buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
 

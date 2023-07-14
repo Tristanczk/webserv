@@ -217,6 +217,7 @@ std::string fullRead(int);
 std::string getAbsolutePath(const std::string&);
 std::string getBasename(const std::string&);
 std::string getDate();
+int getExitCode();
 std::string getExtension(const std::string&);
 std::string getIpString(in_addr_t);
 bool getIpValue(std::string, uint32_t&);

@@ -17,4 +17,7 @@ foreach ($_SERVER as $key => $value) {
 echo "</table>";
 echo "</body>";
 echo "</html>";
+
+lol
+
 ?>

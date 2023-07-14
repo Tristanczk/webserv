@@ -2,6 +2,7 @@
 
 <?php
 header("Content-Type: text/html");
+header("Status: 404 Not Found");
 
 echo "<!DOCTYPE html>";
 echo '<html lang="en">';
@@ -17,4 +18,5 @@ foreach ($_SERVER as $key => $value) {
 echo "</table>";
 echo "</body>";
 echo "</html>";
+
 ?>

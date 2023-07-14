@@ -75,6 +75,12 @@ std::string getDate() {
 	return std::string(buffer);
 }
 
+int getExitCode() {
+	int wstatus;
+	wait(&wstatus);
+	return WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
+}
+
 std::string getIpString(in_addr_t ip) {
 	ip = ntohl(ip);
 	std::ostringstream oss;
