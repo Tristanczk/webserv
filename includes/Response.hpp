@@ -26,9 +26,7 @@ public:
 		: _bodyPos(0), _statusCode(STATUS_NONE), _rootDir(rootDir), _uploadDir(uploadDir),
 		  _autoIndex(autoIndex), _serverErrorPages(serverErrorPages), _errorPages(errorPages),
 		  _indexPages(indexPages), _locationUri(locationUri), _return(redirect), _cgiExec(cgiExec) {
-		for (int i = 0; i < NO_METHOD; ++i) {
-			_allowedMethods[i] = allowedMethods[i];
-		}
+		std::copy(allowedMethods, allowedMethods + NO_METHOD, _allowedMethods);
 		initMethodMap();
 	}
 
