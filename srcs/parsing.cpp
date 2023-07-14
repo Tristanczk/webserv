@@ -88,6 +88,9 @@ bool parseErrorPages(std::istringstream& iss, std::map<int, std::string>& errorP
 		}
 		code = tmpStr;
 	}
+	if (!validateUri(code, "error_page")) {
+		return false;
+	}
 	for (std::vector<int>::iterator it = codeList.begin(); it != codeList.end(); it++) {
 		int codeValue = *it;
 		if (errorPages.find(codeValue) == errorPages.end()) {
