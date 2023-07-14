@@ -39,20 +39,44 @@
 			outline: none;
 		}
 
-		.slider::-webkit-slider-thumb {
+		.slider::-moz-range-thumb {
+			-moz-appearance: none;
 			appearance: none;
 			width: 25px;
 			height: 25px;
 			cursor: pointer;
-			display: block;
+			border: none;
+			border-radius: 0;
+		}
+
+		.slider::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			cursor: pointer;
+			border: none;
+			border-radius: 0;
+		}
+
+		.slider.red::-moz-range-thumb {
+			background: #f33;
 		}
 
 		.slider.red::-webkit-slider-thumb {
 			background: #f33;
 		}
 
+		.slider.green::-moz-range-thumb {
+			background: #3f3;
+		}
+
 		.slider.green::-webkit-slider-thumb {
 			background: #3f3;
+		}
+
+		.slider.blue::-moz-range-thumb {
+			background: #33f;
 		}
 
 		.slider.blue::-webkit-slider-thumb {
