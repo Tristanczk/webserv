@@ -5,7 +5,7 @@ import sys
 
 RESET = "\033[0m"
 RED = "\033[31m"
-DEBUG = True
+DEBUG = False
 
 
 def debug(s):
