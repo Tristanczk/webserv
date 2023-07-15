@@ -136,6 +136,7 @@ private:
 	}
 
 	void buildPost(RequestParsingResult& request) {
+		std::cout << "POST upload dir: " << _uploadDir << '\n';
 		std::map<std::string, std::string>::const_iterator it =
 			request.success.headers.find("content-type");
 		if (it == request.success.headers.end()) {
@@ -147,6 +148,7 @@ private:
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
 		const std::string fileName = "." + getFileUri(request);
+		std::cout << "POST filename: " << fileName << '\n';
 		bool existed = access(fileName.c_str(), F_OK) == 0;
 		std::ofstream ofs(fileName.c_str());
 		if (ofs.fail()) {
@@ -433,9 +435,7 @@ private:
 
 	std::string getFileUri(RequestParsingResult& request) {
 		std::string filename = getBasename(request.success.uri);
-		std::string filepath = _uploadDir[_uploadDir.size() - 1] == '/'
-								   ? _uploadDir + filename
-								   : _uploadDir + "/" + filename;
+		std::string filepath = _uploadDir + filename;
 		return filepath;
 	}
 

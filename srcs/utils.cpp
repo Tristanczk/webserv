@@ -12,6 +12,30 @@ bool configFileError(const std::string& message) {
 	return false;
 }
 
+static char from_hex(char ch) { return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10; }
+
+std::string decodeUri(const std::string& uri) {
+	std::string decoded;
+	for (std::string::const_iterator i = uri.begin(), end = uri.end(); i != end; ++i) {
+		if (int(*i) == '%') {
+			if (i + 2 >= end) {
+				throw std::runtime_error(
+					"Invalid URI encoding: not enough characters after a '%' symbol.");
+			}
+			char ch1 = *(i + 1);
+			char ch2 = *(i + 2);
+			char ch = from_hex(ch1) << 4 | from_hex(ch2);
+			decoded += ch;
+			i += 2;
+		} else if (*i == '+') {
+			decoded += ' ';
+		} else {
+			decoded += *i;
+		}
+	}
+	return decoded;
+}
+
 bool doesRegexMatch(const char* regexStr, const char* matchStr) {
 	regex_t regex;
 	if (regcomp(&regex, regexStr, REG_EXTENDED) != 0) {

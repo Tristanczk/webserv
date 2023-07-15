@@ -46,7 +46,7 @@
 
 #define TIMEOUT 10.0
 
-#define DEBUG true
+#define DEBUG false
 
 #define CGI_VERSION "CGI/1.1"
 #define HTTP_VERSION "HTTP/1.1"
@@ -209,6 +209,7 @@ public:
 
 int comparePrefix(const std::string&, const std::string&);
 bool configFileError(const std::string&);
+std::string decodeUri(const std::string&);
 bool doesRegexMatch(const char*, const char*);
 bool endswith(const std::string&, const std::string&);
 const std::string* findCommonString(const std::vector<std::string>&,
