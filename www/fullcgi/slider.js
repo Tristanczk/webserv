@@ -53,7 +53,7 @@ window.onload = function () {
 	let color = getCookie('color');
 	let hexColorPattern = /^#[0-9A-Fa-f]{6}$/;
 	if (!color || !hexColorPattern.test(color)) {
-		color = "#808080";
+		color = "#CCCCCC";
 	}
 
 	if (color) {

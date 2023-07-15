@@ -1,11 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-	<title>CGI Scripts</title>
+	<title>Full CGI</title>
+	<script src="slider.js" defer></script>
+	<style>
+		body {
+			transition: background-color 0.2s ease;
+		}
+
+		.container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 15px;
+		}
+
+		#saveColor {
+			font-family: Arial, sans-serif;
+			font-size: 1em;
+			padding: 10px 20px;
+			color: white;
+			background-color: #4CAF50;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: background-color 0.2s ease;
+		}
+
+		#saveColor:hover {
+			background-color: #45a049;
+		}
+
+		.slider {
+			appearance: none;
+			max-width: 20%;
+			height: 15px;
+			outline: none;
+		}
+
+		.slider::-moz-range-thumb {
+			-moz-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			cursor: pointer;
+			border: none;
+			border-radius: 0;
+		}
+
+		.slider::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			cursor: pointer;
+			border: none;
+			border-radius: 0;
+		}
+
+		.slider.red::-moz-range-thumb {
+			background: #f33;
+		}
+
+		.slider.red::-webkit-slider-thumb {
+			background: #f33;
+		}
+
+		.slider.green::-moz-range-thumb {
+			background: #3f3;
+		}
+
+		.slider.green::-webkit-slider-thumb {
+			background: #3f3;
+		}
+
+		.slider.blue::-moz-range-thumb {
+			background: #33f;
+		}
+
+		.slider.blue::-webkit-slider-thumb {
+			background: #33f;
+		}
+	</style>
 </head>
 
-<body>
+<body id="body" style="background-color: rgb(204,204,204);">
+	<div class="container">
+		<input type="range" min="0" max="255" value="204" id="red" class="slider red">
+		<input type="range" min="0" max="255" value="204" id="green" class="slider green">
+		<input type="range" min="0" max="255" value="204" id="blue" class="slider blue">
+		<button id="saveColor">Save Color</button>
+	</div>
 	<h1>CGI Scripts</h1>
 	<h2>Calculator</h2>
 	<form action="/cgi-bin/calculator.py" method="GET">
