@@ -136,7 +136,6 @@ private:
 	}
 
 	void buildPost(RequestParsingResult& request) {
-		std::cout << "POST upload dir: " << _uploadDir << '\n';
 		std::map<std::string, std::string>::const_iterator it =
 			request.success.headers.find("content-type");
 		if (it == request.success.headers.end()) {
@@ -147,8 +146,11 @@ private:
 		} else if (!isDirectory("." + _uploadDir)) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		}
-		const std::string fileName = "." + getFileUri(request);
-		std::cout << "POST filename: " << fileName << '\n';
+		_headers["content-type"] = it->second;
+		const std::string fileName = getFileUri(request);
+		if (fileName.empty()) {
+			return buildErrorPage(request, STATUS_BAD_REQUEST);
+		}
 		bool existed = access(fileName.c_str(), F_OK) == 0;
 		std::ofstream ofs(fileName.c_str());
 		if (ofs.fail()) {
@@ -168,8 +170,10 @@ private:
 	}
 
 	void buildDelete(RequestParsingResult& request) {
-		std::string uri = '.' + getFileUri(request);
-		if (isDirectory(uri)) {
+		std::string uri = getFileUri(request);
+		if (uri.empty()) {
+			return buildErrorPage(request, STATUS_FORBIDDEN);
+		} else if (isDirectory(uri)) {
 			return buildErrorPage(request, STATUS_FORBIDDEN);
 		} else if (!isValidFile(uri)) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
@@ -219,7 +223,7 @@ private:
 		_headers["date"] = getDate();
 		_headers["server"] = SERVER_VERSION;
 		_headers["content-length"] = toString(_body.size());
-		if (_headers.find("content-type") == _headers.end()) {
+		if (_headers.find("content-type") == _headers.end() && _method != DELETE) {
 			_headers["content-type"] = DEFAULT_CONTENT_TYPE;
 		}
 		_headers["connection"] = "close";
@@ -434,9 +438,16 @@ private:
 	}
 
 	std::string getFileUri(RequestParsingResult& request) {
-		std::string filename = getBasename(request.success.uri);
-		std::string filepath = _uploadDir + filename;
-		return filepath;
+		Location* location = request.location;
+		LocationModifierEnum modifier = location->getModifier();
+		std::string locationUri = location->getUri();
+		if (modifier == EXACT) {
+			return "";
+		} else if (modifier == REGEX) {
+			return "." + _uploadDir.substr(0, _uploadDir.size() - 1) + request.success.uri;
+		}
+		return "." + _uploadDir.substr(0, _uploadDir.size() - 1) +
+			   request.success.uri.substr(locationUri.size() - 1);
 	}
 
 	void handleIndex(RequestParsingResult& request) {
