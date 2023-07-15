@@ -67,6 +67,13 @@ public:
 					return RESPONSE_FAILURE;
 				}
 			}
+			for (std::vector<std::string>::const_iterator it = _setCookies.begin();
+				 it != _setCookies.end(); it++) {
+				line = "set-cookie: " + *it + "\r\n";
+				if (!pushStringToClient(fd, line)) {
+					return RESPONSE_FAILURE;
+				}
+			}
 			line = "\r\n";
 			if (!pushStringToClient(fd, line)) {
 				return RESPONSE_FAILURE;
@@ -110,6 +117,7 @@ private:
 	std::pair<long, std::string> _return;
 	bool _allowedMethods[NO_METHOD];
 	std::string _cgiExec;
+	std::vector<std::string> _setCookies;
 
 	void initMethodMap() {
 		_methodHandlers[GET] = &Response::buildGet;
@@ -350,6 +358,10 @@ private:
 			if (colon != std::string::npos) {
 				std::string key = strlower(strtrim(line.substr(0, colon), SPACES));
 				std::string value = strtrim(line.substr(colon + 1), SPACES);
+				if (key == "set-cookie") {
+					_setCookies.push_back(value);
+					continue;
+				}
 				_headers[key] = value;
 				if (key == "status") {
 					std::istringstream iss(value);
