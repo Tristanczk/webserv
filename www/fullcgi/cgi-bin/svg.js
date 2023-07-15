@@ -1,5 +1,12 @@
+const escapeHtml = (unsafe) => unsafe
+	.replace(/&/g, "&amp;")
+	.replace(/</g, "&lt;")
+	.replace(/>/g, "&gt;")
+	.replace(/"/g, "&quot;")
+	.replace(/'/g, "&#039;");
+
 const params = require('querystring').parse(process.env.QUERY_STRING);
-const name = params.name || 'World';
+const name = escapeHtml(params.name) || 'World';
 const message = `Hello ${name}! 💞`;
 const scale = 9 / message.length;
 
