@@ -18,8 +18,8 @@ console.log(`Content-Type: image/svg+xml
             <feDropShadow dx="5" dy="5" stdDeviation="3" flood-color="#000"/>
         </filter>
     </defs>
-    <g transform="translate(${(1 - scale) * 500}, 0) scale(${scale}) rotate(-15 500 300)">
-        <text x="50%" y="45%" alignment-baseline="middle" text-anchor="middle" font-family="'Bungee Shade', cursive" font-size="120" filter="url(#3d)">
+    <g transform="translate(${(1 - scale) * 500}, -100) scale(${scale}) rotate(-15 500 300)">
+        <text x="50%" y="50%" alignment-baseline="middle" text-anchor="middle" font-family="'Bungee Shade', cursive" font-size="120" filter="url(#3d)">
             ${message}
         </text>
     </g>
