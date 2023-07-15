@@ -28,6 +28,14 @@
 		<input type="submit" value="Generate SVG">
 	</form>
 
+	<h2>File Upload</h2>
+	<form action="/cgi-bin/file_upload.py" method="POST" enctype="multipart/form-data">
+		<label for="file">Select a file:</label>
+		<input type="file" id="file" name="file">
+		<input type="submit" value="Submit">
+	</form>
+
+
 	<h2>Environment</h2>
 	<form action="/cgi-bin/environment.js">
 		<input type="submit" value="View Environment with the power of JavaScript">

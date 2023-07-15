@@ -335,10 +335,13 @@ private:
 		char* strExec = const_cast<char*>(_cgiExec.c_str());
 		std::string finalUri = findFinalUri(request.success.uri, _rootDir, request.location);
 		char* strScript = const_cast<char*>(finalUri.c_str());
+		std::string body = std::string(request.success.body.begin(), request.success.body.end());
 		if (access(strScript, F_OK) != 0) {
 			return buildErrorPage(request, STATUS_NOT_FOUND);
 		} else if (_autoIndex && isDirectory(strScript)) {
 			return buildAutoIndexPage(request);
+		} else if (body.size() > PIPE_SIZE) {
+			return buildErrorPage(request, STATUS_PAYLOAD_TOO_LARGE);
 		}
 
 		int childToParent[2];
@@ -357,7 +360,6 @@ private:
 		_statusCode = STATUS_OK;
 		close(parentToChild[0]);
 		close(childToParent[1]);
-		std::string body = std::string(request.success.body.begin(), request.success.body.end());
 		write(parentToChild[1], body.c_str(), body.size());
 		close(parentToChild[1]);
 		int exitCode = getExitCode();
