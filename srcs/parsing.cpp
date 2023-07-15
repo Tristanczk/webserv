@@ -46,7 +46,7 @@ static bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
 				return configFileError("too many arguments for code range in error_page");
 			}
 			code[idx] = '-';
-			if (!isValidErrorCode(start) || !isValidErrorCode(end)) {
+			if (!isValidStatusCode(start) || !isValidStatusCode(end)) {
 				return configFileError("invalid error code in range: " + code);
 			}
 			if (start > end) {
@@ -61,7 +61,7 @@ static bool parseErrorCode(std::string& code, std::vector<int>& codeList) {
 		}
 	}
 	int codeValue = std::strtol(code.c_str(), NULL, 10);
-	if (!isValidErrorCode(codeValue)) {
+	if (!isValidStatusCode(codeValue)) {
 		return configFileError("invalid error code: " + code);
 	}
 	codeList.push_back(codeValue);

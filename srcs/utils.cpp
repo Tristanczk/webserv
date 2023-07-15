@@ -36,6 +36,24 @@ const std::string* findCommonString(const std::vector<std::string>& vec1,
 	return NULL;
 }
 
+std::string findFinalUri(std::string& uri, std::string rootDir, Location* location) {
+	if (rootDir[rootDir.size() - 1] == '/') {
+		rootDir = rootDir.substr(0, rootDir.size() - 1);
+	}
+	if (!location) {
+		return "." + rootDir + uri;
+	}
+	LocationModifierEnum modifier = location->getModifier();
+	std::string locationUri = location->getUri();
+	if (modifier == DIRECTORY) {
+		return "." + rootDir + uri.substr(locationUri.size() - 1);
+	} else if (modifier == REGEX) {
+		return "." + rootDir + uri;
+	} else {
+		return "." + rootDir + "/" + getBasename(uri);
+	}
+}
+
 std::string fullRead(int fd) {
 	std::string message;
 	char buf[BUFFER_SIZE];
@@ -61,12 +79,6 @@ std::string getAbsolutePath(const std::string& path) {
 
 std::string getBasename(const std::string& path) { return path.substr(path.find_last_of("/") + 1); }
 
-std::string getExtension(const std::string& path) {
-	std::string basename = getBasename(path);
-	size_t pos = basename.find_last_of(".");
-	return pos == std::string::npos ? "" : basename.substr(pos + 1);
-}
-
 std::string getDate() {
 	std::time_t t = std::time(0);
 	std::tm* now = std::localtime(&t);
@@ -79,6 +91,12 @@ int getExitCode() {
 	int wstatus;
 	wait(&wstatus);
 	return WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
+}
+
+std::string getExtension(const std::string& path) {
+	std::string basename = getBasename(path);
+	size_t pos = basename.find_last_of(".");
+	return pos == std::string::npos ? "" : basename.substr(pos + 1);
 }
 
 std::string getIpString(in_addr_t ip) {
@@ -143,7 +161,7 @@ bool isValidFile(const std::string& path) {
 	return stat(path.c_str(), &buf) == 0 && S_ISREG(buf.st_mode);
 }
 
-bool isValidErrorCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
+bool isValidStatusCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
 
 void perrored(const char* funcName) {
 	std::cerr << RED << funcName << ": " << strerror(errno) << RESET << '\n';
@@ -225,22 +243,4 @@ char** vectorToCharArray(const std::vector<std::string>& envec) {
 	}
 	array[envec.size()] = NULL;
 	return array;
-}
-
-std::string findFinalUri(std::string& uri, std::string rootDir, Location* location) {
-	if (rootDir[rootDir.size() - 1] == '/') {
-		rootDir = rootDir.substr(0, rootDir.size() - 1);
-	}
-	if (!location) {
-		return "." + rootDir + uri;
-	}
-	LocationModifierEnum modifier = location->getModifier();
-	std::string locationUri = location->getUri();
-	if (modifier == DIRECTORY) {
-		return "." + rootDir + uri.substr(locationUri.size() - 1);
-	} else if (modifier == REGEX) {
-		return "." + rootDir + uri;
-	} else {
-		return "." + rootDir + "/" + getBasename(uri);
-	}
 }

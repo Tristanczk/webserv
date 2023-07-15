@@ -217,24 +217,63 @@ private:
 
 	void buildErrorPage(RequestParsingResult& request, StatusCode statusCode) {
 		_statusCode = statusCode;
-		std::map<int, std::string>::iterator it = _errorPages.find(_statusCode);
-		std::string errorPageUri;
-		if (it != _errorPages.end()) {
-			errorPageUri = "." + _rootDir + it->second;
-		} else {
-			it = _serverErrorPages.find(_statusCode);
-			errorPageUri = it != _serverErrorPages.end()
-							   ? "." + request.virtualServer->getRootDir() + it->second
-							   : "./www/default_error.html";
+		std::map<int, std::string>::iterator locationIt = _errorPages.find(_statusCode);
+		std::map<int, std::string>::iterator serverIt = _serverErrorPages.find(_statusCode);
+		std::string errorPageUri =
+			locationIt != _errorPages.end() ? "." + _rootDir + locationIt->second
+			: serverIt != _serverErrorPages.end()
+				? "." + request.virtualServer->getRootDir() + serverIt->second
+				: "";
+		if (errorPageUri.empty() || !readContent(errorPageUri, _body)) {
+			std::map<StatusCode, std::string>::const_iterator it =
+				STATUS_MESSAGES.find(_statusCode);
+			std::string codeString = toString(_statusCode);
+			std::string title = it != STATUS_MESSAGES.end() ? codeString + " " + it->second
+															: "Unknown error " + codeString;
+			_body = "<!DOCTYPE html>\n"
+					"<html lang=\"en\">\n"
+					"\n"
+					"<head>\n"
+					"\t<meta charset=\"UTF-8\">\n"
+					"\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+					"\t<title>" +
+					title +
+					"</title>\n"
+					"\t<style>\n"
+					"\t\tbody {\n"
+					"\t\t\tbackground-color: #f0f0f0;\n"
+					"\t\t\tfont-family: Arial, sans-serif;\n"
+					"\t\t}\n"
+					"\n"
+					"\t\t.container {\n"
+					"\t\t\twidth: 80%;\n"
+					"\t\t\tmargin: auto;\n"
+					"\t\t\ttext-align: center;\n"
+					"\t\t\tpadding-top: 20%;\n"
+					"\t\t}\n"
+					"\n"
+					"\t\th1 {\n"
+					"\t\t\tcolor: #333;\n"
+					"\t\t}\n"
+					"\n"
+					"\t\tp {\n"
+					"\t\t\tcolor: #666;\n"
+					"\t\t}\n"
+					"\t</style>\n"
+					"</head>\n"
+					"\n"
+					"<body>\n"
+					"\t<div class=\"container\">\n"
+					"\t\t<h1>" +
+					title +
+					"</h1>\n"
+					"\t\t<a href=\"/\">Go back to root.</a>\n"
+					"\t</div>\n"
+					"</body>\n"
+					"\n"
+					"</html>";
 		}
-		if (!readContent(errorPageUri, _body)) {
-			_body = "There was an error while trying to access the specified error page for error "
-					"code " +
-					toString(_statusCode);
-			_headers["content-type"] = "text/plain";
-		} else {
-			_headers["content-type"] = "text/html";
-		}
+		_headers["content-type"] = "text/html";
 	}
 
 	void buildPage(RequestParsingResult& request) {
@@ -315,10 +354,15 @@ private:
 				if (key == "status") {
 					std::istringstream iss(value);
 					iss >> value;
-					_statusCode = value.size() == 3 && std::isdigit(value[0]) &&
-										  std::isdigit(value[1]) && std::isdigit(value[2])
-									  ? static_cast<StatusCode>(std::atoi(value.c_str()))
-									  : STATUS_INTERNAL_SERVER_ERROR;
+					if (value.size() != 3 || !std::isdigit(value[0]) || !std::isdigit(value[1]) ||
+						!std::isdigit(value[2])) {
+						_statusCode = STATUS_INTERNAL_SERVER_ERROR;
+					} else {
+						StatusCode castCode = static_cast<StatusCode>(std::atoi(value.c_str()));
+						bool validStatusCode =
+							STATUS_MESSAGES.find(castCode) != STATUS_MESSAGES.end();
+						_statusCode = validStatusCode ? castCode : STATUS_INTERNAL_SERVER_ERROR;
+					}
 				}
 			}
 		}

@@ -225,7 +225,7 @@ bool getIpValue(std::string, uint32_t&);
 void initAllowedMethods(bool[NO_METHOD]);
 bool isDirectory(const std::string&);
 bool isValidFile(const std::string&);
-bool isValidErrorCode(int);
+bool isValidStatusCode(int);
 void perrored(const char*);
 bool readContent(std::string&, std::string&);
 std::string removeDuplicateSlashes(const std::string&);
