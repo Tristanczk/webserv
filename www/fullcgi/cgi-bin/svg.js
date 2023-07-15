@@ -19,9 +19,9 @@ console.log(`Content-Type: image/svg+xml
         </filter>
     </defs>`);
 
-for (let i = 0; i < 25; i++) {
+for (let i = 0; i < 32; i++) {
 	console.log(`
-    <g transform="translate(${(1 - scale) * 500}, ${-1000 + i * 100}) scale(${scale}) rotate(-15 500 300)">
+    <g transform="translate(${(1 - scale) * 500}, ${-1200 + i * 100}) scale(${scale}) rotate(-15 500 300)">
         <text x="50%" y="50%" alignment-baseline="middle" text-anchor="middle" font-family="'Bungee Shade', cursive" font-size="120" filter="url(#3d)">
             ${message}
         </text>
