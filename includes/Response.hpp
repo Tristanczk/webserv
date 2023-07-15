@@ -418,13 +418,12 @@ private:
 		close(childToParent[1]);
 		write(parentToChild[1], body.c_str(), body.size());
 		close(parentToChild[1]);
-		int exitCode = getExitCode();
+		int exitCode = getExitCode(pid);
 		if (DEBUG) {
 			std::cout << strExec << ' ' << strScript << " exited with code " << exitCode << ".\n";
 		}
 		std::string response = fullRead(childToParent[0]);
 		close(childToParent[0]);
-
 		if (exitCode == 0) {
 			translateCgiResponse(request, response);
 		} else {
@@ -445,18 +444,15 @@ private:
 			std::string filepath;
 			for (std::vector<std::string>::iterator it = _indexPages.begin();
 				 it != _indexPages.end(); it++) {
-				filepath =
-					(*it)[0] == '/'
-						? findFinalUri(request.success.uri, _rootDir, request.location) +
-							  (*it).substr(1)
-						: findFinalUri(request.success.uri, _rootDir, request.location) + *it;
+				std::string uri = request.success.uri == "/" ? "/" : request.success.uri + "/";
+				filepath = findFinalUri(uri, _rootDir, request.location) + *it;
 				if (isValidFile(filepath)) {
 					std::string indexFile = (*it)[0] == '/' ? (*it).substr(1) : *it;
-					request.success.uri += indexFile;
+					request.success.uri = uri + indexFile;
 					request.location =
 						request.virtualServer->findMatchingLocation(request.success.uri);
 					reinitResponseVariables(request);
-					buildPage(request);
+					buildResponse(request);
 					return;
 				}
 			}

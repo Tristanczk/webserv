@@ -36,7 +36,7 @@ const std::string* findCommonString(const std::vector<std::string>& vec1,
 	return NULL;
 }
 
-std::string findFinalUri(std::string& uri, std::string rootDir, Location* location) {
+std::string findFinalUri(const std::string& uri, std::string rootDir, Location* location) {
 	if (rootDir[rootDir.size() - 1] == '/') {
 		rootDir = rootDir.substr(0, rootDir.size() - 1);
 	}
@@ -87,10 +87,10 @@ std::string getDate() {
 	return std::string(buffer);
 }
 
-int getExitCode() {
-	int wstatus;
-	wait(&wstatus);
-	return WIFSIGNALED(wstatus) ? 128 + WTERMSIG(wstatus) : WEXITSTATUS(wstatus);
+int getExitCode(pid_t pid) {
+	int wstatus = 0;
+	waitpid(pid, &wstatus, 0);
+	return WIFEXITED(wstatus) ? WEXITSTATUS(wstatus) : 128 + WTERMSIG(wstatus);
 }
 
 std::string getExtension(const std::string& path) {
