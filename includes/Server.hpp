@@ -16,8 +16,8 @@ public:
 			 ++it) {
 			close(*it);
 		}
-		for (int i = 0; i < _numFds; ++i) {
-			close(_eventList[i].data.fd);
+		for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+			close(it->first);
 		}
 		close(_epollFd);
 	};

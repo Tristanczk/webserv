@@ -105,8 +105,14 @@ bool parseIndex(std::istringstream& iss, std::vector<std::string>& indexPages) {
 	if (!(iss >> value)) {
 		return configFileError("missing information after index keyword");
 	}
+	if (value.find_first_of("/") != std::string::npos) {
+		return configFileError("invalid index name: " + value);
+	}
 	indexPages.push_back(value);
 	while (iss >> value) {
+		if (value.find_first_of("/") != std::string::npos) {
+			return configFileError("invalid index name: " + value);
+		}
 		indexPages.push_back(value);
 	}
 	return true;
