@@ -2,7 +2,7 @@ const redSlider = document.getElementById("red");
 const greenSlider = document.getElementById("green");
 const blueSlider = document.getElementById("blue");
 const body = document.getElementById("body");
-const saveColorButton = document.getElementById("saveColor");
+const saveColorButton = document.getElementById("save-color");
 
 redSlider.oninput = function () {
 	updateBackgroundColor();

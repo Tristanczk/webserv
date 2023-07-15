@@ -16,20 +16,26 @@
 			gap: 15px;
 		}
 
-		#saveColor {
+		#save-color {
+			font-weight: bold;
 			font-family: Arial, sans-serif;
 			font-size: 1em;
 			padding: 10px 20px;
 			color: white;
-			background-color: #4CAF50;
+			background-color: #B22222;
 			border: none;
-			border-radius: 5px;
 			cursor: pointer;
-			transition: background-color 0.2s ease;
+			box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+			transition: all 0.09s ease;
 		}
 
-		#saveColor:hover {
-			background-color: #45a049;
+		#save-color:hover {
+			background-color: #C33333;
+		}
+
+		#save-color:active {
+			box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+			transform: translateY(4px);
 		}
 
 		.slider {
@@ -90,7 +96,7 @@
 		<input type="range" min="0" max="255" value="204" id="red" class="slider red">
 		<input type="range" min="0" max="255" value="204" id="green" class="slider green">
 		<input type="range" min="0" max="255" value="204" id="blue" class="slider blue">
-		<button id="saveColor">Save Color</button>
+		<button id="save-color">Save Color</button>
 	</div>
 	<h1>CGI Scripts</h1>
 	<h2>Calculator</h2>

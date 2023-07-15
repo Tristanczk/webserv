@@ -381,7 +381,7 @@ private:
 		char* strScript = const_cast<char*>(finalUri.c_str());
 		std::string body = std::string(request.success.body.begin(), request.success.body.end());
 		if (access(strScript, F_OK) != 0) {
-			return buildErrorPage(request, STATUS_NOT_FOUND);
+			return buildErrorPage(request, STATUS_BAD_GATEWAY);
 		} else if (_autoIndex && isDirectory(strScript)) {
 			return buildAutoIndexPage(request);
 		} else if (body.size() > PIPE_SIZE) {
