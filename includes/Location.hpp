@@ -196,7 +196,7 @@ private:
 			if (_allowedMethods[HEAD]) {
 				return configFileError("multiple HEAD instructions in limit_except directive");
 			}
-			_allowedMethods[DELETE] = true;
+			_allowedMethods[HEAD] = true;
 		} else {
 			return configFileError("invalid method in limit_except directive: " + method);
 		}

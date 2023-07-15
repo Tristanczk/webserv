@@ -225,7 +225,7 @@ std::string strupper(const std::string& s) {
 }
 
 std::string toString(RequestMethod method) {
-	return method == GET ? "GET" : method == POST ? "POST" : "DELETE";
+	return method == GET ? "GET" : method == POST ? "POST" : method == HEAD ? "HEAD" : "DELETE";
 }
 
 bool validateUri(const std::string& uri, const std::string& keyword) {
