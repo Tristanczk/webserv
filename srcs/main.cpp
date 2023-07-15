@@ -8,7 +8,7 @@ const std::set<std::string> CGI_NO_TRANSMISSION;
 int main(int argc, char* argv[]) {
 	std::signal(SIGINT, signalHandler);
 	std::signal(SIGCHLD, SIG_IGN);
-	const char* conf = argc == 2 ? argv[1] : "conf/valid/default.conf"; // TODO everything.conf
+	const char* conf = argc == 2 ? argv[1] : "conf/valid/everything.conf";
 	if (argc > 2 || !endswith(conf, ".conf")) {
 		std::cerr << "Usage: " << argv[0] << " [filename.conf]\n";
 		return EXIT_FAILURE;
