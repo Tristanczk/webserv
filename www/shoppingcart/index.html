@@ -2,24 +2,96 @@
 <html>
 
 <head>
-	<title>Shop</title>
+	<title>E-Commerce</title>
+	<script src="shoppingcart.js" defer></script>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+		}
+
+		.container {
+			width: 90%;
+			margin: auto;
+			overflow: hidden;
+		}
+
+		.product {
+			float: left;
+			width: 30%;
+			padding: 5%;
+			box-sizing: border-box;
+			text-align: center;
+		}
+
+		.product img {
+			width: 80%;
+			height: auto;
+		}
+
+		.product h2,
+		.product p {
+			margin: 10px 0;
+		}
+
+		.btn {
+			display: inline-block;
+			padding: 10px 20px;
+			background-color: #333;
+			color: #fff;
+			text-decoration: none;
+			margin-top: 10px;
+		}
+
+		.btn-cart {
+			display: inline-block;
+			padding: 10px 20px;
+			background-color: #007BFF;
+			color: #fff;
+			text-decoration: none;
+			margin: 20px auto;
+			display: block;
+			text-align: center;
+		}
+
+		.clearfix:after {
+			content: "";
+			display: table;
+			clear: both;
+		}
+
+		.cart-item {
+			display: inline;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 1px;
+		}
+	</style>
 </head>
 
 <body>
-	<h1>Shop</h1>
-
-	<form action="/cgi-bin/shoppingcart.py" method="GET">
-		<label for="item">Item</label>
-		<select name="item" required>
-			<option value="" selected disabled hidden></option>
-			<option value="computer">Computer</option>
-			<option value="phone">Phone</option>
-			<option value="printer">Printer</option>
-		</select>
-		<label for="count">Count</label>
-		<input type="number" name="count" value="0" style="width:80px;" required>
-		<input type="submit" value="update cart">
-	</form>
+	<div class="container clearfix">
+		<div class="product">
+			<img src="images/clippy.jpg" alt="Paperclip" />
+			<h2>Paperclip</h2>
+			<p>$0.01</p>
+			<a href="#" class="btn" onclick="addToCart('paperclip')">Add to Cart</a>
+		</div>
+		<div class="product">
+			<img src="images/monalisa.jpg" alt="Mona Lisa" />
+			<h2>Mona Lisa</h2>
+			<p>$860,000,000</p>
+			<a href="#" class="btn" onclick="addToCart('monalisa')">Add to Cart</a>
+		</div>
+		<div class="product">
+			<img src="images/spaceshuttle.jpg" alt="Space Shuttle" />
+			<h2>Space Shuttle</h2>
+			<p>$1,700,000,000</p>
+			<a href="#" class="btn" onclick="addToCart('spaceshuttle')">Add to Cart</a>
+		</div>
+	</div>
+	<a href="#" class="btn-cart" id="cartButton" onclick="displayCart()">Show Cart</a>
+	<div id="cart" class="container">
+	</div>
 </body>
 
 </html>
