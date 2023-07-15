@@ -5,7 +5,7 @@ const scale = 9 / message.length;
 
 console.log(`Content-Type: image/svg+xml
 
-<svg width="100%" height="100%" style="background-color: #596886;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600">
+<svg width="100%" height="100%" style="background-color: #596886;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 ${600}">
     <defs>
         <style type="text/css">
 			@import url('https://fonts.googleapis.com/css2?family=Bungee+Shade&amp;display=swap');
@@ -17,13 +17,19 @@ console.log(`Content-Type: image/svg+xml
         <filter id="3d">
             <feDropShadow dx="5" dy="5" stdDeviation="3" flood-color="#000"/>
         </filter>
-    </defs>
-    <g transform="translate(${(1 - scale) * 500}, -100) scale(${scale}) rotate(-15 500 300)">
+    </defs>`);
+
+for (let i = 0; i < 25; i++) {
+	console.log(`
+    <g transform="translate(${(1 - scale) * 500}, ${-1000 + i * 100}) scale(${scale}) rotate(-15 500 300)">
         <text x="50%" y="50%" alignment-baseline="middle" text-anchor="middle" font-family="'Bungee Shade', cursive" font-size="120" filter="url(#3d)">
             ${message}
         </text>
     </g>
-    <style>
+    `);
+}
+
+console.log(`<style>
         text {
             fill: url(#gradient);
             stroke: #fff;
