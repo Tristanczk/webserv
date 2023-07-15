@@ -1,7 +1,5 @@
-const querystring = require('querystring');
-
-const params = querystring.parse(process.env.QUERY_STRING);
-const name = params.name || 'World!';
+const params = require('querystring').parse(process.env.QUERY_STRING);
+const name = params.name || 'World';
 
 console.log(`Content-Type: image/svg+xml
 
@@ -18,9 +16,9 @@ console.log(`Content-Type: image/svg+xml
             <feDropShadow dx="5" dy="5" stdDeviation="3" flood-color="#000"/>
         </filter>
     </defs>
-    <g transform="rotate(-15 500 300)">
-        <text x="50%" y="40%" alignment-baseline="middle" text-anchor="middle" font-family="'Bungee Shade', cursive" font-size="120" filter="url(#3d)">
-            Hello ${name}
+    <g transform="translate(100, 0) scale(0.8) rotate(-15 500 300)">
+        <text x="50%" y="45%" alignment-baseline="middle" text-anchor="middle" font-family="'Bungee Shade', cursive" font-size="120" filter="url(#3d)">
+            Hello ${name}!
         </text>
     </g>
     <style>
