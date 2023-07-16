@@ -1,8 +1,6 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <bits/types/time_t.h>
-#include <ctime>
 
 class Client {
 public:

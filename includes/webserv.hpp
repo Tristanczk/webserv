@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <arpa/inet.h>
+#include <bits/types/time_t.h>
 #include <climits>
 #include <csignal>
 #include <cstddef>
