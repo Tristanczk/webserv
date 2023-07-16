@@ -335,14 +335,12 @@ private:
 		return env;
 	}
 
-	static void cgiChild(RequestParsingResult& request, int childToParent[2], int parentToChild[2],
-						 char* strExec, char* strScript, const std::string& finalUri) {
-		close(parentToChild[1]);
-		dup2(parentToChild[0], STDIN_FILENO);
-		close(parentToChild[0]);
-		close(childToParent[0]);
-		dup2(childToParent[1], STDOUT_FILENO);
-		close(childToParent[1]);
+	static void cgiChild(RequestParsingResult& request, int* pipes, char* strExec, char* strScript,
+						 const std::string& finalUri) {
+		dup2(pipes[0], STDIN_FILENO);
+		dup2(pipes[1], STDOUT_FILENO);
+		close(pipes[0]);
+		close(pipes[1]);
 		char* argv[] = {strExec, strScript, NULL};
 		char** env = vectorToCharArray(createCgiEnv(request, finalUri));
 		execve(strExec, argv, env);
@@ -357,6 +355,7 @@ private:
 	}
 
 	void translateCgiResponse(RequestParsingResult& request, const std::string& response) {
+		_statusCode = STATUS_OK;
 		std::istringstream iss(response);
 		std::string line;
 		while (std::getline(iss, line) && !line.empty()) {
@@ -384,7 +383,9 @@ private:
 				}
 			}
 		}
-		if (_statusCode < 200 || _statusCode > 299) {
+		if (_headers.find("content-type") == _headers.end()) {
+			buildErrorPage(request, STATUS_INTERNAL_SERVER_ERROR);
+		} else if (_statusCode < 200 || _statusCode > 299) {
 			buildErrorPage(request, _statusCode);
 		} else {
 			std::stringstream buffer;
@@ -406,30 +407,25 @@ private:
 			return buildErrorPage(request, STATUS_PAYLOAD_TOO_LARGE);
 		}
 
-		int childToParent[2];
-		int parentToChild[2];
-		syscall(pipe(childToParent), "pipe");
-		syscall(pipe(parentToChild), "pipe");
+		int pipes[2];
+		syscall(pipe(pipes), "pipe");
 		pid_t pid = fork();
 		syscall(pid, "fork");
 		if (pid == 0) {
-			cgiChild(request, childToParent, parentToChild, strExec, strScript, finalUri);
+			cgiChild(request, pipes, strExec, strScript, finalUri);
 		}
 
 		if (DEBUG) {
-			std::cout << strExec << ' ' << strScript << " started with pid " << pid << ".\n";
+			std::cerr << strExec << ' ' << strScript << " started with pid " << pid << ".\n";
 		}
-		_statusCode = STATUS_OK;
-		close(parentToChild[0]);
-		close(childToParent[1]);
-		write(parentToChild[1], body.c_str(), body.size());
-		close(parentToChild[1]);
+		write(pipes[1], body.c_str(), body.size());
+		close(pipes[1]);
 		int exitCode = getExitCode(pid);
 		if (DEBUG) {
 			std::cout << strExec << ' ' << strScript << " exited with code " << exitCode << ".\n";
 		}
-		std::string response = fullRead(childToParent[0]);
-		close(childToParent[0]);
+		std::string response = fullRead(pipes[0]);
+		close(pipes[0]);
 		if (exitCode == 0) {
 			translateCgiResponse(request, response);
 		} else {
