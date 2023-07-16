@@ -20,8 +20,7 @@ public:
 	ResponseStatusEnum handleRequest() {
 		char buffer[BUFFER_SIZE];
 		ssize_t bytesRead = recv(_fd, buffer, BUFFER_SIZE, 0);
-		syscall(bytesRead, "recv");
-		if (bytesRead == 0) {
+		if (bytesRead <= 0) {
 			return RESPONSE_FAILURE;
 		}
 		if (DEBUG) {
