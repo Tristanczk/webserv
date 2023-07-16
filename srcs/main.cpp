@@ -7,7 +7,6 @@ const std::set<std::string> CGI_NO_TRANSMISSION;
 
 int main(int argc, char* argv[]) {
 	std::signal(SIGINT, signalHandler);
-	std::signal(SIGCHLD, SIG_IGN);
 	const char* conf = argc == 2 ? argv[1] : "conf/valid/everything.conf";
 	if (argc > 2 || !endswith(conf, ".conf")) {
 		std::cerr << "Usage: " << argv[0] << " [filename.conf]\n";
@@ -19,9 +18,9 @@ int main(int argc, char* argv[]) {
 		if (!server.init(conf)) {
 			return EXIT_FAILURE;
 		}
-		std::cout << BLUE << "Press Ctrl+C to exit.\n" << RESET;
+		std::cout << BLUE << "Press Ctrl+C to exit." << RESET << '\n';
 		server.loop();
-		std::cout << BLUE << "\rGood bye. 💞\n" << RESET;
+		std::cout << BLUE << "\rGood bye. 💞" << RESET << '\n';
 		return EXIT_SUCCESS;
 	} catch (const SystemError& e) {
 		perrored(e.funcName);

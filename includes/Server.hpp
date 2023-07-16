@@ -196,7 +196,8 @@ private:
 			syscall(setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)),
 					"setsockopt");
 			struct sockaddr_in addr = _virtualServersToBind[i]->getAddress();
-			std::cout << BLUE << "Listening on port " << htons(addr.sin_port) << ". 👂\n" << RESET;
+			std::cout << BLUE << "Listening on port " << htons(addr.sin_port) << ". 👂" << RESET
+					  << '\n';
 			syscall(bind(socketFd, (struct sockaddr*)&addr, sizeof(addr)), "bind");
 			syscall(listen(socketFd, SOMAXCONN), "listen");
 			syscallEpoll(_epollFd, EPOLL_CTL_ADD, socketFd, EPOLLIN, "EPOLL_CTL_ADD");

@@ -34,6 +34,8 @@
 #include <unistd.h>
 #include <vector>
 
+#define DEBUG false
+
 #define DEFAULT_PORT 8080
 #define MAX_PORT 65535
 #define MAX_EVENTS 1024
@@ -46,8 +48,6 @@
 #define MAX_HEADER_SIZE 1048576
 
 #define TIMEOUT 10.0
-
-#define DEBUG false
 
 #define CGI_VERSION "CGI/1.1"
 #define HTTP_VERSION "HTTP/1.1"
