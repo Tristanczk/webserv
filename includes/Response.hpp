@@ -477,6 +477,24 @@ private:
 		buildErrorPage(request, static_cast<StatusCode>(_return.first));
 	}
 
+	static std::vector<std::string> ls(DIR* dir, bool dirIsRoot) {
+		struct dirent* entry;
+		std::vector<std::string> res;
+		while ((entry = readdir(dir))) {
+			if (std::strcmp(entry->d_name, ".") == 0) {
+				continue;
+			}
+			bool isParent = std::strcmp(entry->d_name, "..") == 0;
+			if (isParent && dirIsRoot) {
+				continue;
+			}
+			std::string name = std::string(entry->d_name) + (entry->d_type == DT_DIR ? "/" : "");
+			res.push_back(name);
+		}
+		std::sort(res.begin(), res.end());
+		return res;
+	}
+
 	void buildAutoIndexPage(RequestParsingResult& request) {
 		DIR* dir = opendir(findFinalUri(request.success.uri, _rootDir, request.location).c_str());
 		if (!dir) {
@@ -506,19 +524,13 @@ private:
 		_body += "<h1>Index of " + request.success.uri + "</h1>\n";
 		_body += "<ul>\n";
 
-		struct dirent* entry;
-		while ((entry = readdir(dir))) {
-			if (std::strcmp(entry->d_name, ".") == 0) {
-				continue;
-			}
-			bool isParent = std::strcmp(entry->d_name, "..") == 0;
-			if (isParent && request.success.uri == "/") {
-				continue;
-			}
-			std::string name =
-				isParent ? "↩" : std::string(entry->d_name) + (entry->d_type == DT_DIR ? "/" : "");
-			std::string link =
-				request.success.uri + (request.success.uri == "/" ? "" : "/") + entry->d_name;
+		const std::string slashedUri =
+			request.success.uri + (request.success.uri == "/" ? "" : "/");
+		std::vector<std::string> filenames = ls(dir, request.success.uri == "/");
+		for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end();
+			 it++) {
+			std::string link = slashedUri + *it;
+			std::string name = *it == "../" ? "↩" : *it;
 			_body += "<li><a href=\"" + link + "\">" + name + "</a></li>\n";
 		}
 		closedir(dir);
