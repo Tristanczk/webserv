@@ -73,7 +73,7 @@ public:
 			try {
 				matchLevel = _locations[i].isMatching(requestPath);
 			} catch (const RegexError& e) {
-				std::cerr << RED << e.what() << RESET << std::endl;
+				std::cerr << RED << e.what() << RESET << '\n';
 				return NULL;
 			}
 			if (matchLevel == LOCATION_MATCH_EXACT) {

@@ -33,12 +33,12 @@ public:
 
 	bool parseConfig(const char* filename) {
 		if (isDirectory(filename)) {
-			std::cerr << filename << " is a directory" << std::endl;
+			std::cerr << filename << " is a directory\n";
 			return false;
 		}
 		std::ifstream config(filename);
 		if (!config.good()) {
-			std::cerr << "Cannot open file " << filename << std::endl;
+			std::cerr << "Cannot open file " << filename << '\n';
 			return false;
 		}
 		for (std::string line; std::getline(config, line);) {
@@ -82,8 +82,7 @@ public:
 					int clientFd = accept(*it, (struct sockaddr*)&client.getAddress(),
 										  &client.getAddressLen());
 					if (clientFd < 0) {
-						std::cerr << RED << "accept: " << std::strerror(errno) << RESET
-								  << std::endl;
+						std::cerr << RED << "accept: " << std::strerror(errno) << RESET << '\n';
 						continue;
 					}
 					client.setInfo(clientFd);

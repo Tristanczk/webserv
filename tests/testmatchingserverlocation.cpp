@@ -34,7 +34,7 @@ static int findBestMatchLocation(const std::string& uri, VirtualServer& server) 
 		try {
 			matchLevel = locations[i].isMatching(uri);
 		} catch (const RegexError& e) {
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 			return -2;
 		}
 		if (matchLevel == LOCATION_MATCH_EXACT) {
@@ -62,7 +62,7 @@ void testServer() {
 	displayTitle("MATCHING SERVER");
 	std::ifstream config("./tests/testsmatchingserver.txt");
 	if (!config.good()) {
-		std::cerr << "Cannot open file for testing matching server" << std::endl;
+		std::cerr << "Cannot open file for testing matching server\n";
 		return;
 	}
 	int i = 0;
@@ -75,7 +75,7 @@ void testServer() {
 		size_t port;
 		int expected;
 		if (!(iss >> ip >> port >> serverName >> expected)) {
-			std::cerr << "Invalid line in testmatchingserver.txt: " << line << std::endl;
+			std::cerr << "Invalid line in testmatchingserver.txt: " << line << '\n';
 			continue;
 		}
 		if (serverName == "*") {
@@ -86,7 +86,7 @@ void testServer() {
 		bool result = expected == match;
 		displayResult(testNb, result);
 		if (!result) {
-			std::cerr << "Expected: " << expected << " | found: " << match << std::endl;
+			std::cerr << "Expected: " << expected << " | found: " << match << '\n';
 		}
 	}
 }
@@ -98,7 +98,7 @@ void testLocation() {
 	displayTitle("MATCHING LOCATION");
 	std::ifstream config("./tests/testsmatchinglocation.txt");
 	if (!config.good()) {
-		std::cerr << "Cannot open file for testing matching location" << std::endl;
+		std::cerr << "Cannot open file for testing matching location\n";
 		return;
 	}
 	for (std::string line; std::getline(config, line);) {
@@ -110,14 +110,14 @@ void testLocation() {
 		int expected;
 		if (!(iss >> uri >> expected)) {
 			std::cerr << RED << "Invalid line in testmatchinglocation.txt: " << line << RESET
-					  << std::endl;
+					  << '\n';
 			continue;
 		}
 		int match = findBestMatchLocation(uri, vServer);
 		bool result = expected == match;
 		displayResult(uri, result);
 		if (!result) {
-			std::cerr << "Expected: " << expected << " | found: " << match << std::endl;
+			std::cerr << "Expected: " << expected << " | found: " << match << '\n';
 		}
 	}
 }
@@ -129,7 +129,7 @@ void testFinalUri() {
 	displayTitle("FINAL URI");
 	std::ifstream config("./tests/testsfinaluri.txt");
 	if (!config.good()) {
-		std::cerr << "Cannot open file for testing final uri" << std::endl;
+		std::cerr << "Cannot open file for testing final uri\n";
 		return;
 	}
 	for (std::string line; std::getline(config, line);) {
@@ -141,7 +141,7 @@ void testFinalUri() {
 		std::string expectedFinalUri;
 		if (!(iss >> uri >> expectedFinalUri)) {
 			std::cerr << RED << "Invalid line in testmatchinglocation.txt: " << line << RESET
-					  << std::endl;
+					  << '\n';
 			continue;
 		}
 		int locnb = findBestMatchLocation(uri, vServer);
@@ -155,7 +155,7 @@ void testFinalUri() {
 		bool result = finalUri == expectedFinalUri;
 		displayResult(uri, result);
 		if (!result) {
-			std::cerr << "Expected: " << expectedFinalUri << " | found: " << finalUri << std::endl;
+			std::cerr << "Expected: " << expectedFinalUri << " | found: " << finalUri << '\n';
 		}
 	}
 }

@@ -55,7 +55,7 @@ public:
 		std::string line;
 		if (_bodyPos == 0) {
 			if (DEBUG) {
-				std::cout << GREEN << "=== RESPONSE START ===" << RESET << std::endl;
+				std::cout << GREEN << "=== RESPONSE START ===" << RESET << '\n';
 			}
 			if (!pushStringToClient(fd, _statusLine)) {
 				return RESPONSE_FAILURE;
@@ -81,7 +81,7 @@ public:
 		}
 		if (_method == HEAD) {
 			if (DEBUG) {
-				std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
+				std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << '\n';
 			}
 			return RESPONSE_SUCCESS;
 		}
@@ -90,7 +90,7 @@ public:
 		}
 		if (_bodyPos == _body.size()) {
 			if (DEBUG) {
-				std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << std::endl;
+				std::cout << GREEN << "\n=== RESPONSE END ===" << RESET << '\n';
 			}
 			return RESPONSE_SUCCESS;
 		}

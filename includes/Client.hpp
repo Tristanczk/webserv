@@ -27,10 +27,9 @@ public:
 			return RESPONSE_FAILURE;
 		}
 		if (DEBUG) {
-			std::cout << YELLOW << "=== REQUEST START ===" << std::endl
-					  << strtrim(buffer, "\r\n") << std::endl
-					  << "=== REQUEST END ===" << std::endl
-					  << RESET;
+			std::cout << YELLOW << "=== REQUEST START ===\n"
+					  << std::endl
+					  << strtrim(buffer, "\r\n") << "\n=== REQUEST END ===" << RESET << '\n';
 		}
 		if (_currentRequest == NULL) {
 			_currentRequest = new Request(_associatedServers, _ip, _port);

@@ -18,7 +18,7 @@ void displayResult(const std::string& testName, bool result) {
 		status = EXIT_FAILURE;
 	}
 	std::cout << (result ? GREEN : RED) << testName << ": " << (result ? "OK" : "KO") << RESET
-			  << std::endl;
+			  << '\n';
 }
 
 int main() {

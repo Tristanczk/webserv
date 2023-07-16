@@ -8,7 +8,7 @@ int comparePrefix(const std::string& locationUri, const std::string& requestPath
 }
 
 bool configFileError(const std::string& message) {
-	std::cerr << "Configuration error: " << message << std::endl;
+	std::cerr << "Configuration error: " << message << '\n';
 	return false;
 }
 
