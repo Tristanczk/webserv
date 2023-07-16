@@ -320,7 +320,7 @@ private:
 				 request.success.headers.begin();
 			 it != request.success.headers.end(); ++it) {
 			if (CGI_NO_TRANSMISSION.find(it->first) == CGI_NO_TRANSMISSION.end()) {
-				exportEnv(env, "HTTP_" + strupper(it->first), it->second);
+				exportEnv(env, metavariablify(it->first), it->second);
 			}
 		}
 		const std::string absolutePath = getAbsolutePath(finalUri);

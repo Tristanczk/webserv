@@ -188,6 +188,14 @@ bool isValidFile(const std::string& path) {
 
 bool isValidStatusCode(int errorCode) { return 100 <= errorCode && errorCode <= 599; }
 
+std::string metavariablify(const std::string& s) {
+	std::string res = "HTTP_";
+	for (size_t i = 0; i < s.size(); ++i) {
+		res += s[i] == '-' ? '_' : std::toupper(s[i]);
+	}
+	return res;
+}
+
 void perrored(const char* funcName) {
 	std::cerr << RED << funcName << ": " << strerror(errno) << RESET << '\n';
 }
@@ -210,17 +218,6 @@ bool startswith(const std::string& str, const std::string& start) {
 	return str.size() >= start.size() && !str.compare(0, start.size(), start);
 }
 
-std::string strjoin(const std::vector<std::string>& vec, const std::string& sep) {
-	std::string result;
-	for (std::vector<std::string>::const_iterator it = vec.begin(); it != vec.end(); ++it) {
-		if (it != vec.begin()) {
-			result += sep;
-		}
-		result += *it;
-	}
-	return result;
-}
-
 std::string strlower(const std::string& s) {
 	std::string l;
 	for (size_t i = 0; i < s.size(); ++i) {
@@ -239,14 +236,6 @@ std::string strtrim(const std::string& s, const std::string& remove) {
 	pos = result.find_last_not_of(remove);
 	result.erase(pos + 1);
 	return result;
-}
-
-std::string strupper(const std::string& s) {
-	std::string l;
-	for (size_t i = 0; i < s.size(); ++i) {
-		l += std::toupper(s[i]);
-	}
-	return l;
 }
 
 std::string toString(RequestMethod method) {
