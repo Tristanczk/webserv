@@ -91,8 +91,6 @@ public:
 
 	struct sockaddr_in& getAddress() { return _address; }
 	socklen_t& getAddressLen() { return _addressLen; }
-	in_addr_t getIp() { return _ip; }
-	in_port_t getPort() { return _port; }
 
 private:
 	std::vector<VirtualServer*> _associatedServers;
@@ -101,7 +99,6 @@ private:
 	in_addr_t _ip;
 	in_port_t _port;
 	int _fd;
-	std::queue<Response> _responseQueue;
 	Request* _currentRequest;
 	Response* _currentResponse;
 	time_t _startTime;

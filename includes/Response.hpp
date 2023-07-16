@@ -106,7 +106,6 @@ private:
 	size_t _bodyPos;
 	StatusCode _statusCode;
 	RequestMethod _method;
-
 	std::string _rootDir;
 	std::string _uploadDir;
 	bool _autoIndex;
